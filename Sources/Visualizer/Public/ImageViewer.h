@@ -2,7 +2,6 @@
 #include <string>
 #include <cstdint>
 #include <vector>
-#include "imageModifier.h"
 
 struct ImageData
 {
@@ -52,13 +51,7 @@ private:
 
 	template<typename ModifierClass>
 	void AddModifier(const std::string& Name)	{
-		ImageModifier* modifier = new ModifierClass();
-		modifier->Parent = this;
-		modifier->ModifierID = ModifierCount++;
-		modifier->Name = Name;
-		Modifiers.push_back(modifier);
 		ApplyTransformation();
 	}
-
-	std::vector<ImageModifier*> Modifiers;
+	
 };

@@ -12,19 +12,6 @@
 
 #include "stb_image.h"
 #include "GL/gl3w.h"
-#include "Modifiers/Clamp.h"
-#include "Modifiers/Close.h"
-#include "Modifiers/Open.h"
-#include "Modifiers/Convolution.h"
-#include "Modifiers/Dilate.h"
-#include "Modifiers/Equalizer.h"
-#include "Modifiers/Erode.h"
-#include "Modifiers/ExtractBorder.h"
-#include "Modifiers/Histogram.h"
-#include "Modifiers/MedianFilter.h"
-#include "Modifiers/Negate.h"
-#include "Modifiers/StretchContrast.h"
-#include "Modifiers/Threshold.h"
 
 
 std::vector <ImageViewer*> ImagesViewers;
@@ -52,22 +39,6 @@ ImageViewer::ImageViewer() {
 
 void ImageViewer::DrawMenuBar() {
 	if (ImGui::BeginMenuBar()) {
-		if (ImGui::BeginMenu("Add modifier")) {
-			if (ImGui::MenuItem("Negate")) AddModifier<NegateModifier>("Negative");
-			if (ImGui::MenuItem("Clamp")) AddModifier<ClampModifier>("Clamp");
-			if (ImGui::MenuItem("Threshold")) AddModifier<ThresholdModifier>("Threshold");
-			if (ImGui::MenuItem("Normalize")) AddModifier<NormalizerModifier>("Normalize");
-			if (ImGui::MenuItem("Histogram")) AddModifier<Histogram>("Histogram");
-			if (ImGui::MenuItem("Equalizer")) AddModifier<Equalizer>("Equalizer");
-			if (ImGui::MenuItem("Convolution")) AddModifier<ConvolutionModifier>("Convolution");
-			if (ImGui::MenuItem("Median filter")) AddModifier<MedianFilterModifier>("Median Filter");
-			if (ImGui::MenuItem("Dilate")) AddModifier<DilateModifier>("Dilate");
-			if (ImGui::MenuItem("Erode")) AddModifier<ErodeFilter>("Erode");
-			if (ImGui::MenuItem("Open")) AddModifier<OpenModifier>("Open");
-			if (ImGui::MenuItem("Close")) AddModifier<CloseModifier>("Close");
-			if (ImGui::MenuItem("Extract border")) AddModifier<ExtractBorderFilter>("Extract border");
-			ImGui::EndMenu();
-		}
 		ImGui::EndMenuBar();
 	}
 }
@@ -102,9 +73,6 @@ void ImageViewer::Display() {
 	if (ImGui::Begin(("Image " + std::to_string(ImageID)).c_str(), &bDisplay, ImGuiWindowFlags_MenuBar)) {
 		DrawMenuBar();
 		ImGui::Image(reinterpret_cast<void*>(static_cast<uint64_t>(TextureID)), ImVec2(static_cast<float>(SizeX), static_cast<float>(SizeY)));
-		for (const auto& Modifier : Modifiers) {
-			Modifier->DrawUI_Internal();
-		}	
 	}
 	ImGui::End();
 }
@@ -115,11 +83,7 @@ void ImageViewer::ApplyTransformation() {
 	if (!ImageBaseData || SizeX * SizeY * Channels <= 0) return;
 	
 	ImageData ModifiedData(ImageBaseData, SizeX, SizeY, Channels);
-
-	for (const auto& Modifier : Modifiers)
-	{
-		Modifier->ModifyImage_Internal(&ModifiedData);
-	}
+	
 	
 	uint8_t* TempData = new uint8_t[SizeX * SizeY * 4];
 	for (size_t i = 0; i < SizeX * SizeY; ++i) {
