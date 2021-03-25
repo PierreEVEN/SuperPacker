@@ -10,7 +10,7 @@ namespace OpenGLContext
 	void EndFrame();
 	void Shutdown();
 	void GetWindowSize(int& SizeX, int& SizeY);
-
+	void request_close();
 	
 
 

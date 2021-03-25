@@ -9,6 +9,7 @@
 #include "backends/imgui_impl_glfw.h"
 
 GLFWwindow* WindowHandle = nullptr;
+bool close = false;
 
 void ResizeCallback(GLFWwindow* windows, int x, int y) {
 	glViewport(0, 0, x, y);
@@ -74,12 +75,10 @@ void OpenGLContext::Init() {
 			
 	ImGui_ImplGlfw_InitForOpenGL(WindowHandle, true);
 	ImGui_ImplOpenGL3_Init("#version 150");
-
-
 }
 
 bool OpenGLContext::ShouldClose() {
-	return glfwWindowShouldClose(WindowHandle);
+	return glfwWindowShouldClose(WindowHandle) || close;
 }
 
 void OpenGLContext::BeginFrame() {
@@ -115,4 +114,9 @@ void OpenGLContext::Shutdown() {
 
 void OpenGLContext::GetWindowSize(int& SizeX, int& SizeY) {
 	glfwGetWindowSize(WindowHandle, &SizeX, &SizeY);
+}
+
+void OpenGLContext::request_close()
+{
+	close = true;
 }

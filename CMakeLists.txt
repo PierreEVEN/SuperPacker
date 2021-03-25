@@ -11,7 +11,7 @@ add_subdirectory(Tools)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Visualizer)
 
 #set project name
-project(ImageVisualizer)
+project(SuperPacker)
 
 # Pure3D only support x64 architecture
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
