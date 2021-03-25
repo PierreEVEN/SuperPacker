@@ -1,0 +1,16 @@
+Binaries/
+Intermediates/
+Saved/
+.vs/
+.idea/
+
+*.vcxproj
+*.sln
+*.filters
+*.user
+*.cmake
+**/Makefile
+**/CMakeFiles/
+**/CMakeCache.txt
+
+imgui.ini

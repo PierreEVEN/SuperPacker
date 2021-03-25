@@ -1,0 +1,5 @@
+create_executable()
+add_public_dependencies(Glfw)
+add_public_dependencies(Gl3w)
+add_public_dependencies(Imgui)
+add_public_dependencies(Stb)

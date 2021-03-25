@@ -1,0 +1,13 @@
+[submodule "Sources/ThirdParty/gl3w"]
+	path = Sources/ThirdParty/gl3w
+	url = https://github.com/skaslev/gl3w
+[submodule "Sources/ThirdParty/glfw"]
+	path = Sources/ThirdParty/glfw
+	url = https://github.com/glfw/glfw
+[submodule "Sources/ThirdParty/imgui"]
+	path = Sources/ThirdParty/imgui
+	url = https://github.com/ocornut/imgui
+	branch = docking
+[submodule "Sources/ThirdParty/stb"]
+	path = Sources/ThirdParty/stb
+	url = https://github.com/nothings/stb
