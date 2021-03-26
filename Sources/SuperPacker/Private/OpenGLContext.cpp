@@ -3,6 +3,8 @@
 
 #include <filesystem>
 #include <iostream>
+#include <stb_image.h>
+
 
 #include "GL/gl3w.h"
 #include "GLFW/glfw3.h"
@@ -50,6 +52,12 @@ void OpenGLContext::Init() {
 	glfwSetErrorCallback(&ErrorCallback);
 	glfwSetInputMode(WindowHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
+	GLFWimage icons[1];
+	int channels;
+	icons[0].pixels = stbi_load("icon.png", &icons[0].width, &icons[0].height, &channels, 4);
+	glfwSetWindowIcon(WindowHandle, 1, icons);
+	stbi_image_free(icons[0].pixels);
+	
 
 	std::cout << "Initialize OpenGL context" << std::endl;
 	if (gl3wInit()) {
