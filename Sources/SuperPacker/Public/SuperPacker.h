@@ -12,6 +12,7 @@ namespace SuperPacker
 	{
 		std::string channel_name;
 		ImVec4 channel_color;
+		uint8_t default_value;
 	};
 
 	enum class Extension
@@ -29,17 +30,17 @@ namespace SuperPacker
 		switch (ext)
 		{
 		case Extension::EXT_PNG:
-			return "png";
+			return ".png";
 		case Extension::EXT_TGA:
-			return "tga";
+			return ".tga";
 		case Extension::EXT_JPG:
-			return "jpg";
+			return ".jpg";
 		case Extension::EXT_BMP:
-			return "bmp";
+			return ".bmp";
 		case Extension::EXT_HDR:
-			return "hdr";
+			return ".hdr";
 		}
-		return "none";
+		return ".none";
 	}
 
 	struct Image
@@ -77,7 +78,7 @@ namespace SuperPacker
 
 	void draw_ui();
 
-	void save(const std::string& file_path);
+	void save(std::string file_path);
 
 	void draw_channel(ChannelData& channel);
 }

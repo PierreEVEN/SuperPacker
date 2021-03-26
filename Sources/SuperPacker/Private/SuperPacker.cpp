@@ -20,19 +20,23 @@ namespace SuperPacker
 	ChannelInfo channel_info[] = {
 		{
 			.channel_name = "R",
-			.channel_color = ImVec4(1, 0.3f, 0.3f, 1)
+			.channel_color = ImVec4(1, 0.3f, 0.3f, 1),
+			.default_value = 0
 		},
 		{
 			.channel_name = "G",
-			.channel_color = ImVec4(0.1f, 0.6f, 0.1f, 1)
+			.channel_color = ImVec4(0.1f, 0.6f, 0.1f, 1),
+			.default_value = 0
 		},
 		{
 			.channel_name = "B",
-			.channel_color = ImVec4(0.5f, 0.5f, 1, 1)
+			.channel_color = ImVec4(0.5f, 0.5f, 1, 1),
+			.default_value = 0
 		},
 		{
 			.channel_name = "A",
-			.channel_color = ImVec4(0.5f, 0.5f, 0.5f, 1)
+			.channel_color = ImVec4(0.5f, 0.5f, 0.5f, 1),
+			.default_value = 255
 		}
 	};
 
@@ -206,7 +210,7 @@ namespace SuperPacker
 		return std::optional<std::filesystem::path>();
 	}
 	
-	void save(const std::string& file_path)
+	void save(std::string file_path)
 	{
 		uint32_t width = 0;
 		uint32_t height = 0;
@@ -237,7 +241,7 @@ namespace SuperPacker
 			for (int chan_id = 0; chan_id < channels_config[current_chan_conf].channels.size(); ++chan_id)
 			{
 
-				uint8_t chan_color = 0;
+				uint8_t chan_color = channel_info[chan_id].default_value;
 				if (channels_config[current_chan_conf].channels[chan_id].image)
 				{
 					auto& chan_data = channels_config[current_chan_conf].channels[chan_id];
@@ -248,6 +252,17 @@ namespace SuperPacker
 			}
 		}
 
+		std::string extension = extension_to_string(export_extension);
+
+		for (int i = extension.size() - 1; i >= 0; --i)
+		{
+			if (extension[i] != file_path[file_path.size() - 1 - i])
+			{
+				file_path += extension;
+				break;
+			}
+		}
+		
 
 		std::cout << "write image : " << width << " x " << height << " with " << channels_config[current_chan_conf].channels.size() << " components" << std::endl;
 
