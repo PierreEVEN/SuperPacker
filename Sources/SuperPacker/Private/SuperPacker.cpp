@@ -181,7 +181,7 @@ namespace SuperPacker
 		ofn.nMaxFile = MAX_PATH;
 		ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
 		
-		if (GetOpenFileNameA(&ofn))
+		if (GetSaveFileName(&ofn))
 		{
 			return std::filesystem::path(filename);
 		}
@@ -296,7 +296,7 @@ namespace SuperPacker
 		}
 		ImGui::Columns(1);
 		ImGui::Separator();
-		if (ImGui::BeginCombo("channel configuration", channels_config[current_chan_conf].configuration_name.c_str()))
+		if (ImGui::BeginCombo("output palette", channels_config[current_chan_conf].configuration_name.c_str()))
 		{
 			for (int i = 0; i < channels_config.size(); ++i) {
 				if (ImGui::MenuItem(channels_config[i].configuration_name.c_str())) current_chan_conf = i;
