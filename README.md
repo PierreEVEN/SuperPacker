@@ -4,6 +4,8 @@
 - Extract image channels
 - Support png-jpg-tga-bmp
 
+[Download link](https://github.com/PierreEVEN/SuperPacker/releases/tag/SuperPacker)
+
 > Note : This is a basic tool i made in a few hours. I'll improve it maybe later if i have time.
 
 
