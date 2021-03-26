@@ -1,5 +1,7 @@
 #include "OpenGLContext.h"
 
+
+#include <filesystem>
 #include <iostream>
 
 #include "GL/gl3w.h"
@@ -41,7 +43,7 @@ void OpenGLContext::Init() {
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 	glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
 
-	WindowHandle = glfwCreateWindow(1000, 1000, "Pure3D - OpenGL", 0, 0);
+	WindowHandle = glfwCreateWindow(1000, 500, "Super packer - OpenGL", 0, 0);
 	if (!WindowHandle) std::cerr << "Failed to create Glfw window handle" << std::endl;
 	glfwMakeContextCurrent(WindowHandle);
 	glfwSetFramebufferSizeCallback(WindowHandle, &ResizeCallback);
@@ -70,6 +72,16 @@ void OpenGLContext::Init() {
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.IniFilename = NULL;
+	
+	auto& style = ImGui::GetStyle();
+	style.WindowBorderSize = 0;
+	style.FramePadding = ImVec2(20, 10);
+
+	if (std::filesystem::exists("Roboto-Medium.ttf")) {
+		io.Fonts->AddFontFromFileTTF("Roboto-Medium.ttf", 20.f);
+	}
+	
 	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	ImGui::StyleColorsDark();
 			
