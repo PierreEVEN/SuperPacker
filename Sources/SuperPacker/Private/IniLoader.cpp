@@ -1,9 +1,10 @@
 #include "IniLoader.h"
-#if _WIN32
-	#include <filesystem>
-#endif
+
+#include <filesystem>
 #include <iostream>
 #include <fstream>
+
+#include "Logger.h"
 
 bool is_starting_with(const std::string& test, const std::string& start)
 {
@@ -13,7 +14,7 @@ bool is_starting_with(const std::string& test, const std::string& start)
 
 bool is_ending_with(const std::string& test, const std::string& end)
 {
-	for (int i = test.size() - 1; i > test.size() - end.size(); ++i) if (i < 0 || test[i] != end[i]) return false;
+	for (int64_t i = test.size() - 1; i > static_cast<int64_t>(test.size()) - static_cast<int64_t>(end.size()); ++i) if (i < 0 || test[i] != end[i]) return false;
 	return true;
 }
 
@@ -47,14 +48,14 @@ bool split_string(const std::string& test, const std::vector<char>& separators, 
 					continue;
 				}
 			}
-			if (is_left) left = left + chr;
-			else right = right + chr;
+			if (is_left) left += chr;
+			else right += chr;
 		}
 	}
 	else
 	{
-		bool is_left = false;
-		bool is_right = true;
+		is_left = false;
+		is_right = true;
 		for (int64_t i = test.size() - 1; i >= 0; --i)
 		{
 			if (std::ranges::find(separators.begin(), separators.end(), test[i]) != separators.end())
@@ -69,10 +70,10 @@ bool split_string(const std::string& test, const std::vector<char>& separators, 
 			else right = test[i] + right;
 		}
 	}
-	return !is_left && is_right;
+	return from_start ? (!is_left && is_right) : (!is_right && is_left);
 }
 
-IniLoader::IniLoader(const std::string& filePath)
+IniLoader::IniLoader(const std::string filePath)
 	: sourceFile(filePath) {
 	LinkOrCreate();
 }
@@ -235,6 +236,7 @@ void IniLoader::LinkOrCreate()
 	std::ifstream fs(sourceFile.data());
 	char* line = new char[1000];
 	IniCategory* currentCategory = nullptr;
+
 	while (fs.getline(line, 1000, '\n'))
 	{
 		std::string resultLine, right;
@@ -243,10 +245,10 @@ void IniLoader::LinkOrCreate()
 			resultLine = line;
 		}
 
-
 		if (IniCategory::IsCategoryLine(resultLine))
 		{
 			std::string catName = IniCategory::GetCategoryNameFromString(resultLine);
+
 			if (!DoesCategoryExist(catName))
 			{
 				currentCategory = new IniCategory(catName);
@@ -333,6 +335,7 @@ const std::string IniLoader::IniCategory::GetCategoryNameFromString(const std::s
 	std::string left, center, right, categoryName;
 	split_string(line, { '[' }, left, center);
 	split_string(center, { ']' }, categoryName, right);
+	
 	return categoryName;
 }
 

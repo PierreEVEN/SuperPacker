@@ -2,6 +2,8 @@
 #include <string>
 #include <optional>
 #include <filesystem>
+#include <unordered_map>
+
 
 #include "Types.h"
 
@@ -14,30 +16,33 @@ namespace SuperPacker
 	{
 	public:
 
-		ImagePacker(const std::string& config_path, const std::vector<std::pair<std::string, std::string>>& in_formats, const std::vector<ChannelInfo>& in_channel_infos, const std::vector<PaletteConfiguration>& in_channels_config, const std::optional<std::filesystem::path>& default_image = std::optional<std::filesystem::path>());
-		
+		ImagePacker(const std::string& config_path, const std::optional<std::filesystem::path>& default_image = std::optional<std::filesystem::path>());
+
 		void draw_ui();
 
+		void add_format(const FileFormat& format);
+		void add_channel(const ImageChannel& channel);
+		void add_channel_combination(const ChannelCombination& combination);
+		void set_current_channel_combination(const std::string& combination);
+		void set_current_export_format(const std::string& format);
+		[[nodiscard]] ChannelCombination& get_combination() { return channel_combinations[current_channel_combination]; }
+	
 	private:
 
-		std::optional<std::filesystem::path> pick_file(const std::string& destination);
-		std::optional<std::filesystem::path> save_file();
+		std::unordered_map<std::string, FileFormat> formats;
+		std::vector<char> formats_string;
+		std::unordered_map<std::string, ImageChannel> channels;
+		std::unordered_map<std::string, ChannelCombination> channel_combinations;
+		std::string current_channel_combination;
+		std::string current_export_format;
+		
+		void draw_channel(ImageChannel& channel);
+
+
 
 		void save(std::string file_path);
-
-		void draw_channel(ChannelData& channel, int channel_id);
-
 		void reset_from_source(const std::filesystem::path& source);
-
-		std::vector<char> formats;
-		std::vector<ChannelInfo> channel_infos;
-		std::vector<PaletteConfiguration> palette_config;
-		
-		Extension export_extension = Extension::EXT_PNG;
-		int export_palette = 2;
 
 		std::shared_ptr<IniLoader> config_ini;
 	};
-
-	
 }

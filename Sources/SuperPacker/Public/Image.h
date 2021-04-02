@@ -12,14 +12,23 @@ namespace SuperPacker {
 	class IImage
 	{
 	public:
+		explicit IImage(const std::filesystem::path& path)
+			: source_path(path) {}
+		
 		[[nodiscard]] int get_width() const { return width; }
 		[[nodiscard]] int get_height() const { return height; }
 		[[nodiscard]] int get_channels() const { return channels; }
 		[[nodiscard]] GLuint get_texture() const { return texture_id; }
-		
+		[[nodiscard]] std::string get_desired_channel() const { return desired_channel; }
+
+		std::optional<std::filesystem::path> source_path;
+
+		void set_desired_channel(const std::string& channel) { desired_channel = channel; }
+	
 	protected:
 		GLuint texture_id = 0;
 
+		std::string desired_channel;
 		int width = 0;
 		int height = 0;
 		int channels = 0;
@@ -29,9 +38,10 @@ namespace SuperPacker {
 	class TImage final : public IImage
 	{
 	public:
-		explicit TImage(const std::filesystem::path& source_path)
+		explicit TImage(const std::filesystem::path& path)
+			: IImage(path)
 		{
-			Type* raw_data = stbi_load(source_path.string().c_str(), &width, &height, &channels, 4);
+			Type* raw_data = stbi_load(source_path.value().string().c_str(), &width, &height, &channels, 4);
 
 			glGenTextures(1, &texture_id);
 			glBindTexture(GL_TEXTURE_2D, texture_id);

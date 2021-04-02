@@ -1,104 +1,51 @@
 
-#include "OpenGLContext.h"
-#include "imgui.h"
-#include "SuperPacker.h"
-
 #include <windows.h>
 
-#include "logger.h"
+
+#include "Logger.h"
+#include "OpenGLContext.h"
+#include "SuperPacker.h"
+
+#if _WIN32
+#define ARGV __argv
+#define ARGC __argc
+#else
+#define ARGV argv
+#define ARGC argc
+#endif
+
+#if _WIN32 && false
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
-//int main(int argc, char** argv)
+#else
+int main(int argc, char** argv)
+#endif
 {
-	std::filesystem::current_path(std::filesystem::path(__argv[0]).parent_path());
+	current_path(std::filesystem::path(ARGV[0]).parent_path());
 	
 	OpenGLContext::Init();
-
-	std::vector<std::pair<std::string, std::string>> formats = {
-		{"PNG file", "*.png"},
-		{"TGA file", "*.tga"},
-		{"Jpeg file", "*.jpg"},
-		{"Bitmap file", "*.bmp"},
-		{"Any file", "*.*"},
-	};
 	
-	std::vector<SuperPacker::ChannelInfo> channel_infos
-	{
-		{
-			.channel_name = "R",
-			.channel_color = ImVec4(1, 0.3f, 0.3f, 1),
-			.default_value = 0
-		},
-		{
-			.channel_name = "G",
-			.channel_color = ImVec4(0.1f, 0.6f, 0.1f, 1),
-			.default_value = 0
-		},
-		{
-			.channel_name = "B",
-			.channel_color = ImVec4(0.5f, 0.5f, 1, 1),
-			.default_value = 0
-		},
-		{
-			.channel_name = "A",
-			.channel_color = ImVec4(0.5f, 0.5f, 0.5f, 1),
-			.default_value = 255
-		}
-	};
-	
-	std::vector<SuperPacker::PaletteConfiguration> configurations = {
-		SuperPacker::PaletteConfiguration {
-			.palette_name = "Grayscale",
-			.channels = {
-				{
-					.channel_id = 0
-				}
-			},
-		},
-		SuperPacker::PaletteConfiguration {
-			.palette_name = "RGB",
-			.channels = {
-				{
-					.channel_id = 0
-				},
-				{
-					.channel_id = 1
-				},
-				{
-					.channel_id = 2
-				}
-			},
-		},
-		SuperPacker::PaletteConfiguration {
-			.palette_name = "RGBA",
-			.channels = {
-				{
-					.channel_id = 0
-				},
-				{
-					.channel_id = 1
-				},
-				{
-					.channel_id = 2
-				},
-				{
-					.channel_id = 3
-				}
-			},
-		},
-	};
-	
-	auto packer = std::make_shared<SuperPacker::ImagePacker>(
-		"config/default.ini",
-		formats,
-		channel_infos,
-		configurations,
-		__argc == 2 ? __argv[1] : std::optional<std::filesystem::path>()
+	auto packer = std::make_shared<SuperPacker::ImagePacker>("config/default.ini", ARGC > 1 ? ARGV[1] : std::optional<std::filesystem::path>()
 	);
 
-	WCHAR path[MAX_PATH];
-	GetModuleFileNameW(NULL, path, MAX_PATH);
+	packer->add_format({ "PNG file", "*.png" });
+	packer->add_format({ "TGA file", "*.tga" });
+	packer->add_format({ "JPEG file", "*.jpg|*.jpeg|*.JPEG|*.JPG" });
+	packer->add_format({ "BITMAP file", "*.bmp" });
+	packer->add_format({ "HDR file", "*.hdr" });
+	packer->add_format({ "Any file", "*.*" });
 
-	
+	packer->add_channel({0, "red","r",{1.0, 0.0, 0.0, 1.0},0});
+	packer->add_channel({1, "green","g",{0.0, 1.0, 0.0, 1.0},0});
+	packer->add_channel({2, "blue","b",{0.0, 0.0, 1.0, 1.0},0});
+	packer->add_channel({3, "alpha","a",{1.0, 1.0, 1.0, 1.0},255});
+
+	packer->add_channel_combination({ "grayscale", {"r"} });
+	packer->add_channel_combination({ "rgb", {"r", "g", "b"} });
+	packer->add_channel_combination({ "rgba", {"r", "g", "b", "a"} });
+
+	packer->set_current_channel_combination("rgba");
+	packer->set_current_export_format("png");
+
 	while (!OpenGLContext::ShouldClose()) {		
 		OpenGLContext::BeginFrame();
 		

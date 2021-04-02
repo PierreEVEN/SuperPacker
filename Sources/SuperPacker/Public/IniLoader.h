@@ -27,7 +27,7 @@ class IniLoader
 public:
 
 	/** Create a new ini loader - automatically load file at designed path or create path if file doesn't exist. Ini file must have '.ini extension' */
-	IniLoader(const std::string& filePath);
+	IniLoader(const std::string filePath);
 
 	/** save ini modifications, then delete resources */
 	~IniLoader();

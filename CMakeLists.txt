@@ -59,7 +59,11 @@ function(create_executable)
 	log_module("Add executable")
 	
 	file(GLOB_RECURSE SOURCES *.cpp *.hpp *.h *.c)
-	add_executable(${TARGET} ${SOURCES} ${ARGN})
+	IF (WIN32)
+		add_executable(${TARGET} WIN32 ${SOURCES} ${ARGN})
+	ELSE()
+		add_executable(${TARGET} WIN32 ${SOURCES} ${ARGN})
+	ENDIF()
 	_module_definition(${TARGET} ${ARGN})	
 endfunction()
 
