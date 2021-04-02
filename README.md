@@ -1,5 +1,7 @@
-# Super packer 
+# Super packer
+
 ![icon](icon.png)
+
 - Recombine image channels from multiple sources
 - Extract image channels
 - Support png-jpg-tga-bmp
