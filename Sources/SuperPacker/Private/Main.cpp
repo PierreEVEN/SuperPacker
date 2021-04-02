@@ -6,10 +6,10 @@
 #include <windows.h>
 
 #include "logger.h"
-//int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
-int main(int argc, char** argv)
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
+//int main(int argc, char** argv)
 {
-	std::filesystem::current_path(std::filesystem::path(argv[0]).parent_path());
+	std::filesystem::current_path(std::filesystem::path(__argv[0]).parent_path());
 	
 	OpenGLContext::Init();
 
