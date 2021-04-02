@@ -4,9 +4,13 @@
 #include "SuperPacker.h"
 
 #include <windows.h>
+
+#include "logger.h"
 //int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
 int main(int argc, char** argv)
 {
+	std::filesystem::current_path(std::filesystem::path(argv[0]).parent_path());
+	
 	OpenGLContext::Init();
 
 	std::vector<std::pair<std::string, std::string>> formats = {
@@ -41,17 +45,17 @@ int main(int argc, char** argv)
 		}
 	};
 	
-	std::vector<SuperPacker::ChannelConfiguration> configurations = {
-		SuperPacker::ChannelConfiguration {
-			.configuration_name = "Grayscale",
+	std::vector<SuperPacker::PaletteConfiguration> configurations = {
+		SuperPacker::PaletteConfiguration {
+			.palette_name = "Grayscale",
 			.channels = {
 				{
 					.channel_id = 0
 				}
 			},
 		},
-		SuperPacker::ChannelConfiguration {
-			.configuration_name = "RGB",
+		SuperPacker::PaletteConfiguration {
+			.palette_name = "RGB",
 			.channels = {
 				{
 					.channel_id = 0
@@ -64,8 +68,8 @@ int main(int argc, char** argv)
 				}
 			},
 		},
-		SuperPacker::ChannelConfiguration {
-			.configuration_name = "RGBA",
+		SuperPacker::PaletteConfiguration {
+			.palette_name = "RGBA",
 			.channels = {
 				{
 					.channel_id = 0
@@ -87,9 +91,13 @@ int main(int argc, char** argv)
 		"config/default.ini",
 		formats,
 		channel_infos,
-		configurations
+		configurations,
+		__argc == 2 ? __argv[1] : std::optional<std::filesystem::path>()
 	);
-	
+
+	WCHAR path[MAX_PATH];
+	GetModuleFileNameW(NULL, path, MAX_PATH);
+
 	
 	while (!OpenGLContext::ShouldClose()) {		
 		OpenGLContext::BeginFrame();

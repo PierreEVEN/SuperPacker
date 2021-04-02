@@ -5,11 +5,15 @@
 #include <iostream>
 #include <fstream>
 
-#include "logger.h"
-
 bool is_starting_with(const std::string& test, const std::string& start)
 {
 	for (int i = 0; i < start.size(); ++i) if (i >= test.size() || test[i] != start[i]) return false;
+	return true;
+}
+
+bool is_ending_with(const std::string& test, const std::string& end)
+{
+	for (int i = test.size() - 1; i > test.size() - end.size(); ++i) if (i < 0 || test[i] != end[i]) return false;
 	return true;
 }
 
@@ -43,8 +47,8 @@ bool split_string(const std::string& test, const std::vector<char>& separators, 
 					continue;
 				}
 			}
-			if (is_left) left = chr + left;
-			else right = chr + right;
+			if (is_left) left = left + chr;
+			else right = right + chr;
 		}
 	}
 	else
@@ -269,7 +273,7 @@ void IniLoader::LinkOrCreate()
 			}
 		}
 	}
-	delete line;
+	delete[] line;
 	fs.close();
 }
 
@@ -334,5 +338,5 @@ const std::string IniLoader::IniCategory::GetCategoryNameFromString(const std::s
 
 bool IniLoader::IniCategory::IsCategoryLine(const std::string& line)
 {
-	return is_starting_with(line, "[") && is_starting_with(line, "]");
+	return is_starting_with(line, "[") && is_ending_with(line, "]");
 }

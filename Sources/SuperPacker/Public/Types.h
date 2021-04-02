@@ -11,9 +11,9 @@ namespace SuperPacker
 {
 	struct ChannelData;
 
-	struct ChannelConfiguration
+	struct PaletteConfiguration
 	{
-		std::string configuration_name;
+		std::string palette_name;
 		std::vector<ChannelData> channels;
 	};
 
@@ -36,11 +36,12 @@ namespace SuperPacker
 
 	enum class Extension
 	{
-		EXT_PNG,
-		EXT_TGA,
-		EXT_JPG,
-		EXT_BMP,
-		EXT_HDR
+		EXT_PNG = 0,
+		EXT_TGA = 1,
+		EXT_JPG = 2,
+		EXT_BMP = 3,
+		EXT_HDR = 4,
+		EXT_MAX = 5
 	};
 
 

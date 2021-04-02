@@ -17,9 +17,10 @@
 namespace SuperPacker
 {
 	ImagePacker::ImagePacker(const std::string& config_path, const std::vector<std::pair<std::string, std::string>>& in_formats,
-		const std::vector<ChannelInfo>& in_channel_infos, const std::vector<ChannelConfiguration>& in_channels_config) :
-	channels_config(in_channels_config),
-	channel_infos(in_channel_infos)
+		const std::vector<ChannelInfo>& in_channel_infos, const std::vector<PaletteConfiguration>& in_channels_config, 
+		const std::optional<std::filesystem::path>& default_image) :
+	channel_infos(in_channel_infos),
+	palette_config(in_channels_config)
 	{
 		for (const auto& format : in_formats)
 		{
@@ -31,6 +32,22 @@ namespace SuperPacker
 		formats.push_back('\0');
 
 		config_ini = std::make_shared<IniLoader>(config_path);
+		
+		export_extension = static_cast<Extension>(config_ini->GetPropertyAsInt("defaults", "export_extension", 0));
+		export_palette = config_ini->GetPropertyAsInt("defaults", "export_palette", 2);
+
+		if (default_image) {
+			reset_from_source(default_image.value());
+		}
+
+		for (auto& palette : palette_config)
+		{
+			for (int i = 0; i < palette.channels.size(); ++i)
+			{
+				palette.channels[i].desired_channel = config_ini->GetPropertyAsInt(("palette_" + palette.palette_name).c_str(), ("palette_" + palette.palette_name + "_" + std::to_string(i)).c_str(), 0);
+				channel_infos[i].default_value = config_ini->GetPropertyAsInt(("palette_" + palette.palette_name).c_str(), ("default_" + palette.palette_name + "_" + std::to_string(i)).c_str(), channel_infos[i].default_value);
+			}
+		}
 	}
 
 	std::optional<std::filesystem::path> ImagePacker::pick_file(const std::string& destination)
@@ -128,7 +145,7 @@ namespace SuperPacker
 		uint32_t width = 0;
 		uint32_t height = 0;
 
-		for (const auto& channel : channels_config[current_chan_conf].channels)
+		for (const auto& channel : palette_config[export_palette].channels)
 		{
 			if (!channel.image) continue;
 			if (width && width != channel.image->get_width() || height && height != channel.image->get_height())
@@ -147,17 +164,17 @@ namespace SuperPacker
 		}
 		
 		std::vector<stbi_uc> combined_data;
-		combined_data.resize(channels_config[current_chan_conf].channels.size() * width * height);
+		combined_data.resize(palette_config[export_palette].channels.size() * width * height);
 				
 		for (size_t i = 0; i < width * height; ++i)
 		{
-			for (int chan_id = 0; chan_id < channels_config[current_chan_conf].channels.size(); ++chan_id)
+			for (int chan_id = 0; chan_id < palette_config[export_palette].channels.size(); ++chan_id)
 			{
 
 				uint8_t chan_color = channel_infos[chan_id].default_value;
-				if (channels_config[current_chan_conf].channels[chan_id].image)
+				if (palette_config[export_palette].channels[chan_id].image)
 				{
-					auto& chan_data = channels_config[current_chan_conf].channels[chan_id];
+					auto& chan_data = palette_config[export_palette].channels[chan_id];
 					
 					if (auto img = std::dynamic_pointer_cast<Image>(chan_data.image)) {
 
@@ -165,7 +182,7 @@ namespace SuperPacker
 					}
 				}
 				
-				combined_data[i * channels_config[current_chan_conf].channels.size() + chan_id] = chan_color;
+				combined_data[i * palette_config[export_palette].channels.size() + chan_id] = chan_color;
 			}
 		}
 
@@ -181,21 +198,21 @@ namespace SuperPacker
 		}
 		
 
-		std::cout << "write image : " << width << " x " << height << " with " << channels_config[current_chan_conf].channels.size() << " components" << std::endl;
+		std::cout << "write image : " << width << " x " << height << " with " << palette_config[export_palette].channels.size() << " components" << std::endl;
 
 		switch (export_extension)
 		{
 		case Extension::EXT_TGA:
-			stbi_write_tga(file_path.c_str(), width, height, static_cast<int>(channels_config[current_chan_conf].channels.size()), combined_data.data());
+			stbi_write_tga(file_path.c_str(), width, height, static_cast<int>(palette_config[export_palette].channels.size()), combined_data.data());
 			break;
 		case Extension::EXT_PNG:
-			stbi_write_png(file_path.c_str(), width, height, static_cast<int>(channels_config[current_chan_conf].channels.size()), combined_data.data(), 0);
+			stbi_write_png(file_path.c_str(), width, height, static_cast<int>(palette_config[export_palette].channels.size()), combined_data.data(), 0);
 			break;
 		case Extension::EXT_BMP:
-			stbi_write_bmp(file_path.c_str(), width, height, static_cast<int>(channels_config[current_chan_conf].channels.size()), combined_data.data());
+			stbi_write_bmp(file_path.c_str(), width, height, static_cast<int>(palette_config[export_palette].channels.size()), combined_data.data());
 			break;
 		case Extension::EXT_JPG:
-			stbi_write_jpg(file_path.c_str(), width, height, static_cast<int>(channels_config[current_chan_conf].channels.size()), combined_data.data(), 100);
+			stbi_write_jpg(file_path.c_str(), width, height, static_cast<int>(palette_config[export_palette].channels.size()), combined_data.data(), 100);
 			break;
 		case Extension::EXT_HDR:
 			std::cout << "not implemented yet";
@@ -204,28 +221,46 @@ namespace SuperPacker
 	}
 
 	void ImagePacker::draw_ui()
-	{		
-		ImGui::Columns(static_cast<int>(channels_config[current_chan_conf].channels.size()));
-		for (auto& channel : channels_config[current_chan_conf].channels)
+	{
+		if (ImGui::Button("Pick source"))
 		{
-			draw_channel(channel);
+			if (auto file = pick_file(""))
+			{
+				reset_from_source(file.value());
+			}
+		}
+		
+		ImGui::Columns(static_cast<int>(palette_config[export_palette].channels.size()));
+		for (size_t i = 0; i < palette_config[export_palette].channels.size(); ++i)
+		{
+			draw_channel(palette_config[export_palette].channels[i], static_cast<int>(i));
 			ImGui::NextColumn();
 		}
 		ImGui::Columns(1);
 		ImGui::Separator();
-		if (ImGui::BeginCombo("output palette", channels_config[current_chan_conf].configuration_name.c_str()))
+		if (ImGui::BeginCombo("output palette", palette_config[export_palette].palette_name.c_str()))
 		{
-			for (int i = 0; i < channels_config.size(); ++i) {
-				if (ImGui::MenuItem(channels_config[i].configuration_name.c_str())) current_chan_conf = i;
+			for (int i = 0; i < palette_config.size(); ++i) {
+				if (ImGui::MenuItem(palette_config[i].palette_name.c_str())) {
+					export_palette = i;
+					config_ini->SetPropertyAsInt("defaults", "export_palette", i);
+				}
 			}
 			ImGui::EndCombo();
 		}
 		if (ImGui::BeginCombo("format", extension_to_string(export_extension).c_str()))
 		{
-			if (ImGui::MenuItem(extension_to_string(Extension::EXT_BMP).c_str())) export_extension = Extension::EXT_BMP;
-			if (ImGui::MenuItem(extension_to_string(Extension::EXT_JPG).c_str())) export_extension = Extension::EXT_JPG;
-			if (ImGui::MenuItem(extension_to_string(Extension::EXT_PNG).c_str())) export_extension = Extension::EXT_PNG;
-			if (ImGui::MenuItem(extension_to_string(Extension::EXT_TGA).c_str())) export_extension = Extension::EXT_TGA;
+			for (int i = 0; i < static_cast<int>(Extension::EXT_MAX); ++i)
+			{
+
+				if (ImGui::MenuItem(extension_to_string(static_cast<Extension>(i)).c_str())) {
+					export_extension = static_cast<Extension>(i);
+					config_ini->SetPropertyAsInt("defaults", "export_extension", static_cast<int>(export_extension));
+					config_ini->SetPropertyAsInt(
+						("palette_" + palette_config[export_palette].palette_name).c_str(),
+						("default_" + palette_config[export_palette].palette_name + "_" + std::to_string(i)).c_str(), i);
+				}
+			}
 			ImGui::EndCombo();
 		}
 		if (ImGui::Button("Export"))
@@ -237,7 +272,7 @@ namespace SuperPacker
 		}
 	}
 	
-	void ImagePacker::draw_channel(ChannelData& channel)
+	void ImagePacker::draw_channel(ChannelData& channel, int channel_id)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Button, channel_infos[channel.channel_id].channel_color);
 		if (ImGui::Button((channel_infos[channel.channel_id].channel_name).c_str()))
@@ -248,11 +283,20 @@ namespace SuperPacker
 			}
 		}
 		ImGui::PopStyleColor();
+		ImGui::SameLine();
 		if (channel.image) {
-			ImGui::SameLine();
 			if (ImGui::Button(("remove##" + channel_infos[channel.channel_id].channel_name).c_str()))
 			{
 				channel.image = nullptr;
+			}
+		}
+		else
+		{
+			int last_value = channel_infos[channel_id].default_value;
+			ImGui::DragInt(("##default" + channel_infos[channel.channel_id].channel_name).c_str(), &last_value, 1, 0, 255);
+			if (last_value != channel_infos[channel_id].default_value)
+			{
+				channel_infos[channel_id].default_value = static_cast<uint8_t>(last_value);
 			}
 		}
 		if (ImGui::IsItemHovered())
@@ -276,6 +320,9 @@ namespace SuperPacker
 					if (ImGui::MenuItem(channel_infos[i].channel_name.c_str()))
 					{
 						channel.desired_channel = static_cast<uint8_t>(i);
+						config_ini->SetPropertyAsInt(
+							("palette_" + palette_config[export_palette].palette_name).c_str(),
+							("palette_" + palette_config[export_palette].palette_name + "_" + std::to_string(channel_id)).c_str(), i);
 					}
 					ImGui::PopStyleColor();
 				}
@@ -284,6 +331,15 @@ namespace SuperPacker
 			}
 			ImGui::PopStyleColor();
 			
+		}
+	}
+
+	void ImagePacker::reset_from_source(const std::filesystem::path& source)
+	{
+		for (auto& channel : palette_config[export_palette].channels)
+		{
+			channel.image = std::make_shared<Image>(source);
+			channel.source_path = source;
 		}
 	}
 }
