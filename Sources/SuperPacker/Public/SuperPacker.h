@@ -3,82 +3,39 @@
 #include <optional>
 #include <filesystem>
 
-#include "GL/gl3w.h"
-#include "imgui.h"
+#include "Types.h"
+
+class IniLoader;
 
 namespace SuperPacker
 {
-	struct ChannelInfo
+
+	class ImagePacker final
 	{
-		std::string channel_name;
-		ImVec4 channel_color;
-		uint8_t default_value;
-	};
+	public:
 
-	enum class Extension
-	{
-		EXT_PNG,
-		EXT_TGA,
-		EXT_JPG,
-		EXT_BMP,
-		EXT_HDR
-	};
-
-
-	inline std::string extension_to_string(Extension ext)
-	{
-		switch (ext)
-		{
-		case Extension::EXT_PNG:
-			return ".png";
-		case Extension::EXT_TGA:
-			return ".tga";
-		case Extension::EXT_JPG:
-			return ".jpg";
-		case Extension::EXT_BMP:
-			return ".bmp";
-		case Extension::EXT_HDR:
-			return ".hdr";
-		}
-		return ".none";
-	}
-
-	struct Image
-	{
-		explicit Image(const std::filesystem::path& source_path);
-		~Image();
-
+		ImagePacker(const std::string& config_path, const std::vector<std::pair<std::string, std::string>>& in_formats, const std::vector<ChannelInfo>& in_channel_infos, const std::vector<ChannelConfiguration>& in_channels_config);
 		
-		std::vector<std::vector<uint8_t>> data;
+		std::optional<std::filesystem::path> pick_file(const std::string& destination);
+		std::optional<std::filesystem::path> save_file();
 
-		int width = 0;
-		int height = 0;
-		int channels = 0;
+		void draw_ui();
 
-		GLuint texture_id = 0;
+		void save(std::string file_path);
+
+		void draw_channel(ChannelData& channel);
+
+	private:
+
+		std::vector<char> formats;
+		std::vector<ChannelInfo> channel_infos;
+		std::vector<ChannelConfiguration> channels_config;
+		
+		Extension export_extension = Extension::EXT_PNG;
+		int current_chan_conf = 2;
+
+		std::shared_ptr<IniLoader> config_ini;
 	};
 
 	
-	struct ChannelData
-	{		
-		std::filesystem::path source_path;
-		std::shared_ptr<Image> image;
-		uint8_t channel_id = 0;
-		uint8_t desired_channel = 0;
-	};
-
-	struct ChannelConfiguration
-	{
-		std::string configuration_name;
-		std::vector<ChannelData> channels;
-	};
-	
-	std::optional<std::filesystem::path> pick_file(const std::string& destination);
-	std::optional<std::filesystem::path> save_file();
-
-	void draw_ui();
-
-	void save(std::string file_path);
-
-	void draw_channel(ChannelData& channel);
 }

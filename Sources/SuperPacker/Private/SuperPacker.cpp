@@ -1,127 +1,39 @@
 
 #include <windows.h>
-
+#include <iostream>
+#include <vector>
 
 #include "SuperPacker.h"
 
-#include <iostream>
-#include <vector>
 
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "IniLoader.h"
+#include "Logger.h"
 
 
 namespace SuperPacker
 {
-	ChannelInfo channel_info[] = {
-		{
-			.channel_name = "R",
-			.channel_color = ImVec4(1, 0.3f, 0.3f, 1),
-			.default_value = 0
-		},
-		{
-			.channel_name = "G",
-			.channel_color = ImVec4(0.1f, 0.6f, 0.1f, 1),
-			.default_value = 0
-		},
-		{
-			.channel_name = "B",
-			.channel_color = ImVec4(0.5f, 0.5f, 1, 1),
-			.default_value = 0
-		},
-		{
-			.channel_name = "A",
-			.channel_color = ImVec4(0.5f, 0.5f, 0.5f, 1),
-			.default_value = 255
-		}
-	};
-
-	
-	std::vector<ChannelConfiguration> channels_config = 
+	ImagePacker::ImagePacker(const std::string& config_path, const std::vector<std::pair<std::string, std::string>>& in_formats,
+		const std::vector<ChannelInfo>& in_channel_infos, const std::vector<ChannelConfiguration>& in_channels_config) :
+	channels_config(in_channels_config),
+	channel_infos(in_channel_infos)
 	{
-		ChannelConfiguration {
-			.configuration_name = "Grayscale",
-			.channels = {
-				{
-					.channel_id = 0
-				}
-			},
-		},
-		ChannelConfiguration {
-			.configuration_name = "RGB",
-			.channels = {
-				{
-					.channel_id = 0
-				},
-				{
-					.channel_id = 1
-				},
-				{
-					.channel_id = 2
-				}
-			},
-		},
-		ChannelConfiguration {
-			.configuration_name = "RGBA",
-			.channels = {
-				{
-					.channel_id = 0
-				},
-				{
-					.channel_id = 1
-				},
-				{
-					.channel_id = 2
-				},
-				{
-					.channel_id = 3
-				}
-			},
-		},
-		
-	};
-
-	const char* formats = "PNG file\0*.png\0TGA file\0*.tga\0Jpeg file\0*.jpg\0Bitmap file\0*.bmp\0HDR file\0*.hdr\0Any File\0*.*\0";
-	Extension export_extension = Extension::EXT_PNG;
-	int current_chan_conf = 2;
-	
-
-	Image::Image(const std::filesystem::path& source_path)
-	{
-		stbi_uc* raw_data = stbi_load(source_path.string().c_str(), &width, &height, &channels, 4);
-		
-		glGenTextures(1, &texture_id);
-		glBindTexture(GL_TEXTURE_2D, texture_id);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, raw_data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		
-		data.resize(4);
-
-		for (int c = 0; c < 4; ++c)
+		for (const auto& format : in_formats)
 		{
-			auto& channel = data[c];
-			channel.resize(width * height);
-
-			for (int i = 0; i < width * height; ++i)
-			{
-				channel[i] = raw_data[i * 4 + c];
-			}
+			for (const auto& chr : format.first) formats.push_back(chr);
+			formats.push_back('\0');
+			for (const auto& chr : format.second) formats.push_back(chr);
+			formats.push_back('\0');
 		}
-		
+		formats.push_back('\0');
+
+		config_ini = std::make_shared<IniLoader>(config_path);
 	}
 
-	Image::~Image()
-	{
-		glDeleteTextures(1, &texture_id);
-	}
-
-	std::optional<std::filesystem::path> pick_file(const std::string& destination)
+	std::optional<std::filesystem::path> ImagePacker::pick_file(const std::string& destination)
 	{
 		char filename[MAX_PATH];
 		std::string title = ("Select file for channel " + destination).c_str();
@@ -131,7 +43,7 @@ namespace SuperPacker
 		ZeroMemory(&ofn, sizeof(ofn));
 		ofn.lStructSize = sizeof(ofn);
 		ofn.hwndOwner = NULL;
-		ofn.lpstrFilter = formats;
+		ofn.lpstrFilter = formats.data();
 		ofn.lpstrFile = filename;
 		ofn.nMaxFile = MAX_PATH;
 		ofn.lpstrTitle = title.c_str();
@@ -160,12 +72,13 @@ namespace SuperPacker
 			case FNERR_BUFFERTOOSMALL: std::cout << "FNERR_BUFFERTOOSMALL\n";  break;
 			case FNERR_INVALIDFILENAME: std::cout << "FNERR_INVALIDFILENAME\n"; break;
 			case FNERR_SUBCLASSFAILURE: std::cout << "FNERR_SUBCLASSFAILURE\n"; break;
+			default: break;
 			}
 		}
 		return std::optional<std::filesystem::path>();
 	}
 
-	std::optional<std::filesystem::path> save_file()
+	std::optional<std::filesystem::path> ImagePacker::save_file()
 	{
 		char filename[MAX_PATH];
 		
@@ -175,7 +88,7 @@ namespace SuperPacker
 		ZeroMemory(&filename, sizeof(filename));
 		ofn.lStructSize = sizeof(ofn);
 		ofn.hwndOwner = NULL;
-		ofn.lpstrFilter = formats;
+		ofn.lpstrFilter = formats.data();
 		ofn.lpstrFile = filename;
 		ofn.lpstrTitle = "Save as...";
 		ofn.nMaxFile = MAX_PATH;
@@ -210,7 +123,7 @@ namespace SuperPacker
 		return std::optional<std::filesystem::path>();
 	}
 	
-	void save(std::string file_path)
+	void ImagePacker::save(std::string file_path)
 	{
 		uint32_t width = 0;
 		uint32_t height = 0;
@@ -218,13 +131,13 @@ namespace SuperPacker
 		for (const auto& channel : channels_config[current_chan_conf].channels)
 		{
 			if (!channel.image) continue;
-			if (width && width != channel.image->width || height && height != channel.image->height)
+			if (width && width != channel.image->get_width() || height && height != channel.image->get_height())
 			{
 				std::cout << "wrong dimension in channel " << channel.channel_id << std::endl;
 				return;
 			}
-			width = channel.image->width;
-			height = channel.image->height;
+			width = channel.image->get_width();
+			height = channel.image->get_height();
 		}
 		
 		if (!width || !height)
@@ -241,11 +154,15 @@ namespace SuperPacker
 			for (int chan_id = 0; chan_id < channels_config[current_chan_conf].channels.size(); ++chan_id)
 			{
 
-				uint8_t chan_color = channel_info[chan_id].default_value;
+				uint8_t chan_color = channel_infos[chan_id].default_value;
 				if (channels_config[current_chan_conf].channels[chan_id].image)
 				{
 					auto& chan_data = channels_config[current_chan_conf].channels[chan_id];
-					chan_color = chan_data.image->data[chan_data.desired_channel][i];
+					
+					if (auto img = std::dynamic_pointer_cast<Image>(chan_data.image)) {
+
+						chan_color = img->get_pixel(chan_data.desired_channel, i);
+					}
 				}
 				
 				combined_data[i * channels_config[current_chan_conf].channels.size() + chan_id] = chan_color;
@@ -254,7 +171,7 @@ namespace SuperPacker
 
 		std::string extension = extension_to_string(export_extension);
 
-		for (int i = extension.size() - 1; i >= 0; --i)
+		for (int64_t i = extension.size() - 1; i >= 0; --i)
 		{
 			if (extension[i] != file_path[file_path.size() - 1 - i])
 			{
@@ -286,8 +203,8 @@ namespace SuperPacker
 		}
 	}
 
-	void draw_ui()
-	{
+	void ImagePacker::draw_ui()
+	{		
 		ImGui::Columns(static_cast<int>(channels_config[current_chan_conf].channels.size()));
 		for (auto& channel : channels_config[current_chan_conf].channels)
 		{
@@ -320,12 +237,12 @@ namespace SuperPacker
 		}
 	}
 	
-	void draw_channel(ChannelData& channel)
+	void ImagePacker::draw_channel(ChannelData& channel)
 	{
-		ImGui::PushStyleColor(ImGuiCol_Button, channel_info[channel.channel_id].channel_color);
-		if (ImGui::Button((channel_info[channel.channel_id].channel_name).c_str()))
+		ImGui::PushStyleColor(ImGuiCol_Button, channel_infos[channel.channel_id].channel_color);
+		if (ImGui::Button((channel_infos[channel.channel_id].channel_name).c_str()))
 		{
-			if (auto path = pick_file(channel_info[channel.channel_id].channel_name)) {
+			if (auto path = pick_file(channel_infos[channel.channel_id].channel_name)) {
 				channel.source_path = path.value();
 				channel.image = std::make_shared<Image>(channel.source_path);
 			}
@@ -333,7 +250,7 @@ namespace SuperPacker
 		ImGui::PopStyleColor();
 		if (channel.image) {
 			ImGui::SameLine();
-			if (ImGui::Button(("remove##" + channel_info[channel.channel_id].channel_name).c_str()))
+			if (ImGui::Button(("remove##" + channel_infos[channel.channel_id].channel_name).c_str()))
 			{
 				channel.image = nullptr;
 			}
@@ -347,16 +264,16 @@ namespace SuperPacker
 			ImGui::EndTooltip();
 		}
 		if (channel.image) {
-			ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<size_t>(channel.image->texture_id)), ImVec2(100, 100), ImVec2(0, 0), ImVec2(1, 1));
+			ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<size_t>(channel.image->get_texture())), ImVec2(100, 100), ImVec2(0, 0), ImVec2(1, 1));
 
-			if (channel.desired_channel > channel.image->channels) channel.desired_channel = 0;
-			ImGui::PushStyleColor(ImGuiCol_Text, channel_info[channel.desired_channel].channel_color);
-			if (ImGui::BeginCombo(("##" + channel_info[channel.channel_id].channel_name).c_str(), channel_info[channel.desired_channel].channel_name.c_str()))
+			if (channel.desired_channel > channel.image->get_channels()) channel.desired_channel = 0;
+			ImGui::PushStyleColor(ImGuiCol_Text, channel_infos[channel.desired_channel].channel_color);
+			if (ImGui::BeginCombo(("##" + channel_infos[channel.channel_id].channel_name).c_str(), channel_infos[channel.desired_channel].channel_name.c_str()))
 			{
-				for (int i = 0; i < channel.image->channels; ++i)
+				for (int i = 0; i < channel.image->get_channels(); ++i)
 				{
-					ImGui::PushStyleColor(ImGuiCol_Text, channel_info[i].channel_color);
-					if (ImGui::MenuItem(channel_info[i].channel_name.c_str()))
+					ImGui::PushStyleColor(ImGuiCol_Text, channel_infos[i].channel_color);
+					if (ImGui::MenuItem(channel_infos[i].channel_name.c_str()))
 					{
 						channel.desired_channel = static_cast<uint8_t>(i);
 					}
