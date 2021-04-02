@@ -3,6 +3,7 @@
 - Recombine image channels from multiple sources
 - Extract image channels
 - Support png-jpg-tga-bmp
+- Drag&drop image on executable to load it for every channels
 
 > Note : This is a basic tool i made in a few hours. I'll improve it maybe later if i have time.
 
