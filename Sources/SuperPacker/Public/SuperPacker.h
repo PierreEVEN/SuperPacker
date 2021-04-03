@@ -23,8 +23,6 @@ namespace SuperPacker
 		void add_format(const FileFormat& format);
 		void add_channel(const ImageChannel& channel);
 		void add_channel_combination(const ChannelCombination& combination);
-		void set_current_channel_combination(const std::string& combination);
-		void set_current_export_format(const std::string& format);
 		[[nodiscard]] ChannelCombination& get_combination() { return channel_combinations[current_channel_combination]; }
 	
 	private:
@@ -38,7 +36,9 @@ namespace SuperPacker
 		
 		void draw_channel(ImageChannel& channel);
 
-
+		void update_preview();
+		
+		std::shared_ptr<IImage> preview_image;
 
 		void save(std::string file_path);
 		void reset_from_source(const std::filesystem::path& source);

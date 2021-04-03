@@ -13,6 +13,7 @@
 #include "GL/gl3w.h"
 #include "GLFW/glfw3.h"
 #include "imgui.h"
+#include "Logger.h"
 #include "backends/imgui_impl_opengl3.h"
 #include "backends/imgui_impl_glfw.h"
 
@@ -24,7 +25,7 @@ void ResizeCallback(GLFWwindow* windows, int x, int y) {
 }
 
 void ErrorCallback(int Code, const char* Message) {
-	std::cerr << "GLFW error " << Code << " : " << Message << std::endl;
+	logger_warning("GLFW error %d : %s", Code, Message);
 }
 
 void CheckGLErrors()
@@ -32,7 +33,7 @@ void CheckGLErrors()
 	GLenum err;
 	while ((err = glGetError()) != GL_NO_ERROR)
 	{
-		std::cout << "GL error : " << err << std::endl;
+		logger_error("GL error : %s", err);
 	}
 }
 
@@ -41,7 +42,7 @@ void OpenGLContext::Init() {
 	/***
 	 * Init openGL
 	 */
-	std::cout << "Create Glfw context" << std::endl;
+	logger_log("Create Glfw context");
 	if (!glfwInit()) std::cerr << "Failed to create glfw window" << std::endl;
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
@@ -63,21 +64,20 @@ void OpenGLContext::Init() {
 	stbi_image_free(icons[0].pixels);
 	
 
-	std::cout << "Initialize OpenGL context" << std::endl;
+	logger_log("Initialize OpenGL context");
 	if (gl3wInit()) {
-		std::cerr << "failed to initialize OpenGL" << std::endl;
+		logger_error("failed to initialize OpenGL");
 	}
 	if (!gl3wIsSupported(3, 2)) {
-		std::cerr << "OpenGL 3.2 not supported" << std::endl;
+		logger_error("OpenGL 3.2 not supported");
 	}
-	std::cout << "OpenGL " << glGetString(GL_VERSION) << ", GLSL : " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-
-
+	logger_validate("OpenGL %s, GLSL : %s", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+	
 
 	/***
 	 * Init Imgui
 	 */
-	std::cout << "Initialize ImGui " << std::endl;
+	logger_log("Initialize ImGui ");
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
@@ -107,14 +107,12 @@ bool OpenGLContext::ShouldClose() {
 
 void OpenGLContext::BeginFrame() {
 
-	if (!WindowHandle) std::cerr << "null window" << std::endl;
+	if (!WindowHandle) logger_error("null window");
 	
-	glfwPollEvents();
-	
+	glfwPollEvents();	
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-
 }
 
 void OpenGLContext::EndFrame()

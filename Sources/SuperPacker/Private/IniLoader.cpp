@@ -73,22 +73,22 @@ bool split_string(const std::string& test, const std::vector<char>& separators, 
 	return from_start ? (!is_left && is_right) : (!is_right && is_left);
 }
 
-IniLoader::IniLoader(const std::string filePath)
-	: sourceFile(filePath) {
-	LinkOrCreate();
+IniLoader::IniLoader(const std::string file_path)
+	: source_file(file_path) {
+	link_or_create();
 }
 
 IniLoader::~IniLoader() {
-	Save();
-	for (const auto& cat : iniCategories)
+	save();
+	for (const auto& cat : ini_categories)
 	{
 		delete cat;
 	}
-	iniCategories.clear();
+	ini_categories.clear();
 }
 
-const std::string IniLoader::GetPropertyAsString(const char* categoryName, const char* propertyName, const char* defaultValue) {
-	std::string props = GetProperty(categoryName, propertyName);
+const std::string IniLoader::get_property_as_string(const std::string& categoryName, const std::string& propertyName, const std::string& defaultValue) {
+	std::string props = get_property(categoryName, propertyName);
 	if (props != "")
 	{
 		std::string left, center, right, finalS;
@@ -103,9 +103,9 @@ const std::string IniLoader::GetPropertyAsString(const char* categoryName, const
 	return defaultValue;
 }
 
-const int IniLoader::GetPropertyAsInt(const char* categoryName, const char* propertyName, const int& defaultValue)
+const int IniLoader::get_property_as_int(const std::string& categoryName, const std::string& propertyName, const int& defaultValue)
 {
-	std::string props = GetProperty(categoryName, propertyName);
+	std::string props = get_property(categoryName, propertyName);
 	if (props != "")
 	{
 		return std::atoi(props.data());
@@ -113,9 +113,9 @@ const int IniLoader::GetPropertyAsInt(const char* categoryName, const char* prop
 	return defaultValue;
 }
 
-const double IniLoader::GetPropertyAsDouble(const char* categoryName, const char* propertyName, const double& defaultValue)
+const double IniLoader::get_property_as_double(const std::string& categoryName, const std::string& propertyName, const double& defaultValue)
 {
-	std::string props = GetProperty(categoryName, propertyName);
+	std::string props = get_property(categoryName, propertyName);
 	if (props != "")
 	{
 		return std::atof(props.data());
@@ -123,35 +123,35 @@ const double IniLoader::GetPropertyAsDouble(const char* categoryName, const char
 	return defaultValue;
 }
 
-const bool IniLoader::GetPropertyAsBool(const char* categoryName, const char* propertyName, const bool& defaultValue)
+const bool IniLoader::get_property_as_double(const std::string& categoryName, const std::string& propertyName, const bool& defaultValue)
 {
-	std::string props = GetProperty(categoryName, propertyName);
+	std::string props = get_property(categoryName, propertyName);
 	if (props == "true") return true;
 	else if (props == "false") return false;
 	return defaultValue;
 }
 
-void IniLoader::Save()
+void IniLoader::save()
 {
-	std::ofstream of(sourceFile.data());
+	std::ofstream of(source_file.data());
 
-	for (const auto& cat : iniCategories)
+	for (const auto& cat : ini_categories)
 	{
-		std::string catString = cat->WriteCategories();
+		std::string catString = cat->write_categories();
 		of.write(catString.data(), catString.size());
 	}
 	of.close();
 }
 
-const std::string IniLoader::GetProperty(const std::string& categoryName, const std::string& propertyName) const
+const std::string IniLoader::get_property(const std::string& categoryName, const std::string& propertyName) const
 {
-	for (const auto& cat : iniCategories)
+	for (const auto& cat : ini_categories)
 	{
-		if (cat->categoryName == categoryName)
+		if (cat->category_name == categoryName)
 		{
 			for (const auto& prop : cat->properties)
 			{
-				if (prop.propertyName == propertyName)
+				if (prop.property_name == propertyName)
 				{
 					return prop.value;
 				}
@@ -161,21 +161,21 @@ const std::string IniLoader::GetProperty(const std::string& categoryName, const 
 	return "";
 }
 
-void IniLoader::SetProperty(const std::string& categoryName, const std::string& propertyName, const std::string& propertyValue)
+void IniLoader::set_property(const std::string& categoryName, const std::string& propertyName, const std::string& propertyValue)
 {
 	if (propertyValue == "")
 	{
-		ClearProperty(categoryName, propertyName);
+		clear_property(categoryName, propertyName);
 	}
 	else
 	{
-		for (auto& category : iniCategories)
+		for (auto& category : ini_categories)
 		{
-			if (category->categoryName == categoryName)
+			if (category->category_name == categoryName)
 			{
 				for (auto& prop : category->properties)
 				{
-					if (prop.propertyName == propertyName)
+					if (prop.property_name == propertyName)
 					{
 						prop.value = propertyValue;
 						return;
@@ -187,53 +187,53 @@ void IniLoader::SetProperty(const std::string& categoryName, const std::string& 
 		}
 		IniCategory* newCat = new IniCategory(categoryName);
 		newCat->properties.push_back(IniProperty(propertyName, propertyValue));
-		iniCategories.push_back(newCat);
+		ini_categories.push_back(newCat);
 		return;
 	}
 }
 
-void IniLoader::ClearProperty(const std::string& categoryName, const std::string& propertyName)
+void IniLoader::clear_property(const std::string& categoryName, const std::string& propertyName)
 {
-	for (int i = (int)iniCategories.size() - 1; i >= 0; --i)
+	for (int i = (int)ini_categories.size() - 1; i >= 0; --i)
 	{
-		if (iniCategories[i]->categoryName == categoryName)
+		if (ini_categories[i]->category_name == categoryName)
 		{
-			for (int j = (int)iniCategories[i]->properties.size() - 1; j >= 0; --j)
+			for (int j = (int)ini_categories[i]->properties.size() - 1; j >= 0; --j)
 			{
-				if (iniCategories[i]->properties[j].propertyName == propertyName)
+				if (ini_categories[i]->properties[j].property_name == propertyName)
 				{
-					iniCategories[i]->properties.erase(iniCategories[i]->properties.begin() + j);
+					ini_categories[i]->properties.erase(ini_categories[i]->properties.begin() + j);
 				}
 			}
-			if (iniCategories[i]->properties.size() == 0)
+			if (ini_categories[i]->properties.size() == 0)
 			{
-				delete iniCategories[i];
-				iniCategories.erase(iniCategories.begin() + i);
+				delete ini_categories[i];
+				ini_categories.erase(ini_categories.begin() + i);
 			}
 			return;
 		}
 	}
 }
 
-bool IniLoader::DoesCategoryExist(const std::string& propertyName) const
+bool IniLoader::does_category_exists(const std::string& propertyName) const
 {
-	for (const auto& cat : iniCategories)
+	for (const auto& cat : ini_categories)
 	{
-		if (cat->categoryName == propertyName) return true;
+		if (cat->category_name == propertyName) return true;
 	}
 	return false;
 }
 
-void IniLoader::LinkOrCreate()
+void IniLoader::link_or_create()
 {
-	if (!std::filesystem::exists(sourceFile.data()))
+	if (!std::filesystem::exists(source_file.data()))
 	{
 		std::string left, right;
-		split_string(sourceFile, { '/', '\'' }, left, right, false);
+		split_string(source_file, { '/', '\'' }, left, right, false);
 		std::filesystem::create_directories(left.data());
 	}
 
-	std::ifstream fs(sourceFile.data());
+	std::ifstream fs(source_file.data());
 	char* line = new char[1000];
 	IniCategory* currentCategory = nullptr;
 
@@ -245,32 +245,32 @@ void IniLoader::LinkOrCreate()
 			resultLine = line;
 		}
 
-		if (IniCategory::IsCategoryLine(resultLine))
+		if (IniCategory::is_a_category_line(resultLine))
 		{
-			std::string catName = IniCategory::GetCategoryNameFromString(resultLine);
+			std::string catName = IniCategory::get_category_name_from_string(resultLine);
 
-			if (!DoesCategoryExist(catName))
+			if (!does_category_exists(catName))
 			{
 				currentCategory = new IniCategory(catName);
-				iniCategories.push_back(currentCategory);
+				ini_categories.push_back(currentCategory);
 			}
 			else
 			{
-				for (const auto& cat : iniCategories)
+				for (const auto& cat : ini_categories)
 				{
-					if (cat->categoryName == catName) currentCategory = cat;
+					if (cat->category_name == catName) currentCategory = cat;
 				}
 			}
 		}
 		else
 		{
-			if (currentCategory && IniProperty::IsPropertyLine(resultLine))
+			if (currentCategory && IniProperty::is_a_property_line(resultLine))
 			{
 				std::string name, value;
-				IniProperty::GetPropertyNameAndValueFromString(line, name, value);
-				if (!currentCategory->DoesPropertyExist(name))
+				IniProperty::get_property_name_and_value_from_string(line, name, value);
+				if (!currentCategory->does_property_exists(name))
 				{
-					currentCategory->AddProperty(name, value);
+					currentCategory->add_property(name, value);
 				}
 			}
 		}
@@ -280,57 +280,57 @@ void IniLoader::LinkOrCreate()
 }
 
 IniLoader::IniProperty::IniProperty(const std::string& inPropertyName, const std::string& inPropertyValue) {
-	propertyName = inPropertyName;
+	property_name = inPropertyName;
 	value = inPropertyValue;
 }
 
-std::string IniLoader::IniProperty::WriteLine() const {
-	return propertyName+ '=' + value + '\n';
+std::string IniLoader::IniProperty::write_line() const {
+	return property_name+ '=' + value + '\n';
 }
 
-void IniLoader::IniProperty::GetPropertyNameAndValueFromString(const std::string& line, std::string& name, std::string& value)
+void IniLoader::IniProperty::get_property_name_and_value_from_string(const std::string& line, std::string& name, std::string& value)
 {
 	split_string(line, { '=' }, name, value);
 	name = trim(name);
 	value = trim(value);
 }
 
-bool IniLoader::IniProperty::IsPropertyLine(const std::string& line)
+bool IniLoader::IniProperty::is_a_property_line(const std::string& line)
 {
 	std::string left, right;
 	return (split_string(line, { '=' }, left, right, true) && right != "");
 }
 
-IniLoader::IniCategory::IniCategory(const std::string& inCategoryName)
+IniLoader::IniCategory::IniCategory(const std::string& in_category_name)
 {
-	categoryName = inCategoryName;
+	category_name = in_category_name;
 }
 
-void IniLoader::IniCategory::AddProperty(const std::string& propertyName, const std::string& propertyValue)
+void IniLoader::IniCategory::add_property(const std::string& propertyName, const std::string& propertyValue)
 {
 	properties.push_back(IniProperty(propertyName, propertyValue));
 }
 
-std::string IniLoader::IniCategory::WriteCategories() const
+std::string IniLoader::IniCategory::write_categories() const
 {
-	std::string outString = '[' + categoryName + "]\n";
+	std::string outString = '[' + category_name + "]\n";
 	for (const auto& prop : properties)
 	{
-		outString += prop.WriteLine();
+		outString += prop.write_line();
 	}
 	return outString + "\n";
 }
 
-bool IniLoader::IniCategory::DoesPropertyExist(const std::string& propertyName) const
+bool IniLoader::IniCategory::does_property_exists(const std::string& propertyName) const
 {
 	for (const auto& prop : properties)
 	{
-		if (prop.propertyName == propertyName) return true;
+		if (prop.property_name == propertyName) return true;
 	}
 	return false;
 }
 
-const std::string IniLoader::IniCategory::GetCategoryNameFromString(const std::string& line)
+const std::string IniLoader::IniCategory::get_category_name_from_string(const std::string& line)
 {
 	std::string left, center, right, categoryName;
 	split_string(line, { '[' }, left, center);
@@ -339,7 +339,7 @@ const std::string IniLoader::IniCategory::GetCategoryNameFromString(const std::s
 	return categoryName;
 }
 
-bool IniLoader::IniCategory::IsCategoryLine(const std::string& line)
+bool IniLoader::IniCategory::is_a_category_line(const std::string& line)
 {
 	return is_starting_with(line, "[") && is_ending_with(line, "]");
 }

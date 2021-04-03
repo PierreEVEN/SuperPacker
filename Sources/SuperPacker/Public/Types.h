@@ -24,7 +24,8 @@ namespace SuperPacker
 		std::string short_name;
 		ImVec4 channel_color;
 		uint8_t default_value;
-		std::shared_ptr<IImage> assigned_image;		
+		std::shared_ptr<IImage> assigned_image;
+		std::string desired_channel = "";
 	};
 
 	struct ChannelCombination

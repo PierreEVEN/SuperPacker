@@ -7,45 +7,45 @@
  * @IniLoader - Read and write ini files
  *
  * 1) Create a new IniLoader with desired file path
- *			IniLoader myLoader("path/config.ini");
+ *			IniLoader my_loader("path/config.ini");
  *
  * 2) Read and write property from your loader
- *			String value = myLoader.GetPropertyAsString("categoryName", "propertyName", "defaultValue");
- *			myLoader.SetPropertyAsString("categoryName", "propertyName", "value");
+ *			std::string value = myLoader.get_property_as_string("category_name", "property_name", "defaultValue");
+ *			myLoader.set_property_as_string("category_name", "property_name", "value");
  *
  * 3) Clear a property value by writing an empty string
- *			myLoader.SetPropertyAsString("categoryName", "propertyName", "");
+ *			myLoader.set_property_as_string("category_name", "property_name", "");
  *
  * 3) Don't forget to save modifications
- *			myLoader.Save();
+ *			myLoader.save();
  *
  */
 
 
-class IniLoader
+class IniLoader final
 {
 public:
 
 	/** Create a new ini loader - automatically load file at designed path or create path if file doesn't exist. Ini file must have '.ini extension' */
-	IniLoader(const std::string filePath);
+	IniLoader(const std::string file_path);
 
 	/** save ini modifications, then delete resources */
 	~IniLoader();
 
 	/** Get ini property from category and property name. Default value is returned if we can't find any occurrence */
-	const std::string GetPropertyAsString(const char* categoryName, const char* propertyName, const char* defaultValue = "");
-	const double GetPropertyAsDouble(const char* categoryName, const char* propertyName, const double& defaultValue = 0.f);
-	const int GetPropertyAsInt(const char* categoryName, const char* propertyName, const int& defaultValue = 0);
-	const bool GetPropertyAsBool(const char* categoryName, const char* propertyName, const bool& defaultValue = false);
+	[[nodiscard]] const std::string get_property_as_string(const std::string& categoryName, const std::string& propertyName, const std::string& defaultValue = "");
+	[[nodiscard]] const double get_property_as_double(const std::string& categoryName, const std::string& propertyName, const double& defaultValue = 0.f);
+	[[nodiscard]] const int get_property_as_int(const std::string& categoryName, const std::string& propertyName, const int& defaultValue = 0);
+	[[nodiscard]] const bool get_property_as_double(const std::string& categoryName, const std::string& propertyName, const bool& defaultValue = false);
 
 	/** Set ini property (Save() must be called to save modifications on disk) */
-	void SetPropertyAsString(const char* categoryName, const char* propertyName, const char* propertyValue) { SetProperty(categoryName, propertyName, std::string('"' + std::string(propertyValue) + '"'))	; }
-	void SetPropertyAsDouble(const char* categoryName, const char* propertyName, const double& propertyValue) { SetProperty(categoryName, propertyName, std::to_string(propertyValue)); }
-	void SetPropertyAsInt(const char* categoryName, const char* propertyName, const int& propertyValue) { SetProperty(categoryName, propertyName, std::to_string(propertyValue)); }
-	void SetPropertyAsBool(const char* categoryName, const char* propertyName, const bool& propertyValue) { SetProperty(categoryName, propertyName, propertyValue ? "true" : "false"); }
+	void set_property_as_string(const std::string& categoryName, const std::string& propertyName, const std::string& propertyValue) { set_property(categoryName, propertyName, std::string('"' + std::string(propertyValue) + '"')); }
+	void set_property_as_double(const std::string& categoryName, const std::string& propertyName, const double& propertyValue) { set_property(categoryName, propertyName, std::to_string(propertyValue)); }
+	void set_property_as_int(const std::string& categoryName, const std::string& propertyName, const int& propertyValue) { set_property(categoryName, propertyName, std::to_string(propertyValue)); }
+	void set_property_as_bool(const std::string& categoryName, const std::string& propertyName, const bool& propertyValue) { set_property(categoryName, propertyName, propertyValue ? "true" : "false"); }
 
 	/** Create or update ini file on disk */
-	void Save();
+	void save();
 
 private:
 
@@ -54,40 +54,40 @@ private:
 	{
 		IniProperty(const std::string& propertyName, const std::string& propertyValue);
 
-		std::string propertyName;
+		std::string property_name;
 		std::string value;
 
-		std::string WriteLine() const;
-		static void GetPropertyNameAndValueFromString(const std::string& line, std::string& name, std::string& value);
-		static bool IsPropertyLine(const std::string& line);
+		[[nodiscard]] std::string write_line() const;
+		static void get_property_name_and_value_from_string(const std::string& line, std::string& name, std::string& value);
+		static bool is_a_property_line(const std::string& line);
 	};
 
 	struct IniCategory
 	{
-		IniCategory(const std::string& categoryname);
+		IniCategory(const std::string& in_category_name);
 
-		std::string categoryName;
+		std::string category_name;
 		std::vector<IniProperty> properties;
 
-		void AddProperty(const std::string& propertyName, const std::string& propertyValue);
-		std::string WriteCategories() const;
+		void add_property(const std::string& propertyName, const std::string& propertyValue);
+		[[nodiscard]] std::string write_categories() const;
 
-		bool DoesPropertyExist(const std::string& propertyName) const;
-		static const std::string GetCategoryNameFromString(const std::string& line);
-		static bool IsCategoryLine(const std::string& line);
+		bool does_property_exists(const std::string& propertyName) const;
+		static const std::string get_category_name_from_string(const std::string& line);
+		static bool is_a_category_line(const std::string& line);
 	};
 
 	/** Internal methods */
-	const std::string GetProperty(const std::string& categoryName, const std::string& propertyName) const;
-	void SetProperty(const std::string& categoryName, const std::string& propertyName, const std::string& propertyValue);
-	void ClearProperty(const std::string& categoryName, const std::string& propertyName);
-	bool DoesCategoryExist(const std::string& propertyName) const;
+	[[nodiscard]] const std::string get_property(const std::string& categoryName, const std::string& propertyName) const;
+	void set_property(const std::string& categoryName, const std::string& propertyName, const std::string& propertyValue);
+	void clear_property(const std::string& categoryName, const std::string& propertyName);
+	[[nodiscard]] bool does_category_exists(const std::string& propertyName) const;
 
-	void LinkOrCreate();
+	void link_or_create();
 
 	/** ini file path */
-	std::string sourceFile;
+	std::string source_file;
 
 	/** Ini categories (each category contains a property vector) */
-	std::vector<IniCategory*> iniCategories;
+	std::vector<IniCategory*> ini_categories;
 };

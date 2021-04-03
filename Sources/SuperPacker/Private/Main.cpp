@@ -14,7 +14,7 @@
 #define ARGC argc
 #endif
 
-#if _WIN32 && false
+#if _WIN32 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
 #else
 int main(int argc, char** argv)
@@ -24,8 +24,7 @@ int main(int argc, char** argv)
 	
 	OpenGLContext::Init();
 	
-	auto packer = std::make_shared<SuperPacker::ImagePacker>("config/default.ini", ARGC > 1 ? ARGV[1] : std::optional<std::filesystem::path>()
-	);
+	auto packer = std::make_shared<SuperPacker::ImagePacker>("config/default.ini", ARGC > 1 ? ARGV[1] : std::optional<std::filesystem::path>()	);
 
 	packer->add_format({ "PNG file", "*.png" });
 	packer->add_format({ "TGA file", "*.tga" });
@@ -42,10 +41,7 @@ int main(int argc, char** argv)
 	packer->add_channel_combination({ "grayscale", {"r"} });
 	packer->add_channel_combination({ "rgb", {"r", "g", "b"} });
 	packer->add_channel_combination({ "rgba", {"r", "g", "b", "a"} });
-
-	packer->set_current_channel_combination("rgba");
-	packer->set_current_export_format("png");
-
+	
 	while (!OpenGLContext::ShouldClose()) {		
 		OpenGLContext::BeginFrame();
 		

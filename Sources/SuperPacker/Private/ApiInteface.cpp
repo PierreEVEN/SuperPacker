@@ -1,6 +1,6 @@
 
 #include <optional>
-#include <windows.h>
+#include <Windows.h>
 #include <iostream>
 
 #include "ApiInteface.h"
@@ -8,11 +8,13 @@
 
 namespace SuperPacker {
 
-	std::optional<std::filesystem::path> pick_file(const std::string& destination, const std::vector<char>& formats)
+	std::optional<std::filesystem::path> pick_file(const std::string& destination, std::vector<char> formats)
 	{
 		char filename[MAX_PATH];
 		std::string title = ("Select file for channel " + destination).c_str();
 
+		formats.push_back('\0');
+		
 		OPENFILENAME ofn;
 		ZeroMemory(&filename, sizeof(filename));
 		ZeroMemory(&ofn, sizeof(ofn));
@@ -53,10 +55,12 @@ namespace SuperPacker {
 		return std::optional<std::filesystem::path>();
 	}
 
-	std::optional<std::filesystem::path> save_file(const std::vector<char>& formats)
+	std::optional<std::filesystem::path> save_file(std::vector<char> formats)
 	{
 		char filename[MAX_PATH];
 
+		formats.push_back('\0');
+		
 		//Save Dialog
 		OPENFILENAME ofn;
 		ZeroMemory(&ofn, sizeof(ofn));
