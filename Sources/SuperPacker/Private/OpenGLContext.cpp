@@ -20,6 +20,11 @@
 GLFWwindow* WindowHandle = nullptr;
 bool close = false;
 
+GLFWwindow* OpenGLContext::get_window_handle()
+{
+	return WindowHandle;
+}
+
 void ResizeCallback(GLFWwindow* windows, int x, int y) {
 	glViewport(0, 0, x, y);
 }

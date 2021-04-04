@@ -28,6 +28,7 @@ namespace SuperPacker {
 	protected:
 		GLuint texture_id = 0;
 
+		int display_channels;
 		int width = 0;
 		int height = 0;
 		int channels = 0;
@@ -41,7 +42,7 @@ namespace SuperPacker {
 			: IImage(path)
 		{
 			Type* raw_data = stbi_load(source_path.value().string().c_str(), &width, &height, &channels, 4);
-
+			display_channels = 4;
 			glGenTextures(1, &texture_id);
 			set_texture_data(raw_data);
 
@@ -63,6 +64,7 @@ namespace SuperPacker {
 		explicit TImage(const int in_with, const int in_height, const int in_channels)
 			: IImage(in_with, in_height, in_channels)
 		{
+			display_channels = in_channels;
 			data.resize(4);
 			for (int i = 0; i <  4; ++i)
 			{
@@ -77,7 +79,7 @@ namespace SuperPacker {
 		}
 
 		void rebuild_texture() {
-			set_texture_data(gen_data_from_channels(4).data());
+			set_texture_data(gen_data_from_channels(channels).data());
 		}
 
 		~TImage() {
@@ -119,12 +121,15 @@ namespace SuperPacker {
 		void set_texture_data(Type* data)
 		{
 			glBindTexture(GL_TEXTURE_2D, texture_id);
+			
+			GLuint channel_mask = display_channels == 1 ? GL_RED : display_channels == 3 ? GL_RGB : GL_RGBA;
+			
 			if constexpr (std::is_same<Type, float>::value) {
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, data);
+				glTexImage2D(GL_TEXTURE_2D, 0, channel_mask, width, height, 0, channel_mask, GL_FLOAT, data);
 			}
 			else
 			{
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+				glTexImage2D(GL_TEXTURE_2D, 0, channel_mask, width, height, 0, channel_mask, GL_UNSIGNED_BYTE, data);
 			}
 			glGenerateMipmap(GL_TEXTURE_2D);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

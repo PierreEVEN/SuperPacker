@@ -11,22 +11,33 @@
 
 namespace SuperPacker
 {
-	ImagePacker::ImagePacker(const std::string& config_path, const std::optional<std::filesystem::path>& default_image)
+	ImagePacker::ImagePacker(const std::string& config_path)
 	{
 		config_ini = std::make_shared<IniLoader>(config_path);
 
 		current_export_format = config_ini->get_property_as_string("defaults", "export_extension", "");
 		current_channel_combination = config_ini->get_property_as_string("defaults", "export_palette", "");
+	}
 
-		if (default_image) {
-			reset_from_source(default_image.value());
+	void add_tooltip(const std::string& text)
+	{
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+			ImGui::Text("%s", text.c_str());
+			ImGui::PopTextWrapPos();
+			ImGui::EndTooltip();
 		}
 	}
 
 	void ImagePacker::draw_ui()
 	{
+		if (channel_combinations.find(current_channel_combination) == channel_combinations.end()) current_channel_combination = channel_combinations.begin()->first;
+		if (formats.find(current_export_format) == formats.end()) current_export_format = formats.begin()->first;
 		if (ImGui::Button("Pick source")) if (auto file = pick_file("", formats_string)) reset_from_source(file.value());
-
+		add_tooltip("Choose image for all channels");
+		
 		auto& combination = channel_combinations[current_channel_combination].combination;
 		for (const auto& channel : combination)
 		{
@@ -37,10 +48,12 @@ namespace SuperPacker
 		ImGui::Columns(1);
 		ImGui::Separator();
 		
-		if (preview_image) ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<size_t>(preview_image->get_texture())), ImVec2(100, 100), ImVec2(0, 0), ImVec2(1, 1));
+		if (preview_image) {
+			ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<size_t>(preview_image->get_texture())), ImVec2(100, 100), ImVec2(0, 0), ImVec2(1, 1));
+			add_tooltip("output preview");
+		}
 		
 		ImGui::Separator();
-		if (channel_combinations.find(current_channel_combination) == channel_combinations.end()) current_channel_combination = channel_combinations.begin()->first;
 		if (ImGui::BeginCombo("output palette", current_channel_combination.c_str()))
 		{
 			for (const auto& chan_combination : channel_combinations)
@@ -53,8 +66,7 @@ namespace SuperPacker
 			}
 			ImGui::EndCombo();
 		}
-
-		if (formats.find(current_export_format) == formats.end()) current_export_format = formats.begin()->first;		
+	
 		if (ImGui::BeginCombo("format", formats[current_export_format].description.c_str()))
 		{
 			for (const auto& format : formats)
@@ -104,75 +116,117 @@ namespace SuperPacker
 	
 	void ImagePacker::draw_channel(ImageChannel& channel)
 	{
-		ImGui::PushStyleColor(ImGuiCol_Button, channel.channel_color);
-		if (ImGui::Button(channel.full_name.c_str())) {
-			if (auto path = pick_file("", formats_string)) {
-				channel.assigned_image = std::make_shared<Image>(path.value());
+		if (ImGui::BeginChild(("channel : " + channel.full_name).c_str(), ImVec2(0, 200))) {
+
+			if (ImGui::IsWindowHovered() && !dropped_files.empty())
+			{
+				channel.assigned_image = std::make_shared<Image>(dropped_files[0]);
 				update_preview();
+				dropped_files.clear();
 			}
-		}
-		
-		ImGui::PopStyleColor();
-		ImGui::SameLine();
-		if (channel.assigned_image) {
-			if (ImGui::Button(("remove##" + channel.full_name).c_str())) channel.assigned_image = nullptr;
-		}
-		else
-		{
-			int last_value = channel.default_value;
-			ImGui::DragInt(("##default" + channel.full_name).c_str(), &last_value, 1, 0, 255);
-			if (last_value != channel.default_value)
-			{
-				channel.default_value = static_cast<uint8_t>(last_value);
-			}
-		}
-		if (ImGui::IsItemHovered())
-		{
-			ImGui::BeginTooltip();
-			ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-			ImGui::Text("%s", channel.assigned_image && channel.assigned_image->source_path ? channel.assigned_image->source_path.value().string().c_str() : "none");
-			ImGui::PopTextWrapPos();
-			ImGui::EndTooltip();
-		}
-		if (channel.assigned_image) {
-			ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<size_t>(channel.assigned_image->get_texture())), ImVec2(100, 100), ImVec2(0, 0), ImVec2(1, 1));
-
-
-			if (channels.find(channel.desired_channel) == channels.end()) channel.desired_channel = channels.begin()->first;
 			
-			auto& desired_channel = channels[channel.desired_channel];
-			auto& combination = channel_combinations[current_channel_combination];
-			
-			ImGui::PushStyleColor(ImGuiCol_Text, desired_channel.channel_color);
-			if (ImGui::BeginCombo(("##" + channel.short_name).c_str(), desired_channel.full_name.c_str()))
-			{
-				for (const auto& comb_chan : combination.combination)
-				{
-					ImGui::PushStyleColor(ImGuiCol_Text, channels[comb_chan].channel_color);
-					if (ImGui::MenuItem(channels[comb_chan].full_name.c_str()))
-					{
-						channel.desired_channel = channels[comb_chan].short_name;
-						config_ini->set_property_as_string("defaults","palette_" + channels[comb_chan].short_name, channel.desired_channel);
-						update_preview();
-					}
-					ImGui::PopStyleColor();
+			ImGui::PushStyleColor(ImGuiCol_Button, channel.channel_color);
+			if (ImGui::Button(channel.full_name.c_str())) {
+				if (auto path = pick_file("", formats_string)) {
+					channel.assigned_image = std::make_shared<Image>(path.value());
+					update_preview();
 				}
-
-				ImGui::EndCombo();
 			}
+			add_tooltip(channel.assigned_image ? channel.assigned_image->source_path->string() : "Choose image for the " + channel.full_name + " channel");
+			
 			ImGui::PopStyleColor();
+			ImGui::SameLine();
+			if (channel.assigned_image) {
+				if (ImGui::Button(("remove##" + channel.full_name).c_str())) {
+					channel.assigned_image = nullptr;
+					update_preview();
+				}
+				add_tooltip("Remove image");
+			}
+			else
+			{
+				int last_value = channel.default_value;
+				ImGui::DragInt(("##default" + channel.full_name).c_str(), &last_value, 1, 0, 255);
+				if (last_value != channel.default_value)
+				{
+					channel.default_value = static_cast<uint8_t>(last_value);
+					update_preview();
+				}
+				add_tooltip("default channel value");
+			}
+			if (channel.assigned_image) {
+				ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<size_t>(channel.assigned_image->get_texture())), ImVec2(100, 100), ImVec2(0, 0), ImVec2(1, 1));
 
+				if (channel.assigned_image->source_path) add_tooltip(channel.assigned_image->source_path->filename().string());
+
+				if (channels.find(channel.desired_channel) == channels.end()) channel.desired_channel = channels.begin()->first;
+
+				auto& desired_channel = channels[channel.desired_channel];
+				auto& combination = channel_combinations[current_channel_combination];
+
+				ImGui::PushStyleColor(ImGuiCol_Text, desired_channel.channel_color);
+				if (ImGui::BeginCombo(("##" + channel.short_name).c_str(), desired_channel.full_name.c_str()))
+				{
+					for (const auto& comb_chan : combination.combination)
+					{
+						ImGui::PushStyleColor(ImGuiCol_Text, channels[comb_chan].channel_color);
+						if (ImGui::MenuItem(channels[comb_chan].full_name.c_str()))
+						{
+							channel.desired_channel = channels[comb_chan].short_name;
+							config_ini->set_property_as_string("defaults", "palette_" + channels[comb_chan].short_name, channel.desired_channel);
+							update_preview();
+						}
+						ImGui::PopStyleColor();
+					}
+
+					ImGui::EndCombo();
+				}
+				ImGui::PopStyleColor();
+
+				add_tooltip("Choose output channel from this source");
+
+			}
 		}
+		ImGui::EndChild();
 	}
 
 	void ImagePacker::update_preview()
 	{
+		const auto channel_count = channel_combinations[current_channel_combination].combination.size();
+
+		int image_width = 0;
+		int image_height = 0;
+
+		for (const auto& channel : channel_combinations[current_channel_combination].combination)
+		{
+			if (channels[channel].assigned_image)
+			{
+				if (!image_width || !image_height) {
+					image_width = channels[channel].assigned_image->get_width();
+					image_height = channels[channel].assigned_image->get_height();
+				}
+				else if (image_width != channels[channel].assigned_image->get_width() || image_height != channels[channel].assigned_image->get_height())
+				{
+					logger_warning("wrong image dimention");
+					preview_image = nullptr;
+					return;
+				}
+			}
+		}
+
+		if (image_width == 0 || image_height == 0) {
+			preview_image = nullptr;
+			return;
+		}
+
+		if (!preview_image)	preview_image = std::make_shared<Image>(image_width, image_height, static_cast<int>(channel_count));
+		
 		for (const auto& channel : channel_combinations[current_channel_combination].combination)
 		{
 			auto& assigned_image = channels[channel].assigned_image;
-			if (assigned_image && (!preview_image || preview_image->get_width() != assigned_image->get_width() || preview_image->get_height() != assigned_image->get_height()))
+			if (assigned_image && (preview_image->get_width() != assigned_image->get_width() || preview_image->get_height() != assigned_image->get_height()) || preview_image->get_channels() != channel_count)
 			{
-				preview_image = std::make_shared<Image>(assigned_image->get_width(), assigned_image->get_height(), static_cast<int>(channel_combinations[current_channel_combination].combination.size()));
+				preview_image = std::make_shared<Image>(assigned_image->get_width(), assigned_image->get_height(), static_cast<int>(channel_count));
 			}
 
 			if (assigned_image)
@@ -182,85 +236,61 @@ namespace SuperPacker
 					channels[channel].channel_offset
 				);
 			}
+			else
+			{
+				std::vector<uint8_t> image_data(image_width* image_height);
+				for (int i = 0; i < image_width * image_height; ++i)
+				{
+					image_data[i] = channels[channels[channel].desired_channel].default_value;
+				}
+				static_cast<Image*>(preview_image.get())->set_channel_data(image_data, channels[channel].channel_offset);
+			}
 			
 		}
 		if (preview_image) static_cast<Image*>(preview_image.get())->rebuild_texture();
 		
 	}
 
+	std::string set_extension(const std::string& current_name, const std::string& desired_extension)
+	{
+		return std::filesystem::path(current_name).parent_path().string() + "/" + std::filesystem::path(current_name).stem().string() + "." + desired_extension;
+	}
+
+	
 	void ImagePacker::save(std::string file_path)
 	{
 		int width = 0;
 		int height = 0;
 
-			
-		auto& channel_combination = channel_combinations[current_channel_combination];
-		
-		for (const auto& channel_comb : channel_combination.combination) {
-			auto& channel = channels[channel_comb];
-			if (!channel.assigned_image) continue;
-			
-			if (width && width != channel.assigned_image->get_width() || height && height != channel.assigned_image->get_height())
-			{
-				logger_error("wrong dimension in channel %s", channel.full_name.c_str());
-				return;
-			}
-			width = channel.assigned_image->get_width();
-			height = channel.assigned_image->get_height();
-		}
-		
-		if (!width || !height)
+		if (!preview_image)
 		{
-			logger_error("invalid image dimensions");
+			logger_warning("cannot export current image combination");
 			return;
 		}
-				
-		std::vector<uint8_t> combined_data;
-		size_t pixel_count = width * height;
-		combined_data.resize(channel_combination.combination.size() * pixel_count);
-				
-		for (size_t i = 0; i < pixel_count; ++i)
-		{
-			for (const auto& channel_comb : channel_combination.combination)
-			{
-				auto& channel = channels[channel_comb];
-				uint8_t chan_color = channel.default_value;
-				if (channel.assigned_image)
-				{
-					if (auto img = static_cast<Image*>(channel.assigned_image.get())) {
 
-						chan_color = img->get_pixel(channel.channel_offset, i);
-					}
-				}
-				
-				combined_data[i * channel_combination.combination.size() + channel.channel_offset] = chan_color;
-			}
-		}
+		auto export_path = set_extension(file_path, formats[current_export_format].short_name);
 
-		std::string extension = "." + formats[current_export_format].name;
-
-		for (int64_t i = extension.size() - 1; i >= 0; --i) {
-			if (extension[i] != file_path[file_path.size() - 1 - i]) {
-				file_path += extension;
-				break;
-			}
-		}
-
-		if (current_export_format == "png")
+		auto data = static_cast<Image*>(preview_image.get())->gen_data_from_channels(preview_image->get_channels());
+		
+		if (formats[current_export_format].short_name == "png")
 		{
-			stbi_write_png(file_path.c_str(), width, height, static_cast<int>(channel_combination.combination.size()), combined_data.data(), 0);
+			stbi_write_png(export_path.c_str(), preview_image->get_width(), preview_image->get_height(), static_cast<int>(preview_image->get_channels()), data.data(), 0);
 		}
-		else if (current_export_format == "tga")
+		else if (formats[current_export_format].short_name == "tga")
 		{
-			stbi_write_tga(file_path.c_str(), width, height, static_cast<int>(channel_combination.combination.size()), combined_data.data());			
+			stbi_write_tga(export_path.c_str(), preview_image->get_width(), preview_image->get_height(), static_cast<int>(preview_image->get_channels()), data.data());
 		}
-		else if (current_export_format == "bmp")
+		else if (formats[current_export_format].short_name == "bmp")
 		{
-			stbi_write_bmp(file_path.c_str(), width, height, static_cast<int>(channel_combination.combination.size()), combined_data.data());
+			stbi_write_bmp(export_path.c_str(), preview_image->get_width(), preview_image->get_height(), static_cast<int>(preview_image->get_channels()), data.data());
 		}
-		else if (current_export_format == "jpg") {
-			stbi_write_jpg(file_path.c_str(), width, height, static_cast<int>(channel_combination.combination.size()), combined_data.data(), 100);
-		}			
+		else if (formats[current_export_format].short_name == "jpg") {
+			stbi_write_jpg(export_path.c_str(), preview_image->get_width(), preview_image->get_height(), static_cast<int>(preview_image->get_channels()), data.data(), 100);
+		}
+		else
+		{
+			logger_error("unsuported format : %s", formats[current_export_format].short_name.c_str());
+		}
 	}
 		
 	void ImagePacker::reset_from_source(const std::filesystem::path& source)
@@ -270,5 +300,11 @@ namespace SuperPacker
 			channel.second.assigned_image = std::make_shared<Image>(source);
 		}
 		update_preview();
-	}	
+	}
+
+	void ImagePacker::drop_file(const std::filesystem::path& path)
+	{
+		dropped_files.push_back(path);
+		logger_log("drop file %s", path.string().c_str());		
+	}
 }

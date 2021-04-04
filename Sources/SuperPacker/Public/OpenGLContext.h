@@ -1,5 +1,7 @@
 #pragma once
 
+struct GLFWwindow;
+
 namespace OpenGLContext
 {
 
@@ -11,4 +13,6 @@ namespace OpenGLContext
 	void Shutdown();
 	void GetWindowSize(int& SizeX, int& SizeY);
 	void request_close();
+
+	GLFWwindow* get_window_handle();
 }

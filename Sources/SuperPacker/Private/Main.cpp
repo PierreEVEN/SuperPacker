@@ -2,8 +2,11 @@
 #include <windows.h>
 
 
+
 #include "Logger.h"
 #include "OpenGLContext.h"
+#include "GL/gl3w.h"
+#include <GLFW/glfw3.h>
 #include "SuperPacker.h"
 
 #if _WIN32
@@ -14,7 +17,9 @@
 #define ARGC argc
 #endif
 
-#if _WIN32 
+std::shared_ptr<SuperPacker::ImagePacker> packer;
+
+#if _WIN32
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
 #else
 int main(int argc, char** argv)
@@ -24,23 +29,29 @@ int main(int argc, char** argv)
 	
 	OpenGLContext::Init();
 	
-	auto packer = std::make_shared<SuperPacker::ImagePacker>("config/default.ini", ARGC > 1 ? ARGV[1] : std::optional<std::filesystem::path>()	);
+	packer = std::make_shared<SuperPacker::ImagePacker>("config/default.ini");
 
-	packer->add_format({ "PNG file", "*.png" });
-	packer->add_format({ "TGA file", "*.tga" });
-	packer->add_format({ "JPEG file", "*.jpg|*.jpeg|*.JPEG|*.JPG" });
-	packer->add_format({ "BITMAP file", "*.bmp" });
-	packer->add_format({ "HDR file", "*.hdr" });
-	packer->add_format({ "Any file", "*.*" });
+	packer->add_format({ "PNG file", "*.png", "png" });
+	packer->add_format({ "TGA file", "*.tga", "tga" });
+	packer->add_format({ "JPEG file", "*.jpg;*.jpeg;*.JPEG;*.JPG", "jpg" });
+	packer->add_format({ "BITMAP file", "*.bmp", "bmp" });
 
-	packer->add_channel({0, "red","r",{1.0, 0.0, 0.0, 1.0},0});
-	packer->add_channel({1, "green","g",{0.0, 1.0, 0.0, 1.0},0});
-	packer->add_channel({2, "blue","b",{0.0, 0.0, 1.0, 1.0},0});
-	packer->add_channel({3, "alpha","a",{1.0, 1.0, 1.0, 1.0},255});
+	packer->add_channel({0, "red","r",{1, 0.3f, 0.3f, 1},0});
+	packer->add_channel({1, "green","g",{0.1f, 0.6f, 0.1f, 1},0});
+	packer->add_channel({2, "blue","b",{0.5f, 0.5f, 1, 1},0});
+	packer->add_channel({3, "alpha","a",{0.5f, 0.5f, 0.5f, 1},255});
 
 	packer->add_channel_combination({ "grayscale", {"r"} });
 	packer->add_channel_combination({ "rgb", {"r", "g", "b"} });
 	packer->add_channel_combination({ "rgba", {"r", "g", "b", "a"} });
+
+	if (ARGC > 1) packer->reset_from_source(ARGV[1]);
+
+
+	glfwSetDropCallback(OpenGLContext::get_window_handle(), [](GLFWwindow* window, int count, const char** paths)
+	{
+			for (int i = 0; i < count; ++i) packer->drop_file(paths[i]);
+	});
 	
 	while (!OpenGLContext::ShouldClose()) {		
 		OpenGLContext::BeginFrame();

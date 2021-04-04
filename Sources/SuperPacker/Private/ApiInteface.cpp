@@ -13,6 +13,14 @@ namespace SuperPacker {
 		char filename[MAX_PATH];
 		std::string title = ("Select file for channel " + destination).c_str();
 
+		std::string any_file_text = "any file";
+		std::string any_file_format = "*.*";
+
+		for (const auto& chr : any_file_text) formats.push_back(chr);
+		formats.push_back('\0');
+		for (const auto& chr : any_file_format) formats.push_back(chr);
+		formats.push_back('\0');
+
 		formats.push_back('\0');
 		
 		OPENFILENAME ofn;
@@ -24,7 +32,7 @@ namespace SuperPacker {
 		ofn.lpstrFile = filename;
 		ofn.nMaxFile = MAX_PATH;
 		ofn.lpstrTitle = title.c_str();
-		ofn.Flags = OFN_DONTADDTORECENT | OFN_FILEMUSTEXIST;
+		ofn.Flags = OFN_DONTADDTORECENT | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 
 		if (GetOpenFileNameA(&ofn))
 		{
@@ -58,7 +66,7 @@ namespace SuperPacker {
 	std::optional<std::filesystem::path> save_file(std::vector<char> formats)
 	{
 		char filename[MAX_PATH];
-
+				
 		formats.push_back('\0');
 		
 		//Save Dialog
@@ -71,7 +79,7 @@ namespace SuperPacker {
 		ofn.lpstrFile = filename;
 		ofn.lpstrTitle = "Save as...";
 		ofn.nMaxFile = MAX_PATH;
-		ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
+		ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
 
 		if (GetSaveFileName(&ofn))
 		{

@@ -15,6 +15,7 @@ namespace SuperPacker
 	{
 		std::string description;
 		std::string name;
+		std::string short_name;
 	};
 
 	struct ImageChannel

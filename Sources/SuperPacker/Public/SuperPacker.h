@@ -16,7 +16,7 @@ namespace SuperPacker
 	{
 	public:
 
-		ImagePacker(const std::string& config_path, const std::optional<std::filesystem::path>& default_image = std::optional<std::filesystem::path>());
+		ImagePacker(const std::string& config_path);
 
 		void draw_ui();
 
@@ -24,9 +24,14 @@ namespace SuperPacker
 		void add_channel(const ImageChannel& channel);
 		void add_channel_combination(const ChannelCombination& combination);
 		[[nodiscard]] ChannelCombination& get_combination() { return channel_combinations[current_channel_combination]; }
-	
+
+		void reset_from_source(const std::filesystem::path& source);
+
+		void drop_file(const std::filesystem::path& path);
 	private:
 
+		std::vector<std::filesystem::path> dropped_files;
+		
 		std::unordered_map<std::string, FileFormat> formats;
 		std::vector<char> formats_string;
 		std::unordered_map<std::string, ImageChannel> channels;
@@ -41,7 +46,6 @@ namespace SuperPacker
 		std::shared_ptr<IImage> preview_image;
 
 		void save(std::string file_path);
-		void reset_from_source(const std::filesystem::path& source);
 
 		std::shared_ptr<IniLoader> config_ini;
 	};
