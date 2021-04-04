@@ -1,9 +1,7 @@
 #pragma once
 #include <string>
-#include <optional>
 #include <filesystem>
 #include <unordered_map>
-
 
 #include "Types.h"
 
@@ -31,6 +29,7 @@ namespace SuperPacker
 	private:
 
 		std::vector<std::filesystem::path> dropped_files;
+		uint32_t drop_frame = 0;
 		
 		std::unordered_map<std::string, FileFormat> formats;
 		std::vector<char> formats_string;
@@ -39,7 +38,7 @@ namespace SuperPacker
 		std::string current_channel_combination;
 		std::string current_export_format;
 		
-		void draw_channel(ImageChannel& channel);
+		void draw_channel(ImageChannel& channel, const float width);
 
 		void update_preview();
 		

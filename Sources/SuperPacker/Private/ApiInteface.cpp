@@ -20,7 +20,6 @@ namespace SuperPacker {
 		formats.push_back('\0');
 		for (const auto& chr : any_file_format) formats.push_back(chr);
 		formats.push_back('\0');
-
 		formats.push_back('\0');
 		
 		OPENFILENAME ofn;

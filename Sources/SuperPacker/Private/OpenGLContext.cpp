@@ -55,7 +55,7 @@ void OpenGLContext::Init() {
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 	glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
 
-	WindowHandle = glfwCreateWindow(1000, 500, "Super packer - OpenGL", 0, 0);
+	WindowHandle = glfwCreateWindow(1000, 620, std::string("Super packer - OpenGL - Version " + std::string(VERSION)).c_str(), 0, 0);
 	if (!WindowHandle) std::cerr << "Failed to create Glfw window handle" << std::endl;
 	glfwMakeContextCurrent(WindowHandle);
 	glfwSetFramebufferSizeCallback(WindowHandle, &ResizeCallback);

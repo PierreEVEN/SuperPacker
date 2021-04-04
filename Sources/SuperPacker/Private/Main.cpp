@@ -1,8 +1,6 @@
 
 #include <windows.h>
 
-
-
 #include "Logger.h"
 #include "OpenGLContext.h"
 #include "GL/gl3w.h"
@@ -19,7 +17,7 @@
 
 std::shared_ptr<SuperPacker::ImagePacker> packer;
 
-#if _WIN32
+#if WIN32
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
 #else
 int main(int argc, char** argv)
@@ -46,7 +44,6 @@ int main(int argc, char** argv)
 	packer->add_channel_combination({ "rgba", {"r", "g", "b", "a"} });
 
 	if (ARGC > 1) packer->reset_from_source(ARGV[1]);
-
 
 	glfwSetDropCallback(OpenGLContext::get_window_handle(), [](GLFWwindow* window, int count, const char** paths)
 	{
