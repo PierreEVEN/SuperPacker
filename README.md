@@ -5,7 +5,8 @@
 - Recombine image channels from multiple sources
 - Extract image channels
 - Support png-jpg-tga-bmp
-- Drag&drop image on executable to load it for every channels
+- Drag & drop images to quickly combine them
+- Set empty channel default value
 
 [Download link](https://github.com/PierreEVEN/SuperPacker/releases)
 
