@@ -10,7 +10,7 @@
 
 [Download link](https://github.com/PierreEVEN/SuperPacker/releases)
 
-![apercu](https://user-images.githubusercontent.com/24438631/113395212-cc316280-9399-11eb-9b1f-a6db8297536a.png)
+![apercu](https://user-images.githubusercontent.com/24438631/113629508-ca4ff380-9666-11eb-9d17-6a4a56f97d09.png)
 
 credits : Icon by Tonkh
 
