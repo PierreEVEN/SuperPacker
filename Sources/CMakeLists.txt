@@ -1,3 +1,0 @@
-
-add_subdirectory(SuperPacker)
-add_subdirectory(ThirdParty)
