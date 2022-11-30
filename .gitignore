@@ -1,7 +1,5 @@
-Binaries/
-Intermediates/
-Saved/
-config/
+bin
+build
 .vs/
 .idea/
 
