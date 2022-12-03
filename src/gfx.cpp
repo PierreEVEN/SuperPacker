@@ -149,6 +149,7 @@ bool Gfx::draw()
 	ImGui::Render();
     GL_CHECK_ERROR();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    GL_CHECK_ERROR();
 	glfwSwapBuffers(main_window);
 	GL_CHECK_ERROR();
     return !glfwWindowShouldClose(main_window);

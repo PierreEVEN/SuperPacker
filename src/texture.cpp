@@ -14,7 +14,7 @@ float Texture::get_color(uint8_t channel, float pos_x, float pos_y, bool filter)
 	if (!channel_data[channel].first)
 		return -1;
 
-	int pixel_index = pos_x + pos_y * width;
+	int pixel_index = static_cast<int>(pos_x + pos_y * width);
 	if (pixel_index < 0 || pixel_index >= width * height)
 		return -1;
 
@@ -24,7 +24,12 @@ float Texture::get_color(uint8_t channel, float pos_x, float pos_y, bool filter)
 	return channel_data[channel].second[static_cast<int>(pos_x) + static_cast<int>(pos_y) * width] / 255.f;
 }
 
-Texture::Texture(const std::filesystem::path& path)
+const std::filesystem::path& Texture::get_path() const
+{
+	return internal_path;
+}
+
+Texture::Texture(const std::filesystem::path& path) : internal_path(path.string())
 {
 	uint8_t* raw_data = stbi_load(path.string().c_str(), &width, &height, &channels, 0);
 

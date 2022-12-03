@@ -1,8 +1,10 @@
-#include <filesystem>
-#include <imgui.h>
 
 #include "gfx.h"
-#include "ui/node.h"
+#include "ui/graph.h"
+#include "ui/nodes/node_constant.h"
+#include "ui/nodes/node_maths.h"
+#include "ui/nodes/node_string.h"
+#include "ui/nodes/node_texture.h"
 
 int main(int argc, char** argv)
 {
@@ -12,14 +14,14 @@ int main(int argc, char** argv)
 	Graph::register_node("Add", []() { return std::make_shared<NodeAdd>(); });
 	Graph::register_node("Mult", []() { return std::make_shared<NodeMult>(); });
 	Graph::register_node("Resize", []() { return std::make_shared<TextureResizeNode>(); });
-	Graph::register_node("Constant", []() { return std::make_shared<NodeConstant>(); });
+	Graph::register_node("Constant", []() { return std::make_shared<NodeFloat>(); });
 	Graph::register_node("Texture", []() { return std::make_shared<NodeTexture>(); });
+	Graph::register_node("String", []() { return std::make_shared<NodeString>(); });
 	
 	Graph graph("test");
 
 	gfx.on_draw.add_lambda([&]
 	{
-		ImGui::ShowDemoWindow();
 		graph.draw();
 	});
 

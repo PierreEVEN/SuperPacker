@@ -12,131 +12,182 @@
 #define DECLARE_DELEGATE_SINGLECAST_RETURN(name, returnType, ...) typedef DelegateSingleCast<returnType, __VA_ARGS__> name;
 #define DECLARE_DELEGATE_MULTICAST(name, ...)                     using name = DelegateMultiCast<__VA_ARGS__>;
 
-template <typename Return_T, typename... Args_T> class DelegateFunctionPtrWrapper
+template <typename Return_T, typename... Args_T>
+class DelegateFunctionPtrWrapper
 {
-  public:
-    virtual Return_T execute(Args_T&...)           = 0;
-    virtual bool     operator==(const void*) const = 0;
+public:
+	virtual Return_T execute(Args_T&...) = 0;
+	virtual bool operator==(const void*) const = 0;
 };
 
-template <typename... Args_T> class ILambdaClassStorage
+template <typename... Args_T>
+class ILambdaClassStorage
 {
-  public:
-    ILambdaClassStorage()                     = default;
-    virtual void execute(Args_T&&... in_args) = 0;
+public:
+	ILambdaClassStorage() = default;
+	virtual void execute(Args_T&&... in_args) = 0;
 };
 
-template <typename Lambda_T, typename... Args_T> class TLambdaClassStorage final : public ILambdaClassStorage<Args_T...>
+template <typename Return_T, typename... Args_T>
+class ILambdaClassStorageReturn
 {
-  public:
-    TLambdaClassStorage(Lambda_T in_lambda) : lambda_expression(in_lambda)
-    {
-    }
-    void execute(Args_T&&... in_args) override
-    {
-        lambda_expression(std::forward<Args_T>(in_args)...);
-    }
-
-  private:
-    Lambda_T lambda_expression;
+public:
+	ILambdaClassStorageReturn() = default;
+	virtual Return_T execute(Args_T&&... in_args) = 0;
 };
 
-template <typename ObjectClass_T, typename Return_T, typename... Args_T> class DelegateFunctionPtr final : public DelegateFunctionPtrWrapper<Return_T, Args_T...>
+template <typename Lambda_T, typename... Args_T>
+class TLambdaClassStorage final : public ILambdaClassStorage<Args_T...>
 {
-  public:
-    DelegateFunctionPtr(ObjectClass_T* objPtr, Return_T (ObjectClass_T::*funcPtr)(Args_T...)) : object_ptr(objPtr), function_ptr(funcPtr)
-    {
-    }
+public:
+	TLambdaClassStorage(Lambda_T in_lambda) : lambda_expression(in_lambda)
+	{
+	}
 
-    Return_T execute(Args_T&... inArgs)
-    {
-        return (object_ptr->*function_ptr)(inArgs...);
-    }
+	void execute(Args_T&&... in_args) override
+	{
+		lambda_expression(std::forward<Args_T>(in_args)...);
+	}
 
-    bool operator==(const void* objPtr) const
-    {
-        return object_ptr == objPtr;
-    }
-
-  private:
-    ObjectClass_T* object_ptr;
-    Return_T (ObjectClass_T::*function_ptr)(Args_T...);
+private:
+	Lambda_T lambda_expression;
 };
 
-template <typename Return_T, typename... Args_T> class DelegateSingleCast final
+template <typename Lambda_T, typename Return_T, typename... Args_T>
+class TLambdaClassStorageReturn final : public ILambdaClassStorageReturn<Return_T, Args_T...>
 {
-  public:
-    ~DelegateSingleCast()
-    {
-        clear();
-    }
+public:
+	TLambdaClassStorageReturn(Lambda_T in_lambda) : lambda_expression(in_lambda)
+	{
+	}
 
-    template <typename ObjectClass_T> void bind(ObjectClass_T* inObjPtr, Return_T (ObjectClass_T::*inFunc)(Args_T...))
-    {
-        function_ptr = std::make_shared<DelegateFunctionPtr<ObjectClass_T, Return_T, Args_T...>>(inObjPtr, inFunc);
-    }
+	Return_T execute(Args_T&&... in_args) override
+	{
+		return lambda_expression(std::forward<Args_T>(in_args)...);
+	}
 
-    void clear()
-    {
-        function_ptr = nullptr;
-    }
-
-    Return_T execute(Args_T&... inArgs)
-    {
-        assert(function_ptr);
-        return function_ptr->execute(inArgs...);
-    }
-
-  private:
-    std::shared_ptr<DelegateFunctionPtrWrapper<Return_T, Args_T...>> function_ptr = nullptr;
+private:
+	Lambda_T lambda_expression;
 };
 
-template <typename... Args_T> class DelegateMultiCast final
+template <typename ObjectClass_T, typename Return_T, typename... Args_T>
+class DelegateFunctionPtr final : public DelegateFunctionPtrWrapper<Return_T, Args_T...>
 {
-  public:
-    ~DelegateMultiCast()
-    {
-        clear();
-    }
+public:
+	DelegateFunctionPtr(ObjectClass_T* objPtr, Return_T (ObjectClass_T::*funcPtr)(Args_T ...)) : object_ptr(objPtr),
+		function_ptr(funcPtr)
+	{
+	}
 
-    template <typename ObjectClass_T> void add_object(ObjectClass_T* inObjPtr, void (ObjectClass_T::*inFunc)(Args_T...))
-    {
-        functions.push_back(std::make_shared<DelegateFunctionPtr<ObjectClass_T, void, Args_T...>>(inObjPtr, inFunc));
-    }
+	Return_T execute(Args_T&... inArgs)
+	{
+		return (object_ptr->*function_ptr)(inArgs...);
+	}
 
-    template <typename Lambda_T> void add_lambda(const Lambda_T& lambda)
-    {
-        lambda_expressions.emplace_back(std::make_shared<TLambdaClassStorage<Lambda_T, Args_T...>>(lambda));
-    }
+	bool operator==(const void* objPtr) const
+	{
+		return object_ptr == objPtr;
+	}
 
-    void clear()
-    {
-        functions.clear();
-        lambda_expressions.clear();
-    }
+private:
+	ObjectClass_T* object_ptr;
+	Return_T (ObjectClass_T::*function_ptr)(Args_T ...);
+};
 
-    void clear_object(void* ObjPtr)
-    {
-        for (int64_t i = functions.size() - 1; i >= 0; --i)
-        {
-            if (*functions[i] == ObjPtr)
-                functions.erase(functions.begin() + i);
-        }
-    }
+template <typename Return_T, typename... Args_T>
+class DelegateSingleCast final
+{
+public:
+	~DelegateSingleCast()
+	{
+		clear();
+	}
 
-    void execute(Args_T... inArgs)
-    {
-        for (const auto& fct : functions)
-        {
-            fct->execute(inArgs...);
-        }
-        for (const auto& lambda : lambda_expressions)
-        {
-            lambda->execute(std::forward<Args_T>(inArgs)...);
-        }
-    }
+	template <typename ObjectClass_T>
+	void add_object(ObjectClass_T* inObjPtr, Return_T (ObjectClass_T::*inFunc)(Args_T ...))
+	{
+		function_ptr = std::make_shared<DelegateFunctionPtr<ObjectClass_T, Return_T, Args_T...>>(inObjPtr, inFunc);
+	}
 
-  private:
-    std::vector<std::shared_ptr<DelegateFunctionPtrWrapper<void, Args_T...>>> functions;
-    std::vector<std::shared_ptr<ILambdaClassStorage<Args_T...>>>              lambda_expressions;
+	template <typename Lambda_T>
+	void add_lambda(const Lambda_T& lambda)
+	{
+		lambda_expressions = std::make_shared<TLambdaClassStorageReturn<Lambda_T, Return_T, Args_T...>>(lambda);
+	}
+
+
+	void clear()
+	{
+		function_ptr = nullptr;
+		lambda_expressions = nullptr;
+	}
+
+	Return_T execute(Args_T&... inArgs)
+	{
+		if (function_ptr)
+			return function_ptr->execute(inArgs...);
+		if (lambda_expressions)
+			return lambda_expressions->execute(std::forward<Args_T>(inArgs)...);
+		assert(lambda_expressions);
+		assert(function_ptr);
+		exit(EXIT_FAILURE);
+	}
+
+
+private:
+	std::shared_ptr<DelegateFunctionPtrWrapper<Return_T, Args_T...>> function_ptr = nullptr;
+	std::shared_ptr<ILambdaClassStorageReturn<Return_T, Args_T...>> lambda_expressions;
+};
+
+template <typename... Args_T>
+class DelegateMultiCast final
+{
+public:
+	~DelegateMultiCast()
+	{
+		clear();
+	}
+
+	template <typename ObjectClass_T>
+	void add_object(ObjectClass_T* inObjPtr, void (ObjectClass_T::*inFunc)(Args_T ...))
+	{
+		functions.push_back(std::make_shared<DelegateFunctionPtr<ObjectClass_T, void, Args_T...>>(inObjPtr, inFunc));
+	}
+
+	template <typename Lambda_T>
+	void add_lambda(const Lambda_T& lambda)
+	{
+		lambda_expressions.emplace_back(std::make_shared<TLambdaClassStorage<Lambda_T, Args_T...>>(lambda));
+	}
+
+	void clear()
+	{
+		functions.clear();
+		lambda_expressions.clear();
+	}
+
+	void clear_object(void* ObjPtr)
+	{
+		for (int64_t i = functions.size() - 1; i >= 0; --i)
+		{
+			if (*functions[i] == ObjPtr)
+				functions.erase(functions.begin() + i);
+		}
+	}
+
+	void execute(Args_T ... inArgs)
+	{
+		for (const auto& fct : functions)
+		{
+			fct->execute(inArgs...);
+		}
+		for (const auto& lambda : lambda_expressions)
+		{
+			lambda->execute(std::forward<Args_T>(inArgs)...);
+		}
+	}
+
+private:
+	std::vector<std::shared_ptr<DelegateFunctionPtrWrapper<void, Args_T...>>> functions;
+	std::vector<std::shared_ptr<ILambdaClassStorage<Args_T...>>> lambda_expressions;
 };
