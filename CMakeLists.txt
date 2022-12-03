@@ -54,6 +54,7 @@ endfunction()
 # Ensure dependencies are available
 find_package(glfw3 CONFIG REQUIRED)
 find_package(gl3w CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 find_path(STB_INCLUDE_DIRS "stb_c_lexer.h")
 find_package(imgui CONFIG REQUIRED)
 
@@ -66,4 +67,5 @@ target_include_directories(SuperPacker PRIVATE ${STB_INCLUDE_DIRS})
 target_link_libraries(SuperPacker PRIVATE glfw)
 target_link_libraries(SuperPacker PRIVATE unofficial::gl3w::gl3w)
 target_link_libraries(SuperPacker PRIVATE imgui::imgui)
+target_link_libraries(SuperPacker PRIVATE nlohmann_json::nlohmann_json)  
 source_group(TREE ${PROJECT_ROOT} FILES  ${SOURCES})

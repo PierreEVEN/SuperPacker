@@ -132,6 +132,8 @@ Gfx::Gfx(const std::string& window_name, uint32_t window_x, uint32_t window_y)
 
 bool Gfx::draw()
 {
+    glfwPollEvents();
+
     glClearColor(0, 0, 0, 0);
     glClearDepth(1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -142,10 +144,8 @@ bool Gfx::draw()
     if (glfwGetCurrentContext() != main_window)
         glfwMakeContextCurrent(main_window);
 
-    glfwPollEvents();
-
     on_draw.execute();
-
+    
 	ImGui::Render();
     GL_CHECK_ERROR();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

@@ -2,34 +2,27 @@
 #include <imgui.h>
 
 #include "gfx.h"
-#include "texture.h"
-#include "packer/packer.h"
 #include "ui/node.h"
 
 int main(int argc, char** argv)
 {
 	Gfx gfx("Super Packer v3.0", 800, 600);
 
-	Packer packer;
-
-	Graph graph;
-
-	graph.create_node<NodeTexture>(Texture::create(std::filesystem::path("resources/icon.png")));
-	graph.create_node<ImageWriteNode>();
-	graph.create_node<NodeAdd>();
-	graph.create_node<NodeMult>();
-	graph.create_node<TextureResizeNode>();
-	graph.create_node<NodeConstant>(0.f);
-	graph.create_node<NodeConstant>(1.f);
-	graph.create_node<NodeConstant>(2.f);
-	graph.create_node<NodeConstant>(3.f);
-	graph.create_node<NodeConstant>(4.f);
-	graph.create_node<NodeConstant>(5.f);
+	Graph::register_node("ImageWrite", []() { return std::make_shared<ImageWriteNode>(); });
+	Graph::register_node("Add", []() { return std::make_shared<NodeAdd>(); });
+	Graph::register_node("Mult", []() { return std::make_shared<NodeMult>(); });
+	Graph::register_node("Resize", []() { return std::make_shared<TextureResizeNode>(); });
+	Graph::register_node("Constant", []() { return std::make_shared<NodeConstant>(); });
+	Graph::register_node("Texture", []() { return std::make_shared<NodeTexture>(); });
+	
+	Graph graph("test");
 
 	gfx.on_draw.add_lambda([&]
 	{
+		ImGui::ShowDemoWindow();
 		graph.draw();
 	});
 
 	while (gfx.draw());
+	graph.save_to_file();
 }
