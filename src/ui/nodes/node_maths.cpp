@@ -1,5 +1,7 @@
 #include "node_maths.h"
 
+#include <iostream>
+
 NodeAdd::NodeAdd() : Node("add")
 {
 	a = add_input("a");

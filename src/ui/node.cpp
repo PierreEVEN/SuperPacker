@@ -230,7 +230,7 @@ void Node::display_internal(Graph& graph)
 	ImGui::EndChild();
 
 
-	if (hovered)
+	if (hovered && false)
 	{
 		if (!outputs.empty() && (outputs[0]->on_get_type.execute() == EType::Float || outputs[0]->on_get_type.execute()
 			== EType::Float2 || outputs[0]->on_get_type.execute() == EType::Float3 || outputs[0]->on_get_type.execute()
