@@ -24,7 +24,7 @@ NodeFloat::~NodeFloat()
 
 void NodeFloat::display()
 {
-	ImGui::DragFloat("value", &value);
+	ImGui::DragFloat("value", &value, 0.01f);
 }
 
 void NodeFloat::register_uniform(CodeContext& ctx)

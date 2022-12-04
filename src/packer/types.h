@@ -7,6 +7,7 @@ enum class EType
 	Float2,
 	Float3,
 	Float4,
+	Int,
 	Sampler2D,
 	String
 };

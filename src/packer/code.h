@@ -46,5 +46,5 @@ public:
 private:
 	std::vector<std::shared_ptr<ShaderUniform>> uniforms;
 	size_t property_id = 0;
-	int uniform_id = 1;
+	int uniform_id = 2;
 };

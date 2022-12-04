@@ -11,6 +11,15 @@ class Node;
 class NodeInput;
 class NodeOutput;
 
+struct MouseHit
+{
+	ImVec2 position;
+	ImVec2 radius;
+	std::shared_ptr<NodeInput> node_input;
+	std::shared_ptr<NodeOutput> node_output;
+	std::shared_ptr<Node> node;
+};
+
 class Graph
 {
 public:
@@ -50,10 +59,16 @@ public:
 	[[nodiscard]] std::shared_ptr<Node> find_node(int64_t uuid) const;
 
 	void draw_connection(ImVec2 from, ImVec2 to, EType connection_type) const;
+	void draw_pin(const MouseHit& pin_infos, EType type, bool connected, const std::string& name, bool text_left);
 
 	CodeContext& code_ctx() const { return *code_context; }
 
 private:
+
+	bool add_detect_hit(const MouseHit& hit);
+
+	std::vector<MouseHit> hits;
+
 	std::shared_ptr<CodeContext> code_context;
 	std::shared_ptr<NodeOutput> out_to_in = nullptr;
 	std::shared_ptr<NodeInput> in_to_out = nullptr;

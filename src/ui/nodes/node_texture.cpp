@@ -5,26 +5,9 @@
 #include "gfx.h"
 #include "texture.h"
 
-void NodeTexture::display()
-{
-}
-
-void NodeTexture::register_uniform(CodeContext& ctx)
-{
-	Node::register_uniform(ctx);
-	shader_uniform = ctx.add_uniform(EType::Sampler2D);
-	shader_uniform->on_update_value.add_lambda([&](int location)
-	{
-		if (texture)
-		{
-			glUniform1i(location, location);
-			glActiveTexture(GL_TEXTURE0 + location);
-			glBindTexture(GL_TEXTURE_2D, texture->get_id());
-			GL_CHECK_ERROR();
-		}
-	});
-}
-
+/*
+ * TEXTURE INPUT
+ */
 void NodeTexture::load_or_reload()
 {
 	if (!path->target() || path->target()->on_get_type.execute() != EType::String)
@@ -47,65 +30,110 @@ void NodeTexture::load_or_reload()
 	}
 }
 
-void ImageWriteNode::display()
-{
-}
-
 NodeTexture::NodeTexture()
 	: Node("Texture")
 {
-	auto col = add_output("RGBA");
+	const auto col = add_output("RGBA");
 	col->on_get_type.add_lambda([]() { return EType::Float4; });
 	col->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		load_or_reload();
-		return std::format("{} = texture2D({}, text_coords); {}.a += 0.2;", context.glsl_output_var(EType::Float4),
-		                   shader_uniform->get_name(), context.glsl_output_var(EType::Float4));
+		return std::format("{} = texture2D({}, text_coords) * {};", context.glsl_output_var(EType::Float4),
+		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
-	auto r = add_output("R");
+	const auto r = add_output("R");
 	r->on_get_type.add_lambda([]() { return EType::Float; });
 	r->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		load_or_reload();
-		return std::format("{} = texture2D({}, text_coords).r;", context.glsl_output_var(EType::Float),
-		                   shader_uniform->get_name());
+		return std::format("{} = texture2D({}, text_coords).r * {};", context.glsl_output_var(EType::Float),
+		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
-	auto g = add_output("G");
+	const auto g = add_output("G");
 	g->on_get_type.add_lambda([]() { return EType::Float; });
 	g->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		load_or_reload();
-		return std::format("{} = texture2D({}, text_coords).g;", context.glsl_output_var(EType::Float),
-		                   shader_uniform->get_name());
+		return std::format("{} = texture2D({}, text_coords).g * {};", context.glsl_output_var(EType::Float),
+		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
-	auto b = add_output("B");
+	const auto b = add_output("B");
 	b->on_get_type.add_lambda([]() { return EType::Float; });
 	b->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		load_or_reload();
-		return std::format("{} = texture2D({}, text_coords).b;", context.glsl_output_var(EType::Float),
-		                   shader_uniform->get_name());
+		return std::format("{} = texture2D({}, text_coords).b * {};", context.glsl_output_var(EType::Float),
+		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
-	auto a = add_output("A");
+	const auto a = add_output("A");
 	a->on_get_type.add_lambda([]() { return EType::Float; });
 	a->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		load_or_reload();
-		return std::format("{} = texture2D({}, text_coords).a;", context.glsl_output_var(EType::Float),
-		                   shader_uniform->get_name());
+		return std::format("{} = texture2D({}, text_coords).a * {};", context.glsl_output_var(EType::Float),
+		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
 	path = add_input("path");
 }
 
-TextureResizeNode::TextureResizeNode() : Node("Resize")
+void NodeTexture::register_uniform(CodeContext& ctx)
 {
-	color = add_input("channel");
-	in_x = add_input("size_x");
-	in_y = add_input("size_y");
-	auto out = add_output("result");
+	Node::register_uniform(ctx);
+	texture_uniform = ctx.add_uniform(EType::Sampler2D);
+	texture_uniform->on_update_value.add_lambda([&](int location)
+	{
+		if (texture && texture->ready())
+		{
+			glUniform1i(location, location);
+			glActiveTexture(GL_TEXTURE0 + location);
+			glBindTexture(GL_TEXTURE_2D, texture->get_id());
+			GL_CHECK_ERROR();
+		}
+	});
+
+	enabled_uniform = ctx.add_uniform(EType::Int);
+	enabled_uniform->on_update_value.add_lambda([&](int location)
+	{
+		glUniform1i(location, texture ? 1 : 0);
+	});
+}
+
+void NodeTexture::display()
+{
+	load_or_reload();
+}
+
+/*
+ * TEXTURE OUTPUT
+ */
+
+ImageWriteNode::ImageWriteNode()
+	: Node("Image Write")
+{
+	rgba_input = add_input("RGBA");
+	path_input = add_input("Path");
+
+	const auto output = add_output("Color");
+	output->on_get_type.add_lambda([]() { return EType::Float4; });
+	output->on_get_code.add_lambda([&](CodeContext& context)-> std::string
+	{
+		if (rgba_input->target())
+		{
+			auto rgba_code = rgba_input->target()->on_get_code.execute(context);
+			return std::format("{}\n", rgba_code);
+		}
+		return "";
+	});
+}
+
+void ImageWriteNode::display()
+{
+	if (!path_input->target() || path_input->target()->get_type() != EType::String)
+		return;
+
+	if (ImGui::Button("Generate"))
+	{
+		std::cout << "output to " << path_input->target()->get_code(get_graph().code_ctx()) << std::endl;
+	}
+
 }

@@ -31,7 +31,12 @@ const std::filesystem::path& Texture::get_path() const
 
 Texture::Texture(const std::filesystem::path& path) : internal_path(path.string())
 {
+	is_ready = false;
+	channels = 4;
 	uint8_t* raw_data = stbi_load(path.string().c_str(), &width, &height, &channels, 0);
+
+	if (!raw_data)
+		return;
 
 	for (auto& channel : channel_data)
 	{
@@ -65,6 +70,7 @@ Texture::Texture(const std::filesystem::path& path) : internal_path(path.string(
 
 	delete[] display_data;
 	stbi_image_free(raw_data);
+	is_ready = true;
 }
 
 Texture::~Texture()

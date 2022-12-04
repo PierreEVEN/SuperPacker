@@ -43,9 +43,10 @@ std::string CodeContext::glsl_type(EType type) const
 	case EType::Float2: return "vec2";
 	case EType::Float3: return "vec3";
 	case EType::Float4: return "vec4";
+	case EType::Int: return "int";
 	case EType::String: return "String";
 	case EType::Sampler2D: return "sampler2D";
-	default: return "Unhandled";
+	default: return "UnhandledType";
 	}
 }
 
@@ -61,7 +62,7 @@ std::string CodeContext::generate_full_glsl(const std::string& code) const
 	return std::format(
 		"#version 430\n"
 		"out vec4 output_color;\n"
-		"layout (location = 0) uniform vec2 text_coords;\n"
+		"layout (location = 0) in vec2 text_coords;\n"
 		"{}\n"
 		"void main() {{\n"
 		"\toutput_color = vec4(0,0,0,1);\n"

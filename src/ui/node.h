@@ -22,6 +22,7 @@ DECLARE_DELEGATE_MULTICAST(EventUpdateNode);
 
 class NodeOutput
 {
+	friend class NodeInput;
 public:
 	NodeOutput(Node* in_owner, std::string in_name) : name(std::move(in_name)),
 	                                                  owning_node(in_owner)
@@ -38,9 +39,10 @@ public:
 	EType get_type() { return on_get_type.execute(); }
 	[[nodiscard]] Node& owner() const { return *owning_node; }
 	void mark_dirty() { code = nullptr; }
+	bool linked() const { return link_count > 0; }
 private:
 	std::shared_ptr<std::string> code = nullptr;
-
+	int32_t link_count = 0;
 	Node* owning_node;
 };
 

@@ -15,10 +15,11 @@ OutShader::OutShader()
 	const char* src =
 		"#version 430\n"
 		"layout(location = 0) out vec2 text_coords;\n"
+		"layout(location = 1) uniform vec4 clip_rect;\n"
 		"void main() {\n"
 		"   text_coords = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2);\n"
-		"	gl_Position = vec4(text_coords * 2 - 1, 0, 1);\n"
-		"	text_coords *= vec2(1, 1);\n"
+		"	vec2 pos = text_coords * (clip_rect.zw - clip_rect.xy) + clip_rect.xy;"	
+		"	gl_Position = vec4(pos * 2 - 1, 0, 1);\n"
 		"}\n";
 	glShaderSource(glsl_vertex, 1, &src, nullptr);
 	glCompileShader(glsl_vertex);
@@ -48,6 +49,7 @@ void OutShader::set_code(const std::string& code)
 	GL_CHECK_ERROR();
 	if (new_hash != last_hash)
 	{
+		compiled = false;
 		last_hash = new_hash;
 
 		int glsl_fragment = glCreateShader(GL_FRAGMENT_SHADER);

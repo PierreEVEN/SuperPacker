@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 
+#include "gfx.h"
 #include "imgui_operators.h"
 #include "node.h"
 
@@ -14,44 +15,80 @@ Graph::Graph(const std::string& in_name) : name(in_name), code_context(std::make
 	load_from_file(in_name);
 }
 
-void Graph::draw_connection(ImVec2 from, ImVec2 to, EType connection_type) const
+
+uint32_t type_color(EType type, float brightness = 1.f)
 {
-	uint32_t color = 0;
-	switch (connection_type)
+	switch (type)
 	{
 	case EType::Float:
-		color = ImGui::ColorConvertFloat4ToU32({1, 0, 0, 1});
-		break;
+		return ImGui::ColorConvertFloat4ToU32({brightness, 0, 0, 1});
 	case EType::Float2:
-		color = ImGui::ColorConvertFloat4ToU32({0, 1, 0, 1});
-		break;
+		return ImGui::ColorConvertFloat4ToU32({0, brightness, 0, 1});
 	case EType::Float3:
-		color = ImGui::ColorConvertFloat4ToU32({0, 0, 1, 1});
-		break;
+		return ImGui::ColorConvertFloat4ToU32({0, 0, brightness, 1});
 	case EType::Float4:
-		color = ImGui::ColorConvertFloat4ToU32({1, 1, 1, 1});
-		break;
+		return ImGui::ColorConvertFloat4ToU32({brightness, brightness, brightness, 1});
 	case EType::String:
-		color = ImGui::ColorConvertFloat4ToU32({1, 0, 1, 1});
-		break;
+		return ImGui::ColorConvertFloat4ToU32({brightness, 0, brightness, 1});
 	case EType::Undefined:
 	default:
-		color = ImGui::ColorConvertFloat4ToU32({0.1f, 0.1f, 0.1f, 1});
-		break;
+		return ImGui::ColorConvertFloat4ToU32({0.1f, 0.1f, 0.1f, 1});
 	}
+}
+
+void Graph::draw_connection(ImVec2 from, ImVec2 to, EType connection_type) const
+{
+	const uint32_t color = type_color(connection_type);
 
 
-	const float delta = std::abs(from.x - to.x) * 0.5f;
+	const float delta = max(std::abs(from.x - to.x) * 0.5f, std::abs(from.y - to.y) * 0.5f);
 	ImGui::GetWindowDrawList()->AddBezierCurve(from,
 	                                           from + ImVec2(delta, 0),
 	                                           to + ImVec2(-delta, 0),
 	                                           to,
-	                                           color, 2);
+	                                           color, max(4 * zoom, 1.5f));
+}
+
+void Graph::draw_pin(const MouseHit& pin_infos, EType type, bool connected, const std::string& name,
+                     bool text_left)
+{
+	const bool out_hover = add_detect_hit(pin_infos);
+	const auto pin_color = type_color(type, out_hover);
+	const auto pin_color_hover = type_color(type, out_hover);
+
+	ImGui::GetWindowDrawList()->AddCircleFilled(pin_infos.position, (out_hover ? 12.f : 10.f) * zoom,
+	                                            type_color(type, connected ? out_hover ? 0.5f : 1.f : 0.5f));
+
+	ImGui::GetWindowDrawList()->AddCircleFilled(pin_infos.position, (out_hover ? 9.f : 7.f) * zoom,
+	                                            connected
+		                                            ? type_color(type, out_hover ? 1.f : 0.5f)
+		                                            : ImGui::ColorConvertFloat4ToU32({0, 0, 0, 1}));
+
+	const float top_zoom = max(1.f, zoom);
+
+	ImGui::GetWindowDrawList()->AddText(
+		text_left
+			? pin_infos.position - ImVec2{ImGui::CalcTextSize(name.c_str()).x + 15 * zoom, 8 * top_zoom}
+			: pin_infos.position + ImVec2{15 * zoom, -8 * top_zoom},
+		ImGui::ColorConvertFloat4ToU32({1, 1, 1, 1}), name.c_str());
+}
+
+bool Graph::add_detect_hit(const MouseHit& hit)
+{
+	const ImVec2 distance = { std::abs(hit.position.x - ImGui::GetMousePos().x), std::abs(hit.position.y - ImGui::GetMousePos().y) };
+	if (distance.x < hit.radius.x * zoom && distance.y < hit.radius.y * zoom)
+	{
+		hits.emplace_back(hit);
+		return true;
+	}
+	return false;
 }
 
 
 void Graph::draw()
 {
+	hits.clear();
+
 	// Handle drag
 	if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
 	{
@@ -115,6 +152,33 @@ void Graph::draw()
 				hover_node = node;
 			if (hover && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 				selected_node = node;
+		}
+
+		// Handle hits
+		MouseHit* closest_hit = nullptr;
+		float closest_distance = 0;
+		for (auto& hit : hits)
+		{
+			const ImVec2 d2 = { std::abs(hit.position.x - ImGui::GetMousePos().x), std::abs(hit.position.y - ImGui::GetMousePos().y) };
+			const float distance = min(d2.x, d2.y);
+			if (distance < closest_distance ||! closest_hit )
+			{
+				closest_distance = distance;
+				closest_hit = &hit;
+			}
+		}
+		if (closest_hit)
+		{
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+				if (closest_hit->node_input)
+					begin_in_out(closest_hit->node_input);
+				else if (closest_hit->node_output)
+					begin_out_in(closest_hit->node_output);
+			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+				if (closest_hit->node_input)
+					end_out_in(closest_hit->node_input);
+				else if (closest_hit->node_output)
+					end_in_out(closest_hit->node_output);
 		}
 
 		if (selected_node)
@@ -222,15 +286,24 @@ void Graph::load_from_file(const std::string& in_name)
 	}
 	for (const auto& node_js : js["nodes"])
 	{
-		const auto node_right = find_node(node_js["uuid"]);
-		if (!node_right)
+		const auto link_target = find_node(node_js["uuid"]);
+		if (!link_target)
 			continue;
-		size_t i = node_right->inputs.size() - 1;
 		for (const auto& connection : node_js["inputs"])
 		{
-			const auto node_left = find_node(connection["uuid"]);
-			if (node_left)
-				node_right->inputs[i--]->link_to(node_left->output_by_name(connection["name"]));
+			if (!connection.contains("from") || !connection.contains("to") || !connection.contains("uuid"))
+				continue;
+			const auto link_source = find_node(connection["uuid"]);
+			if (!link_source)
+				continue;
+
+			const auto connection_source = link_source->output_by_name(connection["from"]);
+			const auto connection_target = link_target->input_by_name(connection["to"]);
+
+			if (!connection_source || !connection_target)
+				continue;
+
+			connection_target->link_to(connection_source);
 		}
 	}
 }

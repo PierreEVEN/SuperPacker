@@ -1,169 +1,550 @@
 {
     "name": "test",
     "nodes": {
-        "Constant_0": {
-            "height": 200.0,
-            "inputs": null,
-            "name": "Constant",
-            "type": "Constant",
-            "uuid": 0,
-            "value": 0.6000000238418579,
-            "width": 300.0,
-            "x": -873.4999389648438,
-            "y": -239.9958953857422
-        },
-        "Constant_2": {
-            "height": 200.0,
-            "inputs": null,
-            "name": "Constant",
-            "type": "Constant",
-            "uuid": 2,
-            "value": -0.20000000298023224,
-            "width": 300.0,
-            "x": -784.139404296875,
-            "y": 104.36221313476563
-        },
-        "Constant_3": {
-            "height": 200.0,
-            "inputs": null,
-            "name": "Constant",
-            "type": "Constant",
-            "uuid": 3,
-            "value": 0.10000000149011612,
-            "width": 300.0,
-            "x": 17.07763671875,
-            "y": 759.2734375
-        },
-        "Constant_4": {
-            "height": 200.0,
-            "inputs": null,
-            "name": "Constant",
-            "type": "Constant",
-            "uuid": 4,
-            "value": 0.4000000059604645,
-            "width": 300.0,
-            "x": 21.432281494140625,
-            "y": 997.18359375
-        },
-        "Image Write_1": {
+        "Break Color_123": {
             "height": 200.0,
             "inputs": {
-                "A": {
-                    "name": "value",
-                    "uuid": 4
-                },
-                "B": {
-                    "name": "value",
-                    "uuid": 3
-                },
-                "G": {
-                    "name": "result",
+                "In": {
+                    "from": "result",
+                    "to": "In",
+                    "uuid": 84
+                }
+            },
+            "name": "Break Color",
+            "type": "Break Color",
+            "uuid": 123,
+            "width": 300.0,
+            "x": 1703.9154052734375,
+            "y": -525.8563232421875
+        },
+        "Break Color_45": {
+            "height": 200.0,
+            "inputs": {
+                "In": {
+                    "from": "RGBA",
+                    "to": "In",
+                    "uuid": 7
+                }
+            },
+            "name": "Break Color",
+            "type": "Break Color",
+            "uuid": 45,
+            "width": 300.0,
+            "x": 863.2157592773438,
+            "y": 463.8469543457031
+        },
+        "Break Color_82": {
+            "height": 200.0,
+            "inputs": {
+                "In": {
+                    "from": "result",
+                    "to": "In",
+                    "uuid": 26
+                }
+            },
+            "name": "Break Color",
+            "type": "Break Color",
+            "uuid": 82,
+            "width": 300.0,
+            "x": 886.4356689453125,
+            "y": -281.00579833984375
+        },
+        "Float 4_15": {
+            "height": 200.0,
+            "inputs": {
+                "a": {
+                    "from": "A",
+                    "to": "a",
                     "uuid": 7
                 },
-                "R": {
-                    "name": "result",
-                    "uuid": 6
+                "b": {
+                    "from": "R",
+                    "to": "b",
+                    "uuid": 7
+                },
+                "g": {
+                    "from": "G",
+                    "to": "g",
+                    "uuid": 7
+                },
+                "r": {
+                    "from": "B",
+                    "to": "r",
+                    "uuid": 7
+                }
+            },
+            "name": "Float 4",
+            "type": "Make Float4",
+            "uuid": 15,
+            "width": 300.0,
+            "x": 133.20301818847656,
+            "y": 766.905029296875
+        },
+        "Float_124": {
+            "height": 200.0,
+            "inputs": null,
+            "name": "Float",
+            "type": "Constant",
+            "uuid": 124,
+            "value": 0.0,
+            "width": 300.0,
+            "x": 1703.91552734375,
+            "y": -323.30572509765625
+        },
+        "Float_5": {
+            "height": 200.0,
+            "inputs": null,
+            "name": "Float",
+            "type": "Constant",
+            "uuid": 5,
+            "value": 0.20000000298023224,
+            "width": 300.0,
+            "x": 862.8767700195313,
+            "y": 261.1162109375
+        },
+        "Image Write_2": {
+            "height": 200.0,
+            "inputs": {
+                "Path": {
+                    "from": "text",
+                    "to": "Path",
+                    "uuid": 3
+                },
+                "RGBA": {
+                    "from": "result",
+                    "to": "RGBA",
+                    "uuid": 15
                 }
             },
             "name": "Image Write",
             "type": "ImageWrite",
-            "uuid": 1,
+            "uuid": 2,
             "width": 300.0,
-            "x": 1102.4051513671875,
-            "y": 446.833251953125
+            "x": 466.5626220703125,
+            "y": 801.310546875
         },
-        "String_15": {
-            "height": 200.0,
-            "inputs": null,
-            "name": "String",
-            "type": "String",
-            "uuid": 15,
-            "value": "resources/icon.png",
-            "width": 300.0,
-            "x": -1048.232666015625,
-            "y": 519.510986328125
-        },
-        "String_20": {
-            "height": 200.0,
-            "inputs": null,
-            "name": "String",
-            "type": "String",
-            "uuid": 20,
-            "value": "resources/icon.png",
-            "width": 300.0,
-            "x": -1032.0806884765625,
-            "y": 813.0260009765625
-        },
-        "Texture_11": {
+        "Image Write_69": {
             "height": 200.0,
             "inputs": {
-                "path": {
-                    "name": "text",
-                    "uuid": 20
+                "Path": {
+                    "from": "text",
+                    "to": "Path",
+                    "uuid": 0
+                },
+                "RGBA": {
+                    "from": "result",
+                    "to": "RGBA",
+                    "uuid": 59
                 }
             },
-            "name": "Texture",
-            "type": "Texture",
-            "uuid": 11,
+            "name": "Image Write",
+            "type": "ImageWrite",
+            "uuid": 69,
             "width": 300.0,
-            "x": -573.3029174804688,
-            "y": 778.0064697265625
+            "x": 1928.5302734375,
+            "y": 462.99847412109375
         },
-        "Texture_8": {
+        "Image Write_83": {
             "height": 200.0,
             "inputs": {
-                "path": {
-                    "name": "text",
-                    "uuid": 15
+                "Path": {
+                    "from": "text",
+                    "to": "Path",
+                    "uuid": 0
+                },
+                "RGBA": {
+                    "from": "result",
+                    "to": "RGBA",
+                    "uuid": 120
                 }
             },
-            "name": "Texture",
-            "type": "Texture",
-            "uuid": 8,
+            "name": "Image Write",
+            "type": "ImageWrite",
+            "uuid": 83,
             "width": 300.0,
-            "x": -603.9329833984375,
-            "y": 481.40576171875
+            "x": 2764.654296875,
+            "y": -398.57965087890625
         },
-        "add_6": {
+        "Make Float2_35": {
+            "height": 200.0,
+            "inputs": {
+                "g": {
+                    "from": "B",
+                    "to": "g",
+                    "uuid": 1
+                },
+                "r": {
+                    "from": "G",
+                    "to": "r",
+                    "uuid": 1
+                }
+            },
+            "name": "Make Float2",
+            "type": "Make Float2",
+            "uuid": 35,
+            "width": 300.0,
+            "x": 207.54592895507813,
+            "y": -497.59295654296875
+        },
+        "Make Float3_121": {
+            "height": 200.0,
+            "inputs": null,
+            "name": "Make Float3",
+            "type": "Make Float3",
+            "uuid": 121,
+            "width": 300.0,
+            "x": 865.7904663085938,
+            "y": 56.087013244628906
+        },
+        "Make Float3_26": {
+            "height": 200.0,
+            "inputs": {
+                "b": {
+                    "from": "B",
+                    "to": "b",
+                    "uuid": 7
+                },
+                "g": {
+                    "from": "G",
+                    "to": "g",
+                    "uuid": 7
+                },
+                "r": {
+                    "from": "R",
+                    "to": "r",
+                    "uuid": 7
+                }
+            },
+            "name": "Make Float3",
+            "type": "Make Float3",
+            "uuid": 26,
+            "width": 300.0,
+            "x": 573.904052734375,
+            "y": -279.0252990722656
+        },
+        "Make Float3_84": {
+            "height": 200.0,
+            "inputs": {
+                "b": {
+                    "from": "A",
+                    "to": "b",
+                    "uuid": 82
+                },
+                "g": {
+                    "from": "G",
+                    "to": "g",
+                    "uuid": 82
+                },
+                "r": {
+                    "from": "R",
+                    "to": "r",
+                    "uuid": 82
+                }
+            },
+            "name": "Make Float3",
+            "type": "Make Float3",
+            "uuid": 84,
+            "width": 300.0,
+            "x": 1386.9300537109375,
+            "y": -525.4605712890625
+        },
+        "Make Float4_122": {
             "height": 200.0,
             "inputs": {
                 "a": {
-                    "name": "value",
-                    "uuid": 2
+                    "from": "value",
+                    "to": "a",
+                    "uuid": 124
                 },
                 "b": {
-                    "name": "value",
-                    "uuid": 0
+                    "from": "B",
+                    "to": "b",
+                    "uuid": 123
+                },
+                "g": {
+                    "from": "G",
+                    "to": "g",
+                    "uuid": 123
+                },
+                "r": {
+                    "from": "R",
+                    "to": "r",
+                    "uuid": 123
+                }
+            },
+            "name": "Make Float4",
+            "type": "Make Float4",
+            "uuid": 122,
+            "width": 300.0,
+            "x": 2040.355224609375,
+            "y": -525.8563232421875
+        },
+        "Make Float4_59": {
+            "height": 200.0,
+            "inputs": {
+                "a": {
+                    "from": "result",
+                    "to": "a",
+                    "uuid": 68
+                },
+                "b": {
+                    "from": "B",
+                    "to": "b",
+                    "uuid": 45
+                },
+                "g": {
+                    "from": "G",
+                    "to": "g",
+                    "uuid": 45
+                },
+                "r": {
+                    "from": "R",
+                    "to": "r",
+                    "uuid": 45
+                }
+            },
+            "name": "Make Float4",
+            "type": "Make Float4",
+            "uuid": 59,
+            "width": 300.0,
+            "x": 1530.6741943359375,
+            "y": 464.08428955078125
+        },
+        "Make Float4_85": {
+            "height": 200.0,
+            "inputs": {
+                "a": {
+                    "from": "A",
+                    "to": "a",
+                    "uuid": 1
+                },
+                "b": {
+                    "from": "G",
+                    "to": "b",
+                    "uuid": 82
+                },
+                "g": {
+                    "from": "R",
+                    "to": "g",
+                    "uuid": 82
+                },
+                "r": {
+                    "from": "B",
+                    "to": "r",
+                    "uuid": 82
+                }
+            },
+            "name": "Make Float4",
+            "type": "Make Float4",
+            "uuid": 85,
+            "width": 300.0,
+            "x": 1696.905029296875,
+            "y": -118.36805725097656
+        },
+        "String_0": {
+            "height": 200.0,
+            "inputs": null,
+            "name": "String",
+            "type": "String",
+            "uuid": 0,
+            "value": "out/combine2/png",
+            "width": 300.0,
+            "x": 1531.4342041015625,
+            "y": 263.0933837890625
+        },
+        "String_102": {
+            "height": 200.0,
+            "inputs": {
+                "A": {
+                    "from": "text",
+                    "to": "A",
+                    "uuid": 8
+                },
+                "B": {
+                    "from": "text",
+                    "to": "B",
+                    "uuid": 111
+                }
+            },
+            "name": "String",
+            "type": "Append String",
+            "uuid": 102,
+            "width": 300.0,
+            "x": -539.34765625,
+            "y": 170.5420684814453
+        },
+        "String_111": {
+            "height": 200.0,
+            "inputs": null,
+            "name": "String",
+            "type": "String",
+            "uuid": 111,
+            "value": "icon.png",
+            "width": 300.0,
+            "x": -928.27685546875,
+            "y": 278.08770751953125
+        },
+        "String_3": {
+            "height": 200.0,
+            "inputs": null,
+            "name": "String",
+            "type": "String",
+            "uuid": 3,
+            "value": "out/combined.png",
+            "width": 300.0,
+            "x": 131.29415893554688,
+            "y": 967.9496459960938
+        },
+        "String_8": {
+            "height": 200.0,
+            "inputs": null,
+            "name": "String",
+            "type": "String",
+            "uuid": 8,
+            "value": "resources/",
+            "width": 300.0,
+            "x": -928.4429321289063,
+            "y": 75.71455383300781
+        },
+        "Texture_1": {
+            "height": 200.0,
+            "inputs": {
+                "path": {
+                    "from": "Result",
+                    "to": "path",
+                    "uuid": 102
+                }
+            },
+            "name": "Texture",
+            "type": "Texture",
+            "uuid": 1,
+            "width": 300.0,
+            "x": -187.3553466796875,
+            "y": -154.52735900878906
+        },
+        "Texture_7": {
+            "height": 200.0,
+            "inputs": {
+                "path": {
+                    "from": "Result",
+                    "to": "path",
+                    "uuid": 102
+                }
+            },
+            "name": "Texture",
+            "type": "Texture",
+            "uuid": 7,
+            "width": 300.0,
+            "x": -202.6473846435547,
+            "y": 768.9038696289063
+        },
+        "add_120": {
+            "height": 200.0,
+            "inputs": {
+                "a": {
+                    "from": "result",
+                    "to": "a",
+                    "uuid": 122
+                },
+                "b": {
+                    "from": "result",
+                    "to": "b",
+                    "uuid": 85
                 }
             },
             "name": "add",
             "type": "Add",
-            "uuid": 6,
+            "uuid": 120,
             "width": 300.0,
-            "x": 74.33555603027344,
-            "y": 48.0355339050293
+            "x": 2411.12548828125,
+            "y": -469.2108154296875
         },
-        "mult_7": {
+        "add_4": {
             "height": 200.0,
             "inputs": {
                 "a": {
-                    "name": "RGBA",
-                    "uuid": 11
+                    "from": "result",
+                    "to": "a",
+                    "uuid": 6
                 },
                 "b": {
-                    "name": "RGBA",
-                    "uuid": 8
+                    "from": "R",
+                    "to": "b",
+                    "uuid": 1
+                }
+            },
+            "name": "add",
+            "type": "Add",
+            "uuid": 4,
+            "width": 300.0,
+            "x": 847.40283203125,
+            "y": -504.6698303222656
+        },
+        "add_9": {
+            "height": 200.0,
+            "inputs": {
+                "a": {
+                    "from": "RGBA",
+                    "to": "a",
+                    "uuid": 1
+                },
+                "b": {
+                    "from": "Color",
+                    "to": "b",
+                    "uuid": 2
+                }
+            },
+            "name": "add",
+            "type": "Add",
+            "uuid": 9,
+            "width": 300.0,
+            "x": 894.79296875,
+            "y": 740.0835571289063
+        },
+        "mult_6": {
+            "height": 200.0,
+            "inputs": {
+                "a": {
+                    "from": "A",
+                    "to": "a",
+                    "uuid": 1
+                },
+                "b": {
+                    "from": "result",
+                    "to": "b",
+                    "uuid": 35
                 }
             },
             "name": "mult",
             "type": "Mult",
-            "uuid": 7,
+            "uuid": 6,
             "width": 300.0,
-            "x": 80.62382507324219,
-            "y": 444.9716796875
+            "x": 526.09619140625,
+            "y": -540.3268432617188
+        },
+        "mult_68": {
+            "height": 200.0,
+            "inputs": {
+                "a": {
+                    "from": "value",
+                    "to": "a",
+                    "uuid": 5
+                },
+                "b": {
+                    "from": "A",
+                    "to": "b",
+                    "uuid": 45
+                }
+            },
+            "name": "mult",
+            "type": "Mult",
+            "uuid": 68,
+            "width": 300.0,
+            "x": 1187.35888671875,
+            "y": 318.31964111328125
         }
     },
-    "pos_x": 456.3011779785156,
-    "pos_y": -818.1309814453125,
-    "zoom": 0.3625425100326538
+    "pos_x": -1019.4194946289063,
+    "pos_y": -107.96965789794922,
+    "zoom": 0.5138799548149109
 }

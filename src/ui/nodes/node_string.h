@@ -16,3 +16,14 @@ public:
 private:
 	std::string value;
 };
+
+class AppendString : public Node
+{
+public:
+	AppendString();
+	void display() override {}
+
+private:
+	std::shared_ptr<NodeInput> a;
+	std::shared_ptr<NodeInput> b;
+};

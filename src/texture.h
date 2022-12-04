@@ -22,6 +22,7 @@ public:
 
 	~Texture();
 
+	[[nodiscard]] bool ready() const { return is_ready; }
 	[[nodiscard]] uint32_t get_id() const { return gl_id; }
 	[[nodiscard]] int res_x() const { return width; }
 	[[nodiscard]] int res_y() const { return height; }
@@ -36,6 +37,7 @@ private:
 	int width;
 	int height;
 	int channels;
+	bool is_ready = false;
 
 	uint32_t gl_id;
 

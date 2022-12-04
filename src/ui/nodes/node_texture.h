@@ -1,25 +1,6 @@
 #pragma once
 #include "ui/node.h"
 
-class ImageWriteNode : public Node
-{
-public:
-	ImageWriteNode() : Node("Image Write")
-	{
-		r = add_input("R");
-		g = add_input("G");
-		b = add_input("B");
-		a = add_input("A");
-	}
-
-	void display() override;
-private:
-	std::shared_ptr<NodeInput> r;
-	std::shared_ptr<NodeInput> g;
-	std::shared_ptr<NodeInput> b;
-	std::shared_ptr<NodeInput> a;
-};
-
 class NodeTexture : public Node
 {
 public:
@@ -31,20 +12,16 @@ private:
 	std::shared_ptr<NodeInput> path;
 	void load_or_reload();
 	std::shared_ptr<Texture> texture;
-	std::shared_ptr<ShaderUniform> shader_uniform;
+	std::shared_ptr<ShaderUniform> texture_uniform;
+	std::shared_ptr<ShaderUniform> enabled_uniform;
 };
 
-class TextureResizeNode : public Node
+class ImageWriteNode : public Node
 {
 public:
-	TextureResizeNode();
-
-	void display() override
-	{
-	}
-
+	ImageWriteNode();
+	void display() override;
 private:
-	std::shared_ptr<NodeInput> color;
-	std::shared_ptr<NodeInput> in_x;
-	std::shared_ptr<NodeInput> in_y;
+	std::shared_ptr<NodeInput> path_input;
+	std::shared_ptr<NodeInput> rgba_input;
 };
