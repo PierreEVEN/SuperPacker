@@ -33,6 +33,7 @@ OutShader::OutShader()
 		std::cout << "failed to compile vertex shader :" << std::endl << infoLog << std::endl;
 		delete[] infoLog;
 	}
+	GL_CHECK_ERROR();
 }
 
 OutShader::~OutShader()
@@ -43,7 +44,8 @@ OutShader::~OutShader()
 
 void OutShader::set_code(const std::string& code)
 {
-	size_t new_hash = std::hash<std::string>{}(std::string(code));
+	const size_t new_hash = std::hash<std::string>{}(std::string(code));
+	GL_CHECK_ERROR();
 	if (new_hash != last_hash)
 	{
 		last_hash = new_hash;
@@ -64,40 +66,57 @@ void OutShader::set_code(const std::string& code)
 				"__________________________" << std::endl << code << std::endl << "__________________________" <<
 				std::endl;
 			delete[] infoLog;
+			compiled = false;
+			return;
 		}
+		GL_CHECK_ERROR();
 
 		glAttachShader(glsl_program, glsl_vertex);
 		glAttachShader(glsl_program, glsl_fragment);
 		glLinkProgram(glsl_program);
+		GL_CHECK_ERROR();
 
 		compiled = true;
 		glDetachShader(glsl_program, glsl_fragment);
 		glDetachShader(glsl_program, glsl_vertex);
 		glDeleteShader(glsl_fragment);
+		GL_CHECK_ERROR();
 
 		glGetShaderiv(glsl_program, GL_INFO_LOG_LENGTH, &infologLength);
+		while (glGetError());
+		GL_CHECK_ERROR();
 		if (infologLength > 1)
 		{
 			char* infoLog = new char[infologLength];
 			int charsWritten = 0;
 			glGetShaderInfoLog(glsl_program, infologLength, &charsWritten, infoLog);
+			GL_CHECK_ERROR();
 			std::cout << "failed to link program:" << std::endl << infoLog << std::endl;
 			delete[] infoLog;
 			compiled = false;
 		}
+		GL_CHECK_ERROR();
 	}
+
+
+	GL_CHECK_ERROR();
 }
 
-void OutShader::draw(ImVec4 clip_rect)
+bool OutShader::bind(ImVec4 clip_rect)
+{
+	if (!compiled)
+		return false;
+	GL_CHECK_ERROR();
+	glUseProgram(glsl_program);
+	GL_CHECK_ERROR();
+	return true;
+}
+
+void OutShader::draw()
 {
 	if (!compiled)
 		return;
 
-	for (const auto& uniform : uniforms)
-		uniform->bind();
-
-	while (glGetError());
-	glUseProgram(glsl_program);
 	GL_CHECK_ERROR();
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 	GL_CHECK_ERROR();

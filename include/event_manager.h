@@ -175,6 +175,11 @@ public:
 		}
 	}
 
+	void operator()(Args_T ... inArgs)
+	{
+		execute(inArgs...);
+	}
+
 	void execute(Args_T ... inArgs)
 	{
 		for (const auto& fct : functions)

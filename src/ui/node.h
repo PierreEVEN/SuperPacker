@@ -6,6 +6,7 @@
 #include <event_manager.h>
 #include <nlohmann/json.hpp>
 
+#include "graph.h"
 #include "out_shader.h"
 #include "packer/code.h"
 #include "packer/types.h"
@@ -15,15 +16,15 @@ class Texture;
 class Node;
 
 // result, pos_x, pos_y, res_x, res_y
-DECLARE_DELEGATE_MULTICAST(EventGetValue, float&, float, float, float, float);
-DECLARE_DELEGATE_MULTICAST(EventGetRes, float&, float&, float, float, float, float);
 DECLARE_DELEGATE_SINGLECAST_RETURN(EventGetOutputType, EType);
 DECLARE_DELEGATE_SINGLECAST_RETURN(EventGetCode, std::string, CodeContext&);
+DECLARE_DELEGATE_MULTICAST(EventUpdateNode);
 
 class NodeOutput
 {
 public:
-	NodeOutput(Node* in_owner, size_t in_index) : owner(in_owner), index(in_index)
+	NodeOutput(Node* in_owner, std::string in_name) : name(std::move(in_name)),
+	                                                  owning_node(in_owner)
 	{
 	}
 
@@ -31,37 +32,52 @@ public:
 	EventGetCode on_get_code;
 
 	ImVec2 position;
-	std::string name;
-	Node* owner = nullptr;
-	int64_t index = 0;
+	const std::string name;
 
-	std::string generate_shader_code(CodeContext& code_context)
-	{
-		return on_get_code.execute(code_context);
-	}
+	std::string get_code(CodeContext& code_context);
+	EType get_type() { return on_get_type.execute(); }
+	[[nodiscard]] Node& owner() const { return *owning_node; }
+	void mark_dirty() { code = nullptr; }
+private:
+	std::shared_ptr<std::string> code = nullptr;
+
+	Node* owning_node;
 };
 
 class NodeInput
 {
 public:
-	std::string name;
+	NodeInput(Node* in_owner, std::string in_name) : name(std::move(in_name)), owning_node(in_owner)
+	{
+	}
+
 	ImVec2 position;
-	std::shared_ptr<NodeOutput> input;
+
+	const std::string name;
 
 	operator bool() const
 	{
-		return input != nullptr;
+		return link_target != nullptr;
 	}
+
+	void link_to(const std::shared_ptr<NodeOutput>& output);
+
+	[[nodiscard]] const std::shared_ptr<NodeOutput>& target() const { return link_target; }
+	[[nodiscard]] Node& owner() const { return *owning_node; }
+private:
+	Node* owning_node;
+	std::shared_ptr<NodeOutput> link_target;
 };
 
 class Node
 {
 	friend class Graph;
 public:
-	Node(const std::string& name);
+	Node(std::string name);
 
 	virtual nlohmann::json serialize(Graph& graph);
 	virtual void deserialize(const nlohmann::json& json);
+
 
 	virtual bool display_internal(Graph& graph);
 	virtual void display() = 0;
@@ -74,7 +90,20 @@ public:
 
 	OutShader& get_display_shader();
 
+
+	[[nodiscard]] std::shared_ptr<NodeOutput> output_by_name(const std::string& name) const;
+	[[nodiscard]] std::shared_ptr<NodeInput> input_by_name(const std::string& name) const;
+
+	EventUpdateNode on_update;
+
+	void updated_tree();
+
+	Graph& get_graph() const { return *owning_graph; }
+
 protected:
+	virtual void register_uniform(CodeContext& ctx)
+	{
+	}
 
 	std::string type_name;
 	std::vector<std::shared_ptr<NodeInput>> inputs;
@@ -86,4 +115,5 @@ protected:
 	bool focused = false;
 	bool hover = false;
 	OutShader display_shader;
+	Graph* owning_graph = nullptr;
 };

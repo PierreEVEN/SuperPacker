@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+class CodeContext;
 enum class EType;
 class Node;
 class NodeInput;
@@ -49,7 +50,11 @@ public:
 	[[nodiscard]] std::shared_ptr<Node> find_node(int64_t uuid) const;
 
 	void draw_connection(ImVec2 from, ImVec2 to, EType connection_type) const;
+
+	CodeContext& code_ctx() const { return *code_context; }
+
 private:
+	std::shared_ptr<CodeContext> code_context;
 	std::shared_ptr<NodeOutput> out_to_in = nullptr;
 	std::shared_ptr<NodeInput> in_to_out = nullptr;
 	std::vector<std::shared_ptr<Node>> nodes;

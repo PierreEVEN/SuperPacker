@@ -7,13 +7,13 @@ NodeAdd::NodeAdd() : Node("add")
 	auto out = add_output("result");
 	out->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 		{
-			if (!*a || !*b || a->input->on_get_type.execute() != b->input->on_get_type.execute())
+			if (!*a || !*b || a->target()->on_get_type.execute() != b->target()->on_get_type.execute())
 				return "";
 
-			auto a_code = a->input->on_get_code.execute(context);
-			auto b_code = b->input->on_get_code.execute(context);
+			auto a_code = a->target()->on_get_code.execute(context);
+			auto b_code = b->target()->on_get_code.execute(context);
 
-			const auto out_type = a->input->on_get_type.execute();
+			const auto out_type = a->target()->on_get_type.execute();
 			const auto output_var = context.glsl_output_var(out_type);
 			const auto storage_var = context.generate_name();
 			return std::format(
@@ -30,7 +30,7 @@ NodeAdd::NodeAdd() : Node("add")
 
 	out->on_get_type.add_lambda([&]()
 	{
-		return a->input ? a->input->on_get_type.execute() : b->input ? b->input->on_get_type.execute() : EType::Undefined;
+		return a->target() ? a->target()->on_get_type.execute() : b->target() ? b->target()->on_get_type.execute() : EType::Undefined;
 	});
 }
 
@@ -45,13 +45,13 @@ NodeMult::NodeMult() : Node("mult")
 	const auto out = add_output("result");
 	out->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		if (!*a || !*b || a->input->on_get_type.execute() != b->input->on_get_type.execute())
+		if (!*a || !*b || a->target()->on_get_type.execute() != b->target()->on_get_type.execute())
 			return "";
 
-		auto a_code = a->input->on_get_code.execute(context);
-		auto b_code = b->input->on_get_code.execute(context);
+		auto a_code = a->target()->on_get_code.execute(context);
+		auto b_code = b->target()->on_get_code.execute(context);
 
-		const auto out_type = a->input->on_get_type.execute();
+		const auto out_type = a->target()->on_get_type.execute();
 		const auto output_var = context.glsl_output_var(out_type);
 		const auto storage_var = context.generate_name();
 		return std::format(
@@ -68,7 +68,7 @@ NodeMult::NodeMult() : Node("mult")
 
 	out->on_get_type.add_lambda([&]()
 		{
-			return a->input ? a->input->on_get_type.execute() : b->input ? b->input->on_get_type.execute() : EType::Undefined;
+			return a->target() ? a->target()->on_get_type.execute() : b->target() ? b->target()->on_get_type.execute() : EType::Undefined;
 		});
 }
 

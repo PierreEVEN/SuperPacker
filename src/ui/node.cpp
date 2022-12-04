@@ -5,6 +5,8 @@
 #include "texture.h"
 
 #include <imgui_internal.h>
+
+#include "gfx.h"
 #include "imgui_operators.h"
 
 #include "graph.h"
@@ -15,17 +17,50 @@ static int64_t node_uuids = 0;
 void Node::draw_connections(const Graph& graph) const
 {
 	for (const auto& input : inputs)
-		if (input->input)
+		if (input->target())
 		{
-			graph.draw_connection(input->input->position, input->position, input->input->on_get_type.execute());
+			graph.draw_connection(input->target()->position, input->position,
+			                      input->target()->on_get_type.execute());
 		}
 }
 
-Node::Node(const std::string& in_name) : name(in_name)
+std::string NodeOutput::get_code(CodeContext& code_context)
+{
+	if (!code)
+		code = std::make_shared<std::string>(on_get_code.execute(code_context));
+
+	return *code;
+}
+
+void NodeInput::link_to(const std::shared_ptr<NodeOutput>& output)
+{
+	if (link_target != output)
+	{
+		if (link_target)
+		{
+			link_target->owner().on_update.clear_object(owning_node);
+		}
+
+		link_target = output;
+		if (link_target)
+		{
+			link_target->owner().on_update.add_object(owning_node, &Node::updated_tree);
+		}
+		owning_node->on_update();
+	}
+}
+
+Node::Node(std::string in_name) : name(std::move(in_name))
 {
 	uuid = node_uuids++;
 	position = {20, 20};
 	size = {300, 200};
+
+	on_update.add_lambda([&]()
+	{
+		for (const auto& output : outputs)
+			output->mark_dirty();
+	});
 }
 
 
@@ -35,8 +70,8 @@ nlohmann::json Node::serialize(Graph& graph)
 	for (const auto& input : inputs)
 	{
 		inputs_js[input->name] = {
-			{"uuid", input->input ? input->input->owner->uuid : -1},
-			{"index", input->input ? input->input->index : -1}
+			{"uuid", input->target() ? input->target()->owner().uuid : -1},
+			{"name", input->target() ? input->target()->name : ""}
 		};
 	}
 	return {
@@ -55,7 +90,7 @@ void Node::deserialize(const nlohmann::json& input)
 {
 	name = input["name"];
 	uuid = input["uuid"];
-	node_uuids = std::max(uuid + 1, node_uuids);
+	node_uuids = max(uuid + 1, node_uuids);
 	position = ImVec2{input["x"], input["y"]};
 	size = ImVec2{input["width"], input["height"]};
 }
@@ -67,8 +102,27 @@ void Node::deserialize(const nlohmann::json& input)
 
 static void custom_draw_callback(const ImDrawList* parent_list, const ImDrawCmd* cmd)
 {
+	GL_CHECK_ERROR();
 	const auto node = static_cast<Node*>(cmd->UserCallbackData);
-	node->get_display_shader().draw(cmd->ClipRect);
+
+	if (node->get_display_shader().bind(cmd->ClipRect))
+	{
+		node->get_graph().code_ctx().update_uniforms();
+
+
+		int fb_height = static_cast<int>(ImGui::GetIO().DisplaySize.y * ImGui::GetIO().DisplayFramebufferScale.y);
+		ImVec2 clip_min(cmd->ClipRect.x, cmd->ClipRect.y);
+		ImVec2 clip_max(cmd->ClipRect.z, cmd->ClipRect.w);
+		if (clip_max.x <= clip_min.x || clip_max.y <= clip_min.y)
+			;
+
+		// Apply scissor/clipping rectangle (Y is inverted in OpenGL)
+		glScissor(static_cast<int>(clip_min.x), static_cast<int>(static_cast<float>(fb_height) - clip_max.y),
+		          static_cast<int>(clip_max.x - clip_min.x),
+		          static_cast<int>(clip_max.y - clip_min.y));
+		node->get_display_shader().draw();
+	}
+	GL_CHECK_ERROR();
 }
 
 
@@ -93,7 +147,7 @@ bool Node::display_internal(Graph& graph)
 		max = graph.pos * graph.zoom + half_window + ImGui::GetWindowPos() + (position + size) * graph.zoom;
 	}
 
-	const float top_zoom = std::max(1.f, graph.zoom);
+	const float top_zoom = max(1.f, graph.zoom);
 
 	// Draw window at location
 	ImGui::SetCursorScreenPos(min - ImVec2{2, 2} * graph.zoom);
@@ -201,9 +255,9 @@ bool Node::display_internal(Graph& graph)
 			== EType::Float2 || outputs[0]->on_get_type.execute() == EType::Float3 || outputs[0]->on_get_type.execute()
 			== EType::Float4))
 		{
-			CodeContext ctx;
 			ImGui::BeginTooltip();
-			ImGui::Text("code :\n%s", ctx.generate_full_glsl(outputs[0]->generate_shader_code(ctx)).c_str());
+			ImGui::Text("code :\n%s",
+			            graph.code_ctx().generate_full_glsl(outputs[0]->get_code(graph.code_ctx())).c_str());
 			ImGui::EndTooltip();
 		}
 	}
@@ -213,16 +267,14 @@ bool Node::display_internal(Graph& graph)
 
 std::shared_ptr<NodeInput> Node::add_input(std::string name)
 {
-	auto input = std::make_shared<NodeInput>();
-	input->name = name;
+	auto input = std::make_shared<NodeInput>(this, name);
 	inputs.emplace_back(input);
 	return input;
 }
 
 std::shared_ptr<NodeOutput> Node::add_output(const std::string name)
 {
-	auto output = std::make_shared<NodeOutput>(this, outputs.size());
-	output->name = name;
+	auto output = std::make_shared<NodeOutput>(this, name);
 	outputs.emplace_back(output);
 	return output;
 }
@@ -231,13 +283,35 @@ OutShader& Node::get_display_shader()
 {
 	if (!outputs.empty())
 	{
-		CodeContext ctx;
 		const auto out_type = outputs[0]->on_get_type.execute();
 		if (out_type == EType::Float ||
 			out_type == EType::Float2 ||
 			out_type == EType::Float3 ||
 			out_type == EType::Float4)
-			display_shader.set_code(ctx.generate_full_glsl(outputs[0]->generate_shader_code(ctx)));
+			display_shader.set_code(
+				owning_graph->code_ctx().generate_full_glsl(outputs[0]->get_code(owning_graph->code_ctx())));
+		GL_CHECK_ERROR();
 	}
 	return display_shader;
+}
+
+std::shared_ptr<NodeOutput> Node::output_by_name(const std::string& name) const
+{
+	for (const auto& output : outputs)
+		if (output->name == name)
+			return output;
+	return nullptr;
+}
+
+std::shared_ptr<NodeInput> Node::input_by_name(const std::string& name) const
+{
+	for (const auto& input : inputs)
+		if (input->name == name)
+			return input;
+	return nullptr;
+}
+
+void Node::updated_tree()
+{
+	on_update();
 }

@@ -2,10 +2,29 @@
 
 #include <format>
 
-std::shared_ptr<ShaderUniform> CodeContext::add_uniform(const std::string& uniform_name,
-                                                      const EType& uniform_type)
+#include "gfx.h"
+
+ShaderUniform::~ShaderUniform()
 {
-	const auto uniform = std::make_shared<ShaderUniform>(uniform_name, uniform_id++, uniform_type);
+}
+
+void ShaderUniform::unregister()
+{
+	if (!owner)
+		return;
+	for (size_t i = 0; i < owner->uniforms.size(); ++i)
+		if (owner->uniforms[i].get() == this)
+		{
+			owner->uniforms.erase(owner->uniforms.begin() + i);
+			break;
+		}
+	owner = nullptr;
+}
+
+std::shared_ptr<ShaderUniform> CodeContext::add_uniform(const EType& uniform_type)
+{
+	const auto uniform = std::shared_ptr<ShaderUniform>(
+		new ShaderUniform(this, generate_name(), uniform_id++, uniform_type));
 	uniforms.emplace_back(uniform);
 	return uniform;
 }
@@ -35,7 +54,8 @@ std::string CodeContext::generate_full_glsl(const std::string& code) const
 	std::string uniforms_str;
 
 	for (const auto& uniform : uniforms)
-		uniforms_str += std::format("layout (location = {}) uniform {} {};\n", uniform->location, glsl_type(uniform->type),
+		uniforms_str += std::format("layout (location = {}) uniform {} {};\n", uniform->location,
+		                            glsl_type(uniform->type),
 		                            uniform->name);
 
 	return std::format(
@@ -63,4 +83,17 @@ std::string CodeContext::glsl_output_var(EType type) const
 	default:
 		return "incompatible_type";
 	}
+}
+
+void CodeContext::update_uniforms() const
+{
+	for (const auto& uniform : uniforms) {
+		GL_CHECK_ERROR();
+		uniform->on_update_value(uniform->location);
+		GL_CHECK_ERROR();
+	}
+}
+
+CodeContext::~CodeContext()
+{
 }

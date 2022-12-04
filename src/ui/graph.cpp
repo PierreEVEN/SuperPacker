@@ -9,7 +9,7 @@
 
 static std::unordered_map<std::string, std::function<std::shared_ptr<Node>()>> registered_nodes;
 
-Graph::Graph(const std::string& in_name) : name(in_name)
+Graph::Graph(const std::string& in_name) : name(in_name), code_context(std::make_shared<CodeContext>())
 {
 	load_from_file(in_name);
 }
@@ -48,6 +48,7 @@ void Graph::draw_connection(ImVec2 from, ImVec2 to, EType connection_type) const
 	                                           to,
 	                                           color, 2);
 }
+
 
 void Graph::draw()
 {
@@ -122,8 +123,8 @@ void Graph::draw()
 		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
 		{
 			out_to_in = nullptr;
-			if (in_to_out && in_to_out->input)
-				in_to_out->input = nullptr;
+			if (in_to_out && in_to_out->target())
+				in_to_out->link_to(nullptr);
 			in_to_out = nullptr;
 		}
 
@@ -151,7 +152,7 @@ void Graph::begin_out_in(std::shared_ptr<NodeOutput> start)
 
 void Graph::end_out_in(std::shared_ptr<NodeInput> end)
 {
-	end->input = out_to_in;
+	end->link_to(out_to_in);
 	out_to_in = nullptr;
 }
 
@@ -163,7 +164,7 @@ void Graph::begin_in_out(std::shared_ptr<NodeInput> start)
 void Graph::end_in_out(std::shared_ptr<NodeOutput> end)
 {
 	if (in_to_out)
-		in_to_out->input = end;
+		in_to_out->link_to(end);
 	in_to_out = nullptr;
 }
 
@@ -229,7 +230,7 @@ void Graph::load_from_file(const std::string& in_name)
 		{
 			const auto node_left = find_node(connection["uuid"]);
 			if (node_left)
-				node_right->inputs[i--]->input = node_left->outputs[connection["index"]];
+				node_right->inputs[i--]->link_to(node_left->output_by_name(connection["name"]));
 		}
 	}
 }
@@ -268,8 +269,10 @@ std::shared_ptr<Node> Graph::spawn_by_name(const std::string& type_name)
 	{
 		const auto node = found->second();
 		node->type_name = type_name;
+		node->owning_graph = this;
+		node->register_uniform(*code_context);
 		nodes.emplace_back(node);
-		return node;;
+		return node;
 	}
 	return nullptr;
 }
