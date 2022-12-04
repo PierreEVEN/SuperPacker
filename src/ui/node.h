@@ -39,10 +39,12 @@ public:
 	EType get_type() { return on_get_type.execute(); }
 	[[nodiscard]] Node& owner() const { return *owning_node; }
 	void mark_dirty() { code = nullptr; }
-	bool linked() const { return link_count > 0; }
+	[[nodiscard]] bool linked() const { return !link_destinations.empty(); }
+
+	void break_links() const;
 private:
 	std::shared_ptr<std::string> code = nullptr;
-	int32_t link_count = 0;
+	std::vector<NodeInput*> link_destinations;
 	Node* owning_node;
 };
 
@@ -81,7 +83,7 @@ public:
 	virtual void deserialize(const nlohmann::json& json);
 
 
-	virtual bool display_internal(Graph& graph);
+	virtual void display_internal(Graph& graph);
 	virtual void display() = 0;
 	void draw_connections(const Graph& graph) const;
 
@@ -100,12 +102,17 @@ public:
 
 	void updated_tree();
 
-	Graph& get_graph() const { return *owning_graph; }
+	[[nodiscard]] Graph& get_graph() const { return *owning_graph; }
 
 protected:
 	virtual void register_uniform(CodeContext& ctx)
 	{
 	}
+
+	void update_nodes_positions();
+
+	ImVec2 screen_min;
+	ImVec2 screen_max;
 
 	std::string type_name;
 	std::vector<std::shared_ptr<NodeInput>> inputs;
@@ -114,8 +121,6 @@ protected:
 	ImVec2 size;
 	int64_t uuid;
 	std::string name;
-	bool focused = false;
-	bool hover = false;
 	OutShader display_shader;
 	Graph* owning_graph = nullptr;
 };

@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iostream>
 
+#include <imgui_internal.h>
+
 #include "gfx.h"
 #include "imgui_operators.h"
 #include "node.h"
@@ -53,8 +55,6 @@ void Graph::draw_pin(const MouseHit& pin_infos, EType type, bool connected, cons
                      bool text_left)
 {
 	const bool out_hover = add_detect_hit(pin_infos);
-	const auto pin_color = type_color(type, out_hover);
-	const auto pin_color_hover = type_color(type, out_hover);
 
 	ImGui::GetWindowDrawList()->AddCircleFilled(pin_infos.position, (out_hover ? 12.f : 10.f) * zoom,
 	                                            type_color(type, connected ? out_hover ? 0.5f : 1.f : 0.5f));
@@ -73,9 +73,33 @@ void Graph::draw_pin(const MouseHit& pin_infos, EType type, bool connected, cons
 		ImGui::ColorConvertFloat4ToU32({1, 1, 1, 1}), name.c_str());
 }
 
+void Graph::add_to_selection(const std::shared_ptr<Node>& node, bool should_bring_to_front)
+{
+	if (should_bring_to_front)
+		bring_to_front(node.get());
+	selected_nodes.insert(node.get());
+}
+
+void Graph::clear_selection()
+{
+	selected_nodes.clear();
+}
+
+bool Graph::is_selected(Node* node) const
+{
+	return selected_nodes.contains(node);
+}
+
+bool Graph::is_hovered(const Node* node) const
+{
+	return hovered_node.get() == node;
+}
+
 bool Graph::add_detect_hit(const MouseHit& hit)
 {
-	const ImVec2 distance = { std::abs(hit.position.x - ImGui::GetMousePos().x), std::abs(hit.position.y - ImGui::GetMousePos().y) };
+	const ImVec2 distance = {
+		std::abs(hit.position.x - ImGui::GetMousePos().x), std::abs(hit.position.y - ImGui::GetMousePos().y)
+	};
 	if (distance.x < hit.radius.x * zoom && distance.y < hit.radius.y * zoom)
 	{
 		hits.emplace_back(hit);
@@ -84,10 +108,60 @@ bool Graph::add_detect_hit(const MouseHit& hit)
 	return false;
 }
 
+ImVec2 Graph::pos_to_screen(const ImVec2& from, const ImDrawList* draw_list) const
+{
+	const auto dl = draw_list ? draw_list : ImGui::GetWindowDrawList();
+	const auto min = dl->GetClipRectMin();
+	const auto size = dl->GetClipRectMax() - min;
+	return (from + pos) * zoom + size / 2 + min;
+}
+
+ImVec2 Graph::pos_to_graph(const ImVec2& from, const ImDrawList* draw_list) const
+{
+	const auto dl = draw_list ? draw_list : ImGui::GetWindowDrawList();
+	const auto min = dl->GetClipRectMin();
+	const auto size = dl->GetClipRectMax() - min;
+	return (from - size / 2 - min) / zoom - pos;
+}
+
+void Graph::remove_node(Node* erased_node)
+{
+	selected_nodes.erase(selected_nodes.find(erased_node));
+
+	for (const auto& input : erased_node->inputs)
+		input->link_to(nullptr);
+
+	for (const auto& output : erased_node->outputs)
+		output->break_links();
+
+	for (size_t i = 0; i < nodes.size(); ++i)
+	{
+		if (nodes[i].get() == erased_node)
+		{
+			nodes.erase(nodes.begin() + i);
+			break;
+		}
+	}
+}
+
+void Graph::open_context_menu()
+{
+	ImGui::OpenPopup(("ContextMenu_" + name).c_str());
+	is_in_context_menu = true;
+	context_menu_pos = ImGui::GetMousePos();
+}
+
 
 void Graph::draw()
 {
 	hits.clear();
+
+
+	if (ImGui::IsKeyPressed(ImGuiKey_Delete))
+	{
+		while (!selected_nodes.empty())
+			remove_node(*selected_nodes.begin());
+	}
 
 	// Handle drag
 	if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
@@ -95,13 +169,11 @@ void Graph::draw()
 		pos = pos + ImGui::GetMouseDragDelta(ImGuiMouseButton_Right) / zoom;
 	}
 
-	if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-		selected_node = nullptr;
-
 	ImGui::SetNextWindowPos({0, 0});
 	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 	if (ImGui::Begin(name.c_str(), nullptr, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDecoration))
 	{
+		// Draw main menu
 		if (ImGui::BeginMenuBar())
 		{
 			if (ImGui::BeginMenu("file"))
@@ -135,10 +207,60 @@ void Graph::draw()
 			const float zoom_delta = ImGui::GetIO().MouseWheel * zoom * 0.1f;
 			zoom = std::clamp(zoom + zoom_delta, 0.1f, 4.f);
 
-			ImVec2 percents = ((ImGui::GetMousePos() - ImGui::GetWindowPos()) / ImGui::GetWindowSize() - 0.5) * -1;
+			const ImVec2 percents = ((ImGui::GetMousePos() - ImGui::GetWindowPos()) / ImGui::GetWindowSize() - 0.5) * -
+				1;
 			if (zoom_delta != 0)
 				pos += ImGui::GetWindowSize() * zoom_delta / (zoom * zoom) * percents;
 		}
+
+		// Update transformations
+		hovered_node = nullptr;
+		for (const auto& node : nodes)
+		{
+			node->update_nodes_positions();
+			if (ImGui::IsMouseHoveringRect(node->screen_min + ImVec2{node->inputs.empty() ? 0 : 39 * zoom, 0},
+			                               node->screen_max - ImVec2{node->outputs.empty() ? 0 : 39 * zoom, 0}))
+				hovered_node = node;
+		}
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !is_selected(hovered_node.get()))
+		{
+			if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
+				clear_selection();
+			if (hovered_node)
+				add_to_selection(hovered_node);
+		}
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && hovered_node)
+		{
+			moving_node = true;
+		}
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+			no_drag_before_release = true;
+		if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+			no_drag_before_release = false;
+
+		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+			moving_node = false;
+
+		if (ImGui::IsMouseReleased(ImGuiMouseButton_Right) && !hovered_node && no_drag_before_release)
+		{
+			if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
+				clear_selection();
+			open_context_menu();
+		}
+
+		// Handle drag
+		if (moving_node && ImGui::IsMouseDragging(ImGuiMouseButton_Left) && ImGui::GetActiveID() !=
+			ImGui::GetFocusID())
+		{
+			for (auto& c_node : selected_nodes)
+			{
+				Node* node = c_node;
+				node->position += ImGui::GetMouseDragDelta(ImGuiMouseButton_Left) / zoom;
+				node->update_nodes_positions();
+			}
+			ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
+		}
+
 
 		// Draw connections
 		for (const auto& node : nodes)
@@ -146,22 +268,18 @@ void Graph::draw()
 
 		// Draw nodes
 		for (const auto& node : nodes)
-		{
-			const bool hover = node->display_internal(*this);
-			if (hover)
-				hover_node = node;
-			if (hover && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-				selected_node = node;
-		}
+			node->display_internal(*this);
 
-		// Handle hits
-		MouseHit* closest_hit = nullptr;
+		// Handle mouse hits
+		const MouseHit* closest_hit = nullptr;
 		float closest_distance = 0;
 		for (auto& hit : hits)
 		{
-			const ImVec2 d2 = { std::abs(hit.position.x - ImGui::GetMousePos().x), std::abs(hit.position.y - ImGui::GetMousePos().y) };
+			const ImVec2 d2 = {
+				std::abs(hit.position.x - ImGui::GetMousePos().x), std::abs(hit.position.y - ImGui::GetMousePos().y)
+			};
 			const float distance = min(d2.x, d2.y);
-			if (distance < closest_distance ||! closest_hit )
+			if (distance < closest_distance || ! closest_hit)
 			{
 				closest_distance = distance;
 				closest_hit = &hit;
@@ -169,24 +287,59 @@ void Graph::draw()
 		}
 		if (closest_hit)
 		{
-			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-				if (closest_hit->node_input)
-					begin_in_out(closest_hit->node_input);
-				else if (closest_hit->node_output)
-					begin_out_in(closest_hit->node_output);
-			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-				if (closest_hit->node_input)
-					end_out_in(closest_hit->node_input);
-				else if (closest_hit->node_output)
-					end_in_out(closest_hit->node_output);
+			if (closest_hit->node_output || closest_hit->node_input)
+			{
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+					if (closest_hit->node_input)
+						begin_in_out(closest_hit->node_input);
+					else if (closest_hit->node_output)
+						begin_out_in(closest_hit->node_output);
+				if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+					if (closest_hit->node_input)
+						end_out_in(closest_hit->node_input);
+					else if (closest_hit->node_output)
+						end_in_out(closest_hit->node_output);
+			}
+		}
+		else
+		{
+			if (!hovered_node && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+				selection_rect_start = std::make_shared<ImVec2>(ImGui::GetMousePos() * zoom + pos);
+		}
+		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+			selection_rect_start = nullptr;
+
+		if (selection_rect_start)
+		{
+			const ImVec2 selection_rect_end = ImGui::GetMousePos() * zoom + pos;
+
+			const ImVec2 screen_a = (*selection_rect_start - pos) / zoom;
+			const ImVec2 screen_b = (selection_rect_end - pos) / zoom;
+			const ImVec2 screen_min = {min(screen_a.x, screen_b.x), min(screen_a.y, screen_b.y)};
+			const ImVec2 screen_max = {max(screen_a.x, screen_b.x), max(screen_a.y, screen_b.y)};
+			ImGui::GetForegroundDrawList()->AddRectFilled(screen_min, screen_max,
+			                                              ImGui::ColorConvertFloat4ToU32({1, 1, 1, 0.2f}));
+			ImGui::GetForegroundDrawList()->AddRect(screen_min, screen_max,
+			                                        ImGui::ColorConvertFloat4ToU32({1, 1, 1, 1.f}));
+
+			if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
+				clear_selection();
+			for (const auto& node : nodes)
+			{
+				if (screen_max.x > node->screen_min.x && screen_max.y > node->screen_min.y && screen_min.x < node->
+					screen_max.x && screen_min.y < node->screen_max.y)
+				{
+					add_to_selection(node, false);
+				}
+			}
 		}
 
-		if (selected_node)
-			bring_to_front(selected_node.get());
-
-		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) && !is_in_context_menu)
 		{
-			out_to_in = nullptr;
+			if (out_to_in)
+			{
+				open_context_menu();
+			}
 			if (in_to_out && in_to_out->target())
 				in_to_out->link_to(nullptr);
 			in_to_out = nullptr;
@@ -194,12 +347,40 @@ void Graph::draw()
 
 		if (out_to_in)
 		{
-			draw_connection(out_to_in->position, ImGui::GetMousePos(), out_to_in->on_get_type.execute());
+			draw_connection(out_to_in->position, is_in_context_menu ? context_menu_pos : ImGui::GetMousePos(),
+			                out_to_in->on_get_type.execute());
 		}
 
 		if (in_to_out)
 		{
 			draw_connection(ImGui::GetMousePos(), in_to_out->position, EType::Undefined);
+		}
+
+		const auto window_draw_list = ImGui::GetWindowDrawList();
+
+		if (ImGui::BeginPopup(("ContextMenu_" + name).c_str()))
+		{
+			for (const auto& node_type : registered_nodes)
+			{
+				if (ImGui::MenuItem(node_type.first.c_str()))
+				{
+					if (const auto node = spawn_by_name(node_type.first))
+					{
+						node->position = pos_to_graph(context_menu_pos, window_draw_list);
+						if (out_to_in && !node->inputs.empty())
+							node->inputs[0]->link_to(out_to_in);
+					}
+					ImGui::CloseCurrentPopup();
+				}
+			}
+
+
+			ImGui::EndPopup();
+		}
+		else if (is_in_context_menu)
+		{
+			out_to_in = nullptr;
+			is_in_context_menu = false;
 		}
 	}
 	ImGui::End();
@@ -264,8 +445,8 @@ void Graph::load_from_file(const std::string& in_name)
 	input >> js;
 
 	nodes.clear();
-	selected_node = nullptr;
-	hover_node = nullptr;
+	clear_selection();
+	hovered_node = nullptr;
 	out_to_in = nullptr;
 	in_to_out = nullptr;
 

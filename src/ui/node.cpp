@@ -32,20 +32,26 @@ std::string NodeOutput::get_code(CodeContext& code_context)
 	return *code;
 }
 
+void NodeOutput::break_links() const
+{
+	while (linked())
+		link_destinations[0]->link_to(nullptr);
+}
+
 void NodeInput::link_to(const std::shared_ptr<NodeOutput>& output)
 {
 	if (link_target != output)
 	{
 		if (link_target)
 		{
-			link_target->link_count--;
+			link_target->link_destinations.erase(std::find(link_target->link_destinations.begin(), link_target->link_destinations.end(), this));
 			link_target->owner().on_update.clear_object(owning_node);
 		}
 
 		link_target = output;
 		if (link_target)
 		{
-			link_target->link_count++;
+			link_target->link_destinations.emplace_back(this);
 			link_target->owner().on_update.add_object(owning_node, &Node::updated_tree);
 		}
 		owning_node->on_update();
@@ -139,46 +145,32 @@ static void custom_draw_callback(const ImDrawList* parent_list, const ImDrawCmd*
 	GL_CHECK_ERROR();
 }
 
-bool Node::display_internal(Graph& graph)
+void Node::display_internal(Graph& graph)
 {
-	const auto half_window = ImGui::GetWindowSize() / 2;
-
-	ImVec2 min = graph.pos * graph.zoom + half_window + ImGui::GetWindowPos() + position * graph.zoom;
-	ImVec2 max = graph.pos * graph.zoom + half_window + ImGui::GetWindowPos() + (position + size) * graph.zoom;
-
-	if (!graph.selected_node)
-		hover = ImGui::IsMouseHoveringRect(min + ImVec2{inputs.empty() ? 0.f : 39.f * graph.zoom, 0.f},
-		                                   max + ImVec2{outputs.empty() ? 0.f : -39.f * graph.zoom, 0.f});
-
-	// Handle drag
-	if (graph.selected_node.get() == this && ImGui::IsMouseDragging(ImGuiMouseButton_Left) && ImGui::GetActiveID() !=
-		ImGui::GetFocusID())
-	{
-		position = position + ImGui::GetMouseDragDelta(ImGuiMouseButton_Left) / graph.zoom;
-		ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
-		min = graph.pos * graph.zoom + half_window + ImGui::GetWindowPos() + position * graph.zoom;
-		max = graph.pos * graph.zoom + half_window + ImGui::GetWindowPos() + (position + size) * graph.zoom;
-	}
-
 	const float top_zoom = max(1.f, graph.zoom);
 
+	const bool selected = get_graph().is_selected(this);
+	const bool hovered = get_graph().is_hovered(this);
+
 	// Draw window at location
-	ImGui::SetCursorScreenPos(min - ImVec2{2, 2} * graph.zoom);
-	if (ImGui::BeginChild((name + std::to_string(uuid)).c_str(), max - min + ImVec2{4, 4} * graph.zoom, false,
+	ImGui::SetCursorScreenPos(screen_min - ImVec2{2, 2} * graph.zoom);
+	if (ImGui::BeginChild((name + std::to_string(uuid)).c_str(), screen_max - screen_min + ImVec2{4, 4} * graph.zoom,
+	                      false,
 	                      ImGuiWindowFlags_NoBackground))
 	{
-		ImGui::SetCursorScreenPos(min + ImVec2{25 * graph.zoom, 30 * top_zoom});
+		ImGui::SetCursorScreenPos(screen_min + ImVec2{25 * graph.zoom, 30 * top_zoom});
 		const auto dl = ImGui::GetWindowDrawList();
 		// Border
-		dl->AddRectFilled(min - ImVec2{2, 2} * graph.zoom, max + ImVec2{2, 2} * graph.zoom, BORDER_COLOR,
+		dl->AddRectFilled(screen_min - ImVec2{2, 2} * graph.zoom, screen_max + ImVec2{2, 2} * graph.zoom,
+		                  selected ? ImGui::ColorConvertFloat4ToU32({1, 1, 0, 1}) : BORDER_COLOR,
 		                  20 * graph.zoom);
 
 		// Draw background
-		dl->AddRectFilled(min, max, hover ? BG_COLOR_HOVER : BG_COLOR, 20 * graph.zoom);
+		dl->AddRectFilled(screen_min, screen_max, hovered ? BG_COLOR_HOVER : BG_COLOR, 20 * graph.zoom);
 
 		// Draw background
-		dl->PushClipRect(min, ImVec2{max.x, min.y + 30 * top_zoom}, true);
-		dl->AddRectFilled(min, {max.x, min.y + 60 * top_zoom}, TITLE_BG_COLOR, 20 * graph.zoom);
+		dl->PushClipRect(screen_min, ImVec2{screen_max.x, screen_min.y + 30 * top_zoom}, true);
+		dl->AddRectFilled(screen_min, {screen_max.x, screen_min.y + 60 * top_zoom}, TITLE_BG_COLOR, 20 * graph.zoom);
 		dl->PopClipRect();
 
 		// Draw content
@@ -186,7 +178,8 @@ bool Node::display_internal(Graph& graph)
 		                      ImGui::GetContentRegionAvail() - ImVec2{30 * graph.zoom, 10 * graph.zoom}, false,
 		                      ImGuiWindowFlags_NoBackground))
 		{
-			dl->PushClipRect(ImGui::GetWindowDrawList()->GetClipRectMin(), ImGui::GetWindowDrawList()->GetClipRectMax());
+			dl->PushClipRect(ImGui::GetWindowDrawList()->GetClipRectMin(),
+			                 ImGui::GetWindowDrawList()->GetClipRectMax());
 			dl->AddCallback(custom_draw_callback, this);
 			dl->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 			dl->PopClipRect();
@@ -196,18 +189,18 @@ bool Node::display_internal(Graph& graph)
 
 		// Draw name
 		ImGui::SetWindowFontScale(top_zoom);
-		dl->AddText({(min.x + max.x) / 2 - ImGui::CalcTextSize(name.c_str()).x / 2, min.y + 5.f * top_zoom},
+		dl->AddText({
+			            (screen_min.x + screen_max.x) / 2 - ImGui::CalcTextSize(name.c_str()).x / 2,
+			            screen_min.y + 5.f * top_zoom
+		            },
 		            ImGui::ColorConvertFloat4ToU32({1, 1, 1, 1}), name.c_str());
 
 		// Draw outputs points
-		const ImVec2 dims = max - (min + ImVec2{0, 25 * top_zoom + 10 * top_zoom});
+		const ImVec2 dims = screen_max - (screen_min + ImVec2{0, 25 * top_zoom + 10 * top_zoom});
 		{
 			const float step = dims.y / outputs.size();
-			float pos = dims.y / 2 - (step / 2 * (outputs.size() - 1));
 			for (const auto& output : outputs)
 			{
-				output->position = min + ImVec2{dims.x - 14 * graph.zoom, pos + 25 * top_zoom};
-				pos += step;
 				graph.draw_pin({
 					               .position = output->position,
 					               .radius = {25, step / 2 / graph.zoom},
@@ -220,11 +213,8 @@ bool Node::display_internal(Graph& graph)
 		// Draw input points
 		{
 			const float step = dims.y / inputs.size();
-			float pos = dims.y / 2 - (step / 2 * (inputs.size() - 1)) + 25 * top_zoom;
 			for (const auto& input : inputs)
 			{
-				input->position = min + ImVec2{14 * graph.zoom, pos};
-				pos += step;
 				graph.draw_pin({
 					               .position = input->position,
 					               .radius = {25, step / 2 / graph.zoom},
@@ -240,7 +230,7 @@ bool Node::display_internal(Graph& graph)
 	ImGui::EndChild();
 
 
-	if (hover)
+	if (hovered)
 	{
 		if (!outputs.empty() && (outputs[0]->on_get_type.execute() == EType::Float || outputs[0]->on_get_type.execute()
 			== EType::Float2 || outputs[0]->on_get_type.execute() == EType::Float3 || outputs[0]->on_get_type.execute()
@@ -252,8 +242,6 @@ bool Node::display_internal(Graph& graph)
 			ImGui::EndTooltip();
 		}
 	}
-
-	return hover;
 }
 
 std::shared_ptr<NodeInput> Node::add_input(std::string name)
@@ -305,4 +293,27 @@ std::shared_ptr<NodeInput> Node::input_by_name(const std::string& name) const
 void Node::updated_tree()
 {
 	on_update();
+}
+
+void Node::update_nodes_positions()
+{
+	screen_min = get_graph().pos_to_screen(position);
+	screen_max = get_graph().pos_to_screen(position + size);
+	
+	const float top_zoom = max(get_graph().zoom, 1);
+	float pos = 40 * get_graph().zoom;
+
+	for (const auto& input : inputs)
+	{
+		input->position = screen_min + ImVec2{14 * get_graph().zoom, pos};
+		pos += 40 * get_graph().zoom;
+	}
+
+	pos = 40 * get_graph().zoom;
+	const ImVec2 dims = screen_max - (screen_min + ImVec2{0, 25 * top_zoom + 10 * top_zoom});
+	for (const auto& output : outputs)
+	{
+		output->position = screen_min + ImVec2{dims.x - 14 * get_graph().zoom, pos};
+		pos += 40 * get_graph().zoom;
+	}
 }

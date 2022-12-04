@@ -3,7 +3,9 @@
 #include <imgui.h>
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <vector>
+#include "event_manager.h"
 
 class CodeContext;
 enum class EType;
@@ -30,23 +32,15 @@ public:
 	template <typename T, typename...Args_T>
 	std::shared_ptr<T> create_node(Args_T&&... args)
 	{
-		const auto node = std::make_shared<T>(std::forward<Args_T>(args)...);
+		const auto node = std::shared_ptr<T>(new T(std::forward<Args_T>(args)...));
 		nodes.emplace_back(node);
 		return node;
 	}
 
-	void begin_out_in(std::shared_ptr<NodeOutput> start);
-	void end_out_in(std::shared_ptr<NodeInput> end);
-
-	void begin_in_out(std::shared_ptr<NodeInput> start);
-	void end_in_out(std::shared_ptr<NodeOutput> end);
-
-	ImVec2 pos;
+	ImVec2 pos = {0, 0};
 	float zoom = 1;
 
 	void bring_to_front(const Node* node);
-	std::shared_ptr<Node> selected_node = nullptr;
-	std::shared_ptr<Node> hover_node = nullptr;
 
 	void load_from_file(const std::string& in_name);
 	void save_to_file();
@@ -61,17 +55,41 @@ public:
 	void draw_connection(ImVec2 from, ImVec2 to, EType connection_type) const;
 	void draw_pin(const MouseHit& pin_infos, EType type, bool connected, const std::string& name, bool text_left);
 
-	CodeContext& code_ctx() const { return *code_context; }
+	[[nodiscard]] CodeContext& code_ctx() const { return *code_context; }
 
-private:
+	void add_to_selection(const std::shared_ptr<Node>& node, bool should_bring_to_front = true);
+	void clear_selection();
+	[[nodiscard]] bool is_selected(Node* node) const;
+	[[nodiscard]] bool is_hovered(const Node* node) const;
 
 	bool add_detect_hit(const MouseHit& hit);
 
+	[[nodiscard]] ImVec2 pos_to_screen(const ImVec2& from, const ImDrawList* draw_list = nullptr) const;
+	[[nodiscard]] ImVec2 pos_to_graph(const ImVec2& from, const ImDrawList* draw_list = nullptr) const;
+
+
+	void remove_node(Node* erased_node);
+
+	void open_context_menu();
+	
+private:
+	void begin_out_in(std::shared_ptr<NodeOutput> start);
+	void end_out_in(std::shared_ptr<NodeInput> end);
+
+	void begin_in_out(std::shared_ptr<NodeInput> start);
+	void end_in_out(std::shared_ptr<NodeOutput> end);
+
+	std::unordered_set<Node*> selected_nodes;
+	std::shared_ptr<Node> hovered_node;
+	bool moving_node = false;
+	bool no_drag_before_release = true;
 	std::vector<MouseHit> hits;
 
 	std::shared_ptr<CodeContext> code_context;
 	std::shared_ptr<NodeOutput> out_to_in = nullptr;
 	std::shared_ptr<NodeInput> in_to_out = nullptr;
 	std::vector<std::shared_ptr<Node>> nodes;
+	std::shared_ptr<ImVec2> selection_rect_start;
+	bool is_in_context_menu = false;
+	ImVec2 context_menu_pos;
 };
-

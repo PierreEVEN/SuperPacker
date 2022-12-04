@@ -76,6 +76,11 @@ NodeTexture::NodeTexture()
 	path = add_input("path");
 }
 
+NodeTexture::~NodeTexture()
+{
+	texture_uniform->unregister();
+}
+
 void NodeTexture::register_uniform(CodeContext& ctx)
 {
 	Node::register_uniform(ctx);

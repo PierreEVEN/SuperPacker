@@ -5,6 +5,7 @@ class NodeTexture : public Node
 {
 public:
 	NodeTexture();
+	virtual ~NodeTexture();
 
 	void display() override;
 	void register_uniform(CodeContext& ctx) override;
