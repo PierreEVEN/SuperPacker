@@ -1,572 +1,258 @@
 {
     "name": "test",
     "nodes": {
-        "Break Color_123": {
-            "height": 200.0,
-            "inputs": {
-                "In": {
-                    "from": "result",
-                    "to": "In",
-                    "uuid": 84
-                }
-            },
-            "name": "Break Color",
-            "type": "Break Color",
-            "uuid": 123,
-            "width": 300.0,
-            "x": 1890.8477783203125,
-            "y": -892.0682983398438
-        },
-        "Break Color_45": {
-            "height": 200.0,
-            "inputs": {
-                "In": {
-                    "from": "result",
-                    "to": "In",
-                    "uuid": 15
-                }
-            },
-            "name": "Break Color",
-            "type": "Break Color",
-            "uuid": 45,
-            "width": 300.0,
-            "x": 886.9766845703125,
-            "y": -2.205430030822754
-        },
-        "Break Color_82": {
-            "height": 200.0,
-            "inputs": {
-                "In": {
-                    "from": "result",
-                    "to": "In",
-                    "uuid": 26
-                }
-            },
-            "name": "Break Color",
-            "type": "Break Color",
-            "uuid": 82,
-            "width": 300.0,
-            "x": 1108.1229248046875,
-            "y": -634.7836303710938
-        },
-        "Float 4_15": {
-            "height": 200.0,
-            "inputs": {
-                "a": {
-                    "from": "A",
-                    "to": "a",
-                    "uuid": 7
-                },
-                "b": {
-                    "from": "R",
-                    "to": "b",
-                    "uuid": 7
-                },
-                "g": {
-                    "from": "G",
-                    "to": "g",
-                    "uuid": 7
-                },
-                "r": {
-                    "from": "B",
-                    "to": "r",
-                    "uuid": 7
-                }
-            },
-            "name": "Float 4",
-            "type": "Make Float4",
-            "uuid": 15,
-            "width": 300.0,
-            "x": 388.6695251464844,
-            "y": 427.8330993652344
-        },
-        "Float_124": {
-            "height": 200.0,
-            "inputs": null,
-            "name": "Float",
-            "type": "Constant",
-            "uuid": 124,
-            "value": 0.0,
-            "width": 300.0,
-            "x": 1823.9908447265625,
-            "y": -673.7520141601563
-        },
-        "Float_5": {
-            "height": 200.0,
-            "inputs": null,
-            "name": "Float",
-            "type": "Constant",
-            "uuid": 5,
-            "value": 0.7799999713897705,
-            "width": 300.0,
-            "x": 908.9268798828125,
-            "y": 295.70159912109375
-        },
-        "Image Write_150": {
-            "height": 200.0,
-            "inputs": {
-                "Path": {
-                    "from": "text",
-                    "to": "Path",
-                    "uuid": 151
-                },
-                "RGBA": {
-                    "from": "result",
-                    "to": "RGBA",
-                    "uuid": 4
-                }
-            },
-            "name": "Image Write",
-            "type": "ImageWrite",
-            "uuid": 150,
-            "width": 300.0,
-            "x": 1638.2552490234375,
-            "y": -1169.2855224609375
-        },
-        "Image Write_2": {
-            "height": 200.0,
-            "inputs": {
-                "Path": {
-                    "from": "text",
-                    "to": "Path",
-                    "uuid": 3
-                },
-                "RGBA": {
-                    "from": "result",
-                    "to": "RGBA",
-                    "uuid": 15
-                }
-            },
-            "name": "Image Write",
-            "type": "ImageWrite",
-            "uuid": 2,
-            "width": 300.0,
-            "x": 767.6404418945313,
-            "y": 636.340087890625
-        },
-        "Image Write_69": {
-            "height": 200.0,
-            "inputs": {
-                "Path": {
-                    "from": "text",
-                    "to": "Path",
-                    "uuid": 0
-                },
-                "RGBA": {
-                    "from": "result",
-                    "to": "RGBA",
-                    "uuid": 59
-                }
-            },
-            "name": "Image Write",
-            "type": "ImageWrite",
-            "uuid": 69,
-            "width": 300.0,
-            "x": 2398.170654296875,
-            "y": 164.28335571289063
-        },
-        "Image Write_83": {
-            "height": 200.0,
-            "inputs": {
-                "Path": {
-                    "from": "text",
-                    "to": "Path",
-                    "uuid": 0
-                },
-                "RGBA": {
-                    "from": "result",
-                    "to": "RGBA",
-                    "uuid": 120
-                }
-            },
-            "name": "Image Write",
-            "type": "ImageWrite",
-            "uuid": 83,
-            "width": 300.0,
-            "x": 2983.413330078125,
-            "y": -814.8220825195313
-        },
-        "Make Float2_35": {
-            "height": 200.0,
-            "inputs": {
-                "g": {
-                    "from": "B",
-                    "to": "g",
-                    "uuid": 1
-                },
-                "r": {
-                    "from": "G",
-                    "to": "r",
-                    "uuid": 1
-                }
-            },
-            "name": "Make Float2",
-            "type": "Make Float2",
-            "uuid": 35,
-            "width": 300.0,
-            "x": 431.9224853515625,
-            "y": -845.99169921875
-        },
-        "Make Float3_26": {
-            "height": 200.0,
-            "inputs": {
-                "b": {
-                    "from": "B",
-                    "to": "b",
-                    "uuid": 7
-                },
-                "g": {
-                    "from": "G",
-                    "to": "g",
-                    "uuid": 7
-                },
-                "r": {
-                    "from": "R",
-                    "to": "r",
-                    "uuid": 7
-                }
-            },
-            "name": "Make Float3",
-            "type": "Make Float3",
-            "uuid": 26,
-            "width": 300.0,
-            "x": 798.280029296875,
-            "y": -627.42431640625
-        },
-        "Make Float3_84": {
-            "height": 200.0,
-            "inputs": {
-                "b": {
-                    "from": "A",
-                    "to": "b",
-                    "uuid": 82
-                },
-                "g": {
-                    "from": "G",
-                    "to": "g",
-                    "uuid": 82
-                },
-                "r": {
-                    "from": "R",
-                    "to": "r",
-                    "uuid": 82
-                }
-            },
-            "name": "Make Float3",
-            "type": "Make Float3",
-            "uuid": 84,
-            "width": 300.0,
-            "x": 1577.7940673828125,
-            "y": -889.8180541992188
-        },
-        "Make Float4_122": {
-            "height": 200.0,
-            "inputs": {
-                "a": {
-                    "from": "value",
-                    "to": "a",
-                    "uuid": 124
-                },
-                "b": {
-                    "from": "B",
-                    "to": "b",
-                    "uuid": 123
-                },
-                "g": {
-                    "from": "G",
-                    "to": "g",
-                    "uuid": 123
-                },
-                "r": {
-                    "from": "R",
-                    "to": "r",
-                    "uuid": 123
-                }
-            },
-            "name": "Make Float4",
-            "type": "Make Float4",
-            "uuid": 122,
-            "width": 300.0,
-            "x": 2285.291015625,
-            "y": -837.9259643554688
-        },
-        "Make Float4_59": {
-            "height": 200.0,
-            "inputs": {
-                "a": {
-                    "from": "result",
-                    "to": "a",
-                    "uuid": 68
-                },
-                "b": {
-                    "from": "B",
-                    "to": "b",
-                    "uuid": 45
-                },
-                "g": {
-                    "from": "G",
-                    "to": "g",
-                    "uuid": 45
-                },
-                "r": {
-                    "from": "R",
-                    "to": "r",
-                    "uuid": 45
-                }
-            },
-            "name": "Make Float4",
-            "type": "Make Float4",
-            "uuid": 59,
-            "width": 300.0,
-            "x": 1897.3270263671875,
-            "y": 122.17778778076172
-        },
-        "Make Float4_85": {
-            "height": 200.0,
-            "inputs": {
-                "a": {
-                    "from": "A",
-                    "to": "a",
-                    "uuid": 1
-                },
-                "b": {
-                    "from": "G",
-                    "to": "b",
-                    "uuid": 82
-                },
-                "g": {
-                    "from": "R",
-                    "to": "g",
-                    "uuid": 82
-                },
-                "r": {
-                    "from": "B",
-                    "to": "r",
-                    "uuid": 82
-                }
-            },
-            "name": "Make Float4",
-            "type": "Make Float4",
-            "uuid": 85,
-            "width": 300.0,
-            "x": 1775.7305908203125,
-            "y": -410.2832946777344
-        },
-        "String_0": {
-            "height": 200.0,
-            "inputs": null,
-            "name": "String",
-            "type": "String",
-            "uuid": 0,
-            "value": "out/combine2/png",
-            "width": 300.0,
-            "x": 1753.8607177734375,
-            "y": -104.93563842773438
-        },
-        "String_102": {
-            "height": 200.0,
+        "Append String_1": {
+            "height": 110.0,
             "inputs": {
                 "A": {
                     "from": "text",
                     "to": "A",
-                    "uuid": 8
+                    "uuid": 2
                 },
                 "B": {
                     "from": "text",
                     "to": "B",
-                    "uuid": 111
+                    "uuid": 4
                 }
             },
-            "name": "String",
-            "type": "Append String",
-            "uuid": 102,
-            "width": 300.0,
-            "x": -314.9712829589844,
-            "y": -177.8570556640625
-        },
-        "String_111": {
-            "height": 200.0,
-            "inputs": null,
-            "name": "String",
-            "type": "String",
-            "uuid": 111,
-            "value": "icon.png",
-            "width": 300.0,
-            "x": -676.9688720703125,
-            "y": -45.76405334472656
-        },
-        "String_151": {
-            "height": 200.0,
-            "inputs": null,
-            "name": "String",
-            "type": "String",
-            "uuid": 151,
-            "value": "test.jpg",
-            "width": 300.0,
-            "x": 1220.1453857421875,
-            "y": -1150.135498046875
-        },
-        "String_3": {
-            "height": 200.0,
-            "inputs": null,
-            "name": "String",
-            "type": "String",
-            "uuid": 3,
-            "value": "out/combined.png",
-            "width": 300.0,
-            "x": 219.42608642578125,
-            "y": 754.340087890625
-        },
-        "String_8": {
-            "height": 200.0,
-            "inputs": null,
-            "name": "String",
-            "type": "String",
-            "uuid": 8,
-            "value": "resources/",
-            "width": 300.0,
-            "x": -677.1348876953125,
-            "y": -248.1373291015625
-        },
-        "Texture_1": {
-            "height": 200.0,
-            "inputs": {
-                "path": {
-                    "from": "Result",
-                    "to": "path",
-                    "uuid": 102
-                }
-            },
-            "name": "Texture",
-            "type": "Texture",
+            "name": "Append String",
+            "type": "class AppendString",
             "uuid": 1,
             "width": 300.0,
-            "x": -5.0493083000183105,
-            "y": -510.5755615234375
+            "x": 509.8244934082031,
+            "y": 141.70437622070313
         },
-        "Texture_7": {
-            "height": 200.0,
+        "Append String_41": {
+            "height": 110.0,
             "inputs": {
-                "path": {
-                    "from": "Result",
-                    "to": "path",
-                    "uuid": 102
-                }
-            },
-            "name": "Texture",
-            "type": "Texture",
-            "uuid": 7,
-            "width": 300.0,
-            "x": 21.729276657104492,
-            "y": 420.5052185058594
-        },
-        "add_120": {
-            "height": 200.0,
-            "inputs": {
-                "a": {
-                    "from": "result",
-                    "to": "a",
-                    "uuid": 122
-                },
-                "b": {
-                    "from": "result",
-                    "to": "b",
-                    "uuid": 85
-                }
-            },
-            "name": "add",
-            "type": "Add",
-            "uuid": 120,
-            "width": 300.0,
-            "x": 2662.433837890625,
-            "y": -813.1207885742188
-        },
-        "add_4": {
-            "height": 200.0,
-            "inputs": {
-                "a": {
-                    "from": "result",
-                    "to": "a",
-                    "uuid": 6
-                },
-                "b": {
-                    "from": "R",
-                    "to": "b",
-                    "uuid": 1
-                }
-            },
-            "name": "add",
-            "type": "Add",
-            "uuid": 4,
-            "width": 300.0,
-            "x": 1071.779052734375,
-            "y": -853.0684814453125
-        },
-        "add_9": {
-            "height": 200.0,
-            "inputs": {
-                "a": {
-                    "from": "RGBA",
-                    "to": "a",
-                    "uuid": 1
-                },
-                "b": {
-                    "from": "Color",
-                    "to": "b",
+                "A": {
+                    "from": "text",
+                    "to": "A",
                     "uuid": 2
+                },
+                "B": {
+                    "from": "text",
+                    "to": "B",
+                    "uuid": 43
                 }
             },
-            "name": "add",
-            "type": "Add",
-            "uuid": 9,
+            "name": "Append String",
+            "type": "class AppendString",
+            "uuid": 41,
             "width": 300.0,
-            "x": 1306.4710693359375,
-            "y": 561.103515625
+            "x": 517.53515625,
+            "y": 381.0141906738281
         },
-        "mult_6": {
-            "height": 200.0,
+        "Append String_46": {
+            "height": 110.0,
             "inputs": {
-                "a": {
-                    "from": "A",
-                    "to": "a",
-                    "uuid": 1
+                "A": {
+                    "from": "text",
+                    "to": "A",
+                    "uuid": 2
                 },
-                "b": {
-                    "from": "result",
-                    "to": "b",
-                    "uuid": 35
-                }
-            },
-            "name": "mult",
-            "type": "Mult",
-            "uuid": 6,
-            "width": 300.0,
-            "x": 750.4724731445313,
-            "y": -888.7258911132813
-        },
-        "mult_68": {
-            "height": 200.0,
-            "inputs": {
-                "a": {
-                    "from": "value",
-                    "to": "a",
-                    "uuid": 5
-                },
-                "b": {
-                    "from": "A",
-                    "to": "b",
+                "B": {
+                    "from": "text",
+                    "to": "B",
                     "uuid": 45
                 }
             },
-            "name": "mult",
-            "type": "Mult",
-            "uuid": 68,
+            "name": "Append String",
+            "type": "class AppendString",
+            "uuid": 46,
             "width": 300.0,
-            "x": 1459.6734619140625,
-            "y": 238.09625244140625
+            "x": 518.4285888671875,
+            "y": 609.8878173828125
+        },
+        "Float_63": {
+            "height": 70.0,
+            "inputs": null,
+            "name": "Float",
+            "type": "class NodeFloat",
+            "uuid": 63,
+            "value": 0.3799999952316284,
+            "width": 300.0,
+            "x": 824.9130249023438,
+            "y": 9.406418800354004
+        },
+        "Image Write_6": {
+            "height": 110.0,
+            "inputs": {
+                "Path": {
+                    "from": "text",
+                    "to": "Path",
+                    "uuid": 33
+                },
+                "RGBA": {
+                    "from": "result",
+                    "to": "RGBA",
+                    "uuid": 50
+                }
+            },
+            "name": "Image Write",
+            "type": "class ImageWriteNode",
+            "uuid": 6,
+            "width": 300.0,
+            "x": 2137.002685546875,
+            "y": 427.54443359375
+        },
+        "Make Float4_50": {
+            "height": 190.0,
+            "inputs": {
+                "a": {
+                    "from": "A",
+                    "to": "a",
+                    "uuid": 47
+                },
+                "b": {
+                    "from": "result",
+                    "to": "b",
+                    "uuid": 62
+                },
+                "g": {
+                    "from": "G",
+                    "to": "g",
+                    "uuid": 5
+                },
+                "r": {
+                    "from": "B",
+                    "to": "r",
+                    "uuid": 44
+                }
+            },
+            "name": "Make Float4",
+            "type": "class MakeFloat4",
+            "uuid": 50,
+            "width": 300.0,
+            "x": 1750.9683837890625,
+            "y": 346.1405029296875
+        },
+        "String_2": {
+            "height": 70.0,
+            "inputs": null,
+            "name": "String",
+            "type": "class NodeString",
+            "uuid": 2,
+            "value": "resources/",
+            "width": 300.0,
+            "x": -390.4271240234375,
+            "y": 371.5205993652344
+        },
+        "String_33": {
+            "height": 70.0,
+            "inputs": null,
+            "name": "String",
+            "type": "class NodeString",
+            "uuid": 33,
+            "value": "bop.jpg",
+            "width": 300.0,
+            "x": 1750.0865478515625,
+            "y": 540.4746704101563
+        },
+        "String_4": {
+            "height": 70.0,
+            "inputs": null,
+            "name": "String",
+            "type": "class NodeString",
+            "uuid": 4,
+            "value": "times_square.jpg",
+            "width": 300.0,
+            "x": 151.3677978515625,
+            "y": 177.71153259277344
+        },
+        "String_43": {
+            "height": 70.0,
+            "inputs": null,
+            "name": "String",
+            "type": "class NodeString",
+            "uuid": 43,
+            "value": "appicon.ico",
+            "width": 300.0,
+            "x": 132.0155487060547,
+            "y": 416.611328125
+        },
+        "String_45": {
+            "height": 70.0,
+            "inputs": null,
+            "name": "String",
+            "type": "class NodeString",
+            "uuid": 45,
+            "value": "icon.png",
+            "width": 300.0,
+            "x": 132.81776428222656,
+            "y": 645.5104370117188
+        },
+        "Texture_44": {
+            "height": 230.0,
+            "inputs": {
+                "path": {
+                    "from": "Result",
+                    "to": "path",
+                    "uuid": 41
+                }
+            },
+            "name": "Texture",
+            "type": "class NodeTexture",
+            "uuid": 44,
+            "width": 300.0,
+            "x": 830.1116333007813,
+            "y": 319.6453857421875
+        },
+        "Texture_47": {
+            "height": 230.0,
+            "inputs": {
+                "path": {
+                    "from": "Result",
+                    "to": "path",
+                    "uuid": 46
+                }
+            },
+            "name": "Texture",
+            "type": "class NodeTexture",
+            "uuid": 47,
+            "width": 300.0,
+            "x": 832.2868041992188,
+            "y": 552.330810546875
+        },
+        "Texture_5": {
+            "height": 230.0,
+            "inputs": {
+                "path": {
+                    "from": "Result",
+                    "to": "path",
+                    "uuid": 1
+                }
+            },
+            "name": "Texture",
+            "type": "class NodeTexture",
+            "uuid": 5,
+            "width": 300.0,
+            "x": 824.71533203125,
+            "y": 84.48563385009766
+        },
+        "add_62": {
+            "height": 110.0,
+            "inputs": {
+                "a": {
+                    "from": "R",
+                    "to": "a",
+                    "uuid": 44
+                },
+                "b": {
+                    "from": "value",
+                    "to": "b",
+                    "uuid": 63
+                }
+            },
+            "name": "add",
+            "type": "class NodeAdd",
+            "uuid": 62,
+            "width": 300.0,
+            "x": 1277.91650390625,
+            "y": 341.1959533691406
         }
     },
-    "pos_x": -1591.988525390625,
-    "pos_y": 71.91427612304688,
-    "zoom": 0.27393749356269836
+    "pos_x": -976.7831420898438,
+    "pos_y": -479.85675048828125,
+    "zoom": 1.3254680633544922
 }

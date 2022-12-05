@@ -45,7 +45,6 @@ public:
 	void load_from_file(const std::string& in_name);
 	void save_to_file();
 
-	static void register_node(const std::string& type_name, std::function<std::shared_ptr<Node>()> constructor);
 	std::shared_ptr<Node> spawn_by_name(const std::string& type_name);
 
 	std::string name;
@@ -71,8 +70,15 @@ public:
 	void remove_node(Node* erased_node);
 
 	void open_context_menu();
-	
+
+	template<typename T> static void register_node()
+	{
+		register_node(typeid(T).name(), []() { return std::make_shared<T>(); });
+	}
+
 private:
+	static void register_node(const std::string& type_name, std::function<std::shared_ptr<Node>()> constructor);
+
 	void begin_out_in(std::shared_ptr<NodeOutput> start);
 	void end_out_in(std::shared_ptr<NodeInput> end);
 

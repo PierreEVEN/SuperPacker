@@ -18,9 +18,13 @@ NodeString::NodeString() : Node("String")
 void NodeString::display()
 {
 	char buf[2048];
+
 	strcpy_s(buf, std::min(value.length() + 1, static_cast<size_t>(256)), value.c_str());
-	if (ImGui::InputText("value", buf, 2048)) {
+	if (ImGui::InputTextMultiline("value", buf, 2048, ImGui::GetContentRegionAvail(),
+	                              ImGuiInputTextFlags_CtrlEnterForNewLine))
+	{
 		value = buf;
+		mark_dirty();
 	}
 }
 
@@ -42,18 +46,36 @@ AppendString::AppendString() : Node("Append String")
 {
 	a = add_input("A");
 	b = add_input("B");
-	const auto out = add_output("Result");
+	out = add_output("Result");
 	out->on_get_type.add_lambda([] { return EType::String; });
 	out->on_get_code.add_lambda([&](CodeContext& context)-> std::string
+	{
+		if (!*a && !*b)
 		{
-			if (!*b && *a)
-				return a->target()->get_code(context);
-			if (!*a && *b)
-				return b->target()->get_code(context);
+			return "";
+		}
 
-			if (!*a && !*b)
-				return "";
+		if (!*b && *a)
+		{
+			return a->target()->get_code(get_graph().code_ctx());
+		}
+		if (!*a && *b)
+		{
+			return b->target()->get_code(get_graph().code_ctx());
+		}
 
-			return a->target()->get_code(context) + b->target()->get_code(context);
-		});
+		const auto val = a->target()->get_code(get_graph().code_ctx()) + b->target()->get_code(get_graph().code_ctx());
+
+		return val;
+	});
+
+	on_update.add_lambda([&]
+	{
+		value = out->on_get_code.execute(get_graph().code_ctx());
+	});
+}
+
+void AppendString::display()
+{
+	ImGui::TextWrapped("%s", value.c_str());
 }

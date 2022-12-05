@@ -100,11 +100,15 @@ public:
 
 	EventUpdateNode on_update;
 
-	void updated_tree();
+	void mark_dirty();
 
 	[[nodiscard]] Graph& get_graph() const { return *owning_graph; }
+	
 
 protected:
+
+	float calc_min_height() const;
+
 	virtual void register_uniform(CodeContext& ctx)
 	{
 	}

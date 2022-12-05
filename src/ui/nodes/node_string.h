@@ -21,9 +21,13 @@ class AppendString : public Node
 {
 public:
 	AppendString();
-	void display() override {}
+	void display() override;
 
 private:
+
+	std::string value;
+
 	std::shared_ptr<NodeInput> a;
 	std::shared_ptr<NodeInput> b;
+	std::shared_ptr<NodeOutput> out;
 };

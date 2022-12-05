@@ -27,8 +27,9 @@ void Node::draw_connections(const Graph& graph) const
 std::string NodeOutput::get_code(CodeContext& code_context)
 {
 	if (!code)
+	{
 		code = std::make_shared<std::string>(on_get_code.execute(code_context));
-
+	}
 	return *code;
 }
 
@@ -44,7 +45,8 @@ void NodeInput::link_to(const std::shared_ptr<NodeOutput>& output)
 	{
 		if (link_target)
 		{
-			link_target->link_destinations.erase(std::find(link_target->link_destinations.begin(), link_target->link_destinations.end(), this));
+			link_target->link_destinations.erase(std::find(link_target->link_destinations.begin(),
+			                                               link_target->link_destinations.end(), this));
 			link_target->owner().on_update.clear_object(owning_node);
 		}
 
@@ -52,9 +54,9 @@ void NodeInput::link_to(const std::shared_ptr<NodeOutput>& output)
 		if (link_target)
 		{
 			link_target->link_destinations.emplace_back(this);
-			link_target->owner().on_update.add_object(owning_node, &Node::updated_tree);
+			link_target->owner().on_update.add_object(owning_node, &Node::mark_dirty);
 		}
-		owning_node->on_update();
+		owning_node->mark_dirty();
 	}
 }
 
@@ -63,12 +65,6 @@ Node::Node(std::string in_name) : name(std::move(in_name))
 	uuid = node_uuids++;
 	position = {20, 20};
 	size = {300, 200};
-
-	on_update.add_lambda([&]()
-	{
-		for (const auto& output : outputs)
-			output->mark_dirty();
-	});
 }
 
 
@@ -147,7 +143,7 @@ static void custom_draw_callback(const ImDrawList* parent_list, const ImDrawCmd*
 
 void Node::display_internal(Graph& graph)
 {
-	const float top_zoom = max(1.f, graph.zoom);
+	ImGui::SetWindowFontScale(get_graph().zoom);
 
 	const bool selected = get_graph().is_selected(this);
 	const bool hovered = get_graph().is_hovered(this);
@@ -158,7 +154,7 @@ void Node::display_internal(Graph& graph)
 	                      false,
 	                      ImGuiWindowFlags_NoBackground))
 	{
-		ImGui::SetCursorScreenPos(screen_min + ImVec2{25 * graph.zoom, 30 * top_zoom});
+		ImGui::SetCursorScreenPos(screen_min + ImVec2{25 * graph.zoom, 30 * get_graph().zoom});
 		const auto dl = ImGui::GetWindowDrawList();
 		// Border
 		dl->AddRectFilled(screen_min - ImVec2{2, 2} * graph.zoom, screen_max + ImVec2{2, 2} * graph.zoom,
@@ -169,34 +165,36 @@ void Node::display_internal(Graph& graph)
 		dl->AddRectFilled(screen_min, screen_max, hovered ? BG_COLOR_HOVER : BG_COLOR, 20 * graph.zoom);
 
 		// Draw background
-		dl->PushClipRect(screen_min, ImVec2{screen_max.x, screen_min.y + 30 * top_zoom}, true);
-		dl->AddRectFilled(screen_min, {screen_max.x, screen_min.y + 60 * top_zoom}, TITLE_BG_COLOR, 20 * graph.zoom);
+		dl->PushClipRect(screen_min, ImVec2{screen_max.x, screen_min.y + 30 * get_graph().zoom}, true);
+		dl->AddRectFilled(screen_min, {screen_max.x, screen_min.y + 60 * get_graph().zoom}, TITLE_BG_COLOR,
+		                  20 * graph.zoom);
 		dl->PopClipRect();
 
 		// Draw content
 		if (ImGui::BeginChild((name + "_content_" + std::to_string(uuid)).c_str(),
-		                      ImGui::GetContentRegionAvail() - ImVec2{30 * graph.zoom, 10 * graph.zoom}, false,
+		                      ImGui::GetContentRegionAvail() - ImVec2{30 * graph.zoom, 2 * graph.zoom}, false,
 		                      ImGuiWindowFlags_NoBackground))
 		{
-			dl->PushClipRect(ImGui::GetWindowDrawList()->GetClipRectMin(),
-			                 ImGui::GetWindowDrawList()->GetClipRectMax());
+			ImGui::SetWindowFontScale(get_graph().zoom);
+			dl->PushClipRect(screen_min + ImVec2{ 25 * graph.zoom, 30 * get_graph().zoom },
+				screen_min + ImVec2{ 25 * graph.zoom, 30 * get_graph().zoom } + ImGui::GetContentRegionAvail() - ImVec2{ 30 * graph.zoom, 2 * graph.zoom });
 			dl->AddCallback(custom_draw_callback, this);
 			dl->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 			dl->PopClipRect();
 			display();
+			ImGui::SetWindowFontScale(1);
 		}
 		ImGui::EndChild();
 
 		// Draw name
-		ImGui::SetWindowFontScale(top_zoom);
 		dl->AddText({
 			            (screen_min.x + screen_max.x) / 2 - ImGui::CalcTextSize(name.c_str()).x / 2,
-			            screen_min.y + 5.f * top_zoom
+			            screen_min.y + 5.f * get_graph().zoom
 		            },
 		            ImGui::ColorConvertFloat4ToU32({1, 1, 1, 1}), name.c_str());
 
 		// Draw outputs points
-		const ImVec2 dims = screen_max - (screen_min + ImVec2{0, 25 * top_zoom + 10 * top_zoom});
+		const ImVec2 dims = screen_max - (screen_min + ImVec2{0, 25 * get_graph().zoom + 10 * get_graph().zoom});
 		{
 			const float step = dims.y / outputs.size();
 			for (const auto& output : outputs)
@@ -225,12 +223,12 @@ void Node::display_internal(Graph& graph)
 				               input->name, false);
 			}
 		}
-		ImGui::SetWindowFontScale(1);
 	}
 	ImGui::EndChild();
 
+	ImGui::SetWindowFontScale(1);
 
-	if (hovered && false)
+	if (hovered)
 	{
 		if (!outputs.empty() && (outputs[0]->on_get_type.execute() == EType::Float || outputs[0]->on_get_type.execute()
 			== EType::Float2 || outputs[0]->on_get_type.execute() == EType::Float3 || outputs[0]->on_get_type.execute()
@@ -290,30 +288,43 @@ std::shared_ptr<NodeInput> Node::input_by_name(const std::string& name) const
 	return nullptr;
 }
 
-void Node::updated_tree()
+void Node::mark_dirty()
 {
+	for (const auto& output : outputs)
+		output->mark_dirty();
 	on_update();
+}
+
+float Node::calc_min_height() const
+{
+	return max(outputs.size(), inputs.size()) * 40.f + 30.f;
 }
 
 void Node::update_nodes_positions()
 {
+	size.y = calc_min_height();
+
 	screen_min = get_graph().pos_to_screen(position);
 	screen_max = get_graph().pos_to_screen(position + size);
-	
-	const float top_zoom = max(get_graph().zoom, 1);
-	float pos = 40 * get_graph().zoom;
 
+	const float header_height = 35 * get_graph().zoom;
+	const float available_space = screen_max.y - screen_min.y - header_height - 10 * get_graph().zoom;
+	const float initial_pos = header_height + available_space / 2;
+
+	const float input_step = available_space / inputs.size();
+	float input_pos = initial_pos - input_step * (inputs.size() - 1) / 2;
 	for (const auto& input : inputs)
 	{
-		input->position = screen_min + ImVec2{14 * get_graph().zoom, pos};
-		pos += 40 * get_graph().zoom;
+		input->position = screen_min + ImVec2{14 * get_graph().zoom, input_pos};
+		input_pos += input_step;
 	}
 
-	pos = 40 * get_graph().zoom;
-	const ImVec2 dims = screen_max - (screen_min + ImVec2{0, 25 * top_zoom + 10 * top_zoom});
+	const float output_step = available_space / outputs.size();
+	float output_pos = initial_pos - output_step * (outputs.size() - 1) / 2;
+	const ImVec2 dims = screen_max - (screen_min + ImVec2{0, 25 * get_graph().zoom + 10 * get_graph().zoom});
 	for (const auto& output : outputs)
 	{
-		output->position = screen_min + ImVec2{dims.x - 14 * get_graph().zoom, pos};
-		pos += 40 * get_graph().zoom;
+		output->position = screen_min + ImVec2{dims.x - 14 * get_graph().zoom, output_pos};
+		output_pos += output_step;
 	}
 }

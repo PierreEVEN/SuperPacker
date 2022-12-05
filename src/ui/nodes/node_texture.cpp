@@ -8,27 +8,6 @@
 /*
  * TEXTURE INPUT
  */
-void NodeTexture::load_or_reload()
-{
-	if (!path->target() || path->target()->on_get_type.execute() != EType::String)
-	{
-		texture = nullptr;
-		return;
-	}
-
-	const std::filesystem::path file = path->target()->on_get_code.execute(get_graph().code_ctx());
-
-	if (!exists(file))
-	{
-		texture = nullptr;
-		return;
-	}
-
-	if (!texture || texture->get_path() != file)
-	{
-		texture = Texture::create(file);
-	}
-}
 
 NodeTexture::NodeTexture()
 	: Node("Texture")
@@ -37,7 +16,8 @@ NodeTexture::NodeTexture()
 	col->on_get_type.add_lambda([]() { return EType::Float4; });
 	col->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		return std::format("{} = texture2D({}, vec2(text_coords.x, 1 - text_coords.y)) * {};", context.glsl_output_var(EType::Float4),
+		return std::format("{} = vec4(texture2D({}, vec2(text_coords.x, 1 - text_coords.y)) * {});",
+		                   context.glsl_output_var(EType::Float4),
 		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
@@ -45,7 +25,8 @@ NodeTexture::NodeTexture()
 	r->on_get_type.add_lambda([]() { return EType::Float; });
 	r->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		return std::format("{} = texture2D({}, vec2(text_coords.x, 1 - text_coords.y)).r * {};", context.glsl_output_var(EType::Float),
+		return std::format("{} = texture2D({}, vec2(text_coords.x, 1 - text_coords.y)).r * {};",
+		                   context.glsl_output_var(EType::Float),
 		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
@@ -53,7 +34,8 @@ NodeTexture::NodeTexture()
 	g->on_get_type.add_lambda([]() { return EType::Float; });
 	g->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		return std::format("{} = texture2D({}, vec2(text_coords.x, 1 - text_coords.y)).g * {};", context.glsl_output_var(EType::Float),
+		return std::format("{} = texture2D({}, vec2(text_coords.x, 1 - text_coords.y)).g * {};",
+		                   context.glsl_output_var(EType::Float),
 		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
@@ -61,7 +43,8 @@ NodeTexture::NodeTexture()
 	b->on_get_type.add_lambda([]() { return EType::Float; });
 	b->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		return std::format("{} = texture2D({}, vec2(text_coords.x, 1 - text_coords.y)).b * {};", context.glsl_output_var(EType::Float),
+		return std::format("{} = texture2D({}, vec2(text_coords.x, 1 - text_coords.y)).b * {};",
+		                   context.glsl_output_var(EType::Float),
 		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
@@ -69,11 +52,32 @@ NodeTexture::NodeTexture()
 	a->on_get_type.add_lambda([]() { return EType::Float; });
 	a->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		return std::format("{} = texture2D({}, vec2(text_coords.x, 1 - text_coords.y)).a * {};", context.glsl_output_var(EType::Float),
+		return std::format("{} = texture2D({}, vec2(text_coords.x, 1 - text_coords.y)).a * {};",
+		                   context.glsl_output_var(EType::Float),
 		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
 	path = add_input("path");
+
+	texture_data.on_data_changed.add_lambda([&]
+	{
+		if (texture_data.is_valid())
+		{
+			texture = Texture::create(texture_data.get_path());
+		}
+		else
+		{
+			texture = nullptr;
+		}
+	});
+
+	on_update.add_lambda([&]
+	{
+		if (*path)
+			texture_data.set_path(path->target()->get_code(get_graph().code_ctx()));
+		else
+			texture_data.set_path("");
+	});
 }
 
 NodeTexture::~NodeTexture()
@@ -100,7 +104,7 @@ void NodeTexture::register_uniform(CodeContext& ctx)
 	enabled_uniform = ctx.add_uniform(EType::Int);
 	enabled_uniform->on_update_value.add_lambda([&](int location)
 	{
-		glUniform1i(location, texture ? 1 : 0);
+		glUniform1i(location, texture && texture->ready() ? 1 : 0);
 		glGetError();
 		GL_CHECK_ERROR();
 	});
@@ -108,7 +112,6 @@ void NodeTexture::register_uniform(CodeContext& ctx)
 
 void NodeTexture::display()
 {
-	load_or_reload();
 }
 
 /*

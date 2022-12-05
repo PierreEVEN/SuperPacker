@@ -1,9 +1,9 @@
-
 #include <FreeImagePlus.h>
 
 #include "texture.h"
 
 #include <filesystem>
+#include <iostream>
 #include <gl/gl3w.h>
 
 float Texture::get_color(uint8_t channel, float pos_x, float pos_y, bool filter)
@@ -39,20 +39,24 @@ Texture::Texture(const std::filesystem::path& path) : internal_path(path.string(
 	height = img.getHeight();
 	channels = img.getColorType() == FIC_RGB ? 3 : FIC_RGBALPHA ? 4 : 0;
 
+	size_t i = 0;
 	for (auto& channel : channel_data)
 	{
 		channel.first = false;
 		channel.second = new uint8_t[width * height * 4];
-		std::memset(channel.second, 0, width * height * 4);
+		std::memset(channel.second, i++ == 3 ? 255 : 0, width * height * 4);
 	}
 
 	for (size_t i = 0; i < channels; ++i)
 		channel_data[i].first = true;
 
 
-	for (size_t i = 0; i < width * height; ++i)
-		for (size_t c = 0; c < channels; ++c)
-			channel_data[c].second[i] = img.accessPixels()[i * channels + c];
+	for (size_t c = 0; c < channels; ++c)
+	{
+		int cc = c == 0 ? 2 : c == 2 ? 0 : c;
+		for (size_t i = 0; i < width * height; ++i)
+			channel_data[c].second[i] = img.accessPixels()[i * channels + cc];
+	}
 
 	glGenTextures(1, &gl_id);
 
