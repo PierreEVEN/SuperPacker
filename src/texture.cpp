@@ -1,8 +1,5 @@
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+#include <FreeImagePlus.h>
 
 #include "texture.h"
 
@@ -24,7 +21,7 @@ float Texture::get_color(uint8_t channel, float pos_x, float pos_y, bool filter)
 	return channel_data[channel].second[static_cast<int>(pos_x) + static_cast<int>(pos_y) * width] / 255.f;
 }
 
-const std::filesystem::path& Texture::get_path() const
+std::string Texture::get_path() const
 {
 	return internal_path;
 }
@@ -33,10 +30,14 @@ Texture::Texture(const std::filesystem::path& path) : internal_path(path.string(
 {
 	is_ready = false;
 	channels = 4;
-	uint8_t* raw_data = stbi_load(path.string().c_str(), &width, &height, &channels, 0);
 
-	if (!raw_data)
+	fipImage img;
+	if (!img.load(path.string().c_str()))
 		return;
+
+	width = img.getWidth();
+	height = img.getHeight();
+	channels = img.getColorType() == FIC_RGB ? 3 : FIC_RGBALPHA ? 4 : 0;
 
 	for (auto& channel : channel_data)
 	{
@@ -51,7 +52,7 @@ Texture::Texture(const std::filesystem::path& path) : internal_path(path.string(
 
 	for (size_t i = 0; i < width * height; ++i)
 		for (size_t c = 0; c < channels; ++c)
-			channel_data[c].second[i] = raw_data[i * channels + c];
+			channel_data[c].second[i] = img.accessPixels()[i * channels + c];
 
 	glGenTextures(1, &gl_id);
 
@@ -69,7 +70,6 @@ Texture::Texture(const std::filesystem::path& path) : internal_path(path.string(
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	delete[] display_data;
-	stbi_image_free(raw_data);
 	is_ready = true;
 }
 

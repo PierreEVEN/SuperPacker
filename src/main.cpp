@@ -33,3 +33,9 @@ int main(int argc, char** argv)
 	while (gfx.draw());
 	graph.save_to_file();
 }
+
+
+INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT nCmdShow)
+{
+	return main(0, nullptr);
+}

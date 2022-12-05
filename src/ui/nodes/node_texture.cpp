@@ -37,7 +37,7 @@ NodeTexture::NodeTexture()
 	col->on_get_type.add_lambda([]() { return EType::Float4; });
 	col->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		return std::format("{} = texture2D({}, text_coords) * {};", context.glsl_output_var(EType::Float4),
+		return std::format("{} = texture2D({}, vec2(text_coords.x, 1 - text_coords.y)) * {};", context.glsl_output_var(EType::Float4),
 		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
@@ -45,7 +45,7 @@ NodeTexture::NodeTexture()
 	r->on_get_type.add_lambda([]() { return EType::Float; });
 	r->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		return std::format("{} = texture2D({}, text_coords).r * {};", context.glsl_output_var(EType::Float),
+		return std::format("{} = texture2D({}, vec2(text_coords.x, 1 - text_coords.y)).r * {};", context.glsl_output_var(EType::Float),
 		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
@@ -53,7 +53,7 @@ NodeTexture::NodeTexture()
 	g->on_get_type.add_lambda([]() { return EType::Float; });
 	g->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		return std::format("{} = texture2D({}, text_coords).g * {};", context.glsl_output_var(EType::Float),
+		return std::format("{} = texture2D({}, vec2(text_coords.x, 1 - text_coords.y)).g * {};", context.glsl_output_var(EType::Float),
 		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
@@ -61,7 +61,7 @@ NodeTexture::NodeTexture()
 	b->on_get_type.add_lambda([]() { return EType::Float; });
 	b->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		return std::format("{} = texture2D({}, text_coords).b * {};", context.glsl_output_var(EType::Float),
+		return std::format("{} = texture2D({}, vec2(text_coords.x, 1 - text_coords.y)).b * {};", context.glsl_output_var(EType::Float),
 		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
@@ -69,7 +69,7 @@ NodeTexture::NodeTexture()
 	a->on_get_type.add_lambda([]() { return EType::Float; });
 	a->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		return std::format("{} = texture2D({}, text_coords).a * {};", context.glsl_output_var(EType::Float),
+		return std::format("{} = texture2D({}, vec2(text_coords.x, 1 - text_coords.y)).a * {};", context.glsl_output_var(EType::Float),
 		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
@@ -92,6 +92,7 @@ void NodeTexture::register_uniform(CodeContext& ctx)
 			glUniform1i(location, location);
 			glActiveTexture(GL_TEXTURE0 + location);
 			glBindTexture(GL_TEXTURE_2D, texture->get_id());
+			glGetError();
 			GL_CHECK_ERROR();
 		}
 	});
@@ -100,6 +101,8 @@ void NodeTexture::register_uniform(CodeContext& ctx)
 	enabled_uniform->on_update_value.add_lambda([&](int location)
 	{
 		glUniform1i(location, texture ? 1 : 0);
+		glGetError();
+		GL_CHECK_ERROR();
 	});
 }
 
@@ -140,5 +143,4 @@ void ImageWriteNode::display()
 	{
 		std::cout << "output to " << path_input->target()->get_code(get_graph().code_ctx()) << std::endl;
 	}
-
 }

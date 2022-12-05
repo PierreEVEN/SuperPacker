@@ -33,7 +33,9 @@ void NodeFloat::register_uniform(CodeContext& ctx)
 	uniform_var = ctx.add_uniform(EType::Float);
 	uniform_var->on_update_value.add_lambda([&](int location)
 	{
+		GL_CHECK_ERROR();
 		glUniform1f(location, value);
+		glGetError();
 		GL_CHECK_ERROR();
 	});
 }

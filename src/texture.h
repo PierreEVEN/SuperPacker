@@ -26,7 +26,7 @@ public:
 	[[nodiscard]] uint32_t get_id() const { return gl_id; }
 	[[nodiscard]] int res_x() const { return width; }
 	[[nodiscard]] int res_y() const { return height; }
-	[[nodiscard]] const std::filesystem::path& get_path() const;
+	[[nodiscard]] std::string get_path() const;
 
 	float get_color(uint8_t channel, float pos_x, float pos_y, bool filter = false);
 
