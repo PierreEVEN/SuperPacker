@@ -103,7 +103,6 @@ public:
 
 	[[nodiscard]] Graph& get_graph() const { return *owning_graph; }
 
-
 protected:
 	float calc_min_height() const;
 
@@ -137,5 +136,5 @@ protected:
 private:
 	bool edit_name = false;
 	bool display_in_summary = true;
-	void internal_init();
+	void internal_init(size_t new_uuid);
 };

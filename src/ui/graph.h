@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <vector>
 #include "logger.h"
+#include <nlohmann/json.hpp>
 
 #define REGISTER_NODE(type, infos) \
 struct __node_registerer_##type { \
@@ -14,7 +15,6 @@ struct __node_registerer_##type { \
 	} \
 }; \
 __node_registerer_##type __instance##type
-
 
 class CodeContext;
 enum class EType;
@@ -106,7 +106,11 @@ public:
 
 	Logger logger;
 
+	size_t gen_uuid() { return last_generated_id++; }
+	void push_uuid(size_t uuid) { last_generated_id = uuid + 1 > last_generated_id ? uuid + 1 : last_generated_id; }
 private:
+	void remap_uuid_in_json(nlohmann::json& in_json);
+
 	std::string path;
 	static void register_node(const NodeInfo& node_infos);
 
@@ -133,4 +137,5 @@ private:
 	bool focused_search_context = false;
 	char context_menu_search[256] = {};
 	ImVec2 context_menu_pos;
+	size_t last_generated_id = 0;
 };

@@ -158,7 +158,6 @@ void Graph::draw()
 {
 	hits.clear();
 
-
 	if (ImGui::IsKeyPressed(ImGuiKey_Delete))
 	{
 		while (!selected_nodes.empty())
@@ -174,10 +173,29 @@ void Graph::draw()
 	if (ImGui::BeginChild(name.c_str(), ImGui::GetContentRegionAvail(), true,
 	                      ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar))
 	{
+		if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && (ImGui::IsKeyPressed(ImGuiKey_C, false) || ImGui::IsKeyPressed(
+			ImGuiKey_X, false)))
+		{
+			nlohmann::json clipboard;
+
+			for (const auto& node : selected_nodes)
+			{
+				if (node)
+					clipboard[std::to_string(node->uuid)] = node->serialize(*this);
+			}
+
+			std::stringstream serialized;
+			serialized << clipboard;
+			Gfx::get().set_clipboard(serialized.str());
+			if (ImGui::IsKeyPressed(ImGuiKey_X, false))
+				while (!selected_nodes.empty())
+					remove_node(*selected_nodes.begin());
+		}
+
 		// Handle zoom
 		{
 			const float zoom_delta = ImGui::GetIO().MouseWheel * zoom * 0.1f;
-			zoom = std::clamp(zoom + zoom_delta, 0.1f, 4.f);
+			zoom = std::clamp(zoom + zoom_delta, 0.01f, 4.f);
 
 			const ImVec2 percents = ((ImGui::GetMousePos() - ImGui::GetWindowPos()) / ImGui::GetWindowSize() - 0.5) * -
 				1;
@@ -226,16 +244,48 @@ void Graph::draw()
 		if (moving_node && ImGui::IsMouseDragging(ImGuiMouseButton_Left) && ImGui::GetActiveID() !=
 			ImGui::GetFocusID())
 		{
+			const auto pos_min = ImGui::GetWindowPos();
+			const auto pos_max = ImGui::GetWindowPos() + ImGui::GetWindowSize();
+			const auto mouse_pos = ImGui::GetMousePos();
+			ImVec2 offscreen_delta = {};
+			offscreen_delta.x += Gfx::get().get_delta_second() * static_cast<float>(std::pow(
+				std::clamp(pos_min.x + 40 - mouse_pos.x, 0.f, 40.f) / 40, 4) * 10000);
+			offscreen_delta.y += Gfx::get().get_delta_second() * static_cast<float>(std::pow(
+				std::clamp(pos_min.y + 40 - mouse_pos.y, 0.f, 40.f) / 40, 4) * 10000);
+			offscreen_delta.x -= Gfx::get().get_delta_second() * static_cast<float>(std::pow(
+				std::clamp(40 + mouse_pos.x - pos_max.x, 0.f, 40.f) / 40, 4) * 10000);
+			offscreen_delta.y -= Gfx::get().get_delta_second() * static_cast<float>(std::pow(
+				std::clamp(40 + mouse_pos.y - pos_max.y, 0.f, 40.f) / 40, 4) * 10000);
+
+			pos += offscreen_delta;
+
 			for (auto& c_node : selected_nodes)
 			{
 				Node* node = c_node;
-				node->position += ImGui::GetMouseDragDelta(ImGuiMouseButton_Left) / zoom;
+				node->position += ImGui::GetMouseDragDelta(ImGuiMouseButton_Left) / zoom - offscreen_delta;
 				node->update_nodes_positions();
 			}
 			ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
 		}
 
+		if (ImGui::IsKeyPressed(ImGuiKey_F))
+		{
+			ImVec2 avg;
+			for (const auto node : selected_nodes)
+				avg = avg - node->position;
+			avg = avg / static_cast<float>(selected_nodes.size());
 
+			pos = avg;
+		}
+
+		if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_A, true))
+		{
+			if (selected_nodes.size() == nodes.size())
+				clear_selection();
+			else
+				for (const auto node : nodes)
+					add_to_selection(node, false);
+		}
 		// Draw connections
 		for (const auto& node : nodes)
 			node->draw_connections(*this);
@@ -345,10 +395,75 @@ void Graph::draw()
 		}
 
 		logger.display();
+
+		if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_V, false))
+		{
+			try
+			{
+				nlohmann::json clipboard = nlohmann::json::parse(Gfx::get().get_clipboard());
+
+				remap_uuid_in_json(clipboard);
+
+				clear_selection();
+
+				std::vector<std::shared_ptr<Node>> added_nodes;
+				ImVec2 average_pos = {};
+				for (const auto& node_js : clipboard)
+				{
+					const auto node = spawn_by_name(node_js["type"]);
+					if (!node)
+					{
+						std::cerr << "failed to spawn node of type " << node_js["type"] << std::endl;
+						logger.add_persistent_log({
+							.type = ELogType::Error,
+							.message = std::string("failed to spawn node of type ") + std::string(node_js["type"])
+						});
+						continue;
+					}
+					node->deserialize(node_js);
+					add_to_selection(node, false);
+					added_nodes.emplace_back(node);
+					average_pos += node->position;
+				}
+				average_pos = average_pos / static_cast<float>(added_nodes.size());
+				for (const auto& node_js : clipboard)
+				{
+					const auto link_target = find_node(node_js["uuid"]);
+					if (!link_target)
+						continue;
+					for (const auto& connection : node_js["inputs"])
+					{
+						if (!connection.contains("from") || !connection.contains("to") || !connection.contains("uuid"))
+							continue;
+						const auto link_source = find_node(connection["uuid"]);
+						if (!link_source)
+							continue;
+
+						const auto connection_source = link_source->output_by_name(connection["from"]);
+						const auto connection_target = link_target->input_by_name(connection["to"]);
+
+						if (!connection_source || !connection_target)
+							continue;
+
+						connection_target->link_to(connection_source);
+					}
+				}
+
+				ImVec2 delta = pos_to_graph(ImGui::GetMousePos()) - average_pos;
+				for (const auto& node : added_nodes)
+					node->position += delta;
+			}
+			catch (const std::exception& e)
+			{
+				logger.add_persistent_log({
+					.type = ELogType::Error, .message = std::string("Failed to past value : ") + e.what()
+				});
+			}
+		}
+
+		ImGui::ResetMouseDragDelta(ImGuiMouseButton_Right);
 	}
 	ImGui::EndChild();
-
-	ImGui::ResetMouseDragDelta(ImGuiMouseButton_Right);
 }
 
 
@@ -429,7 +544,7 @@ void Graph::display_node_context_menu(ImDrawList* window_draw_list)
 
 	std::vector<const NodeInfo*> nodes;
 	nodes.reserve(registered_nodes->size());
-	
+
 	for (const auto& node_type : *registered_nodes)
 		nodes.emplace_back(&node_type.second);
 
@@ -437,7 +552,8 @@ void Graph::display_node_context_menu(ImDrawList* window_draw_list)
 	{
 		const std::string& display_name_a = a->alias.empty() ? a->internal_name : a->alias[0];
 		const std::string& display_name_b = b->alias.empty() ? b->internal_name : b->alias[0];
-		return std::lexicographical_compare(display_name_a.begin(), display_name_a.end(), display_name_b.begin(), display_name_b.end());
+		return std::lexicographical_compare(display_name_a.begin(), display_name_a.end(), display_name_b.begin(),
+		                                    display_name_b.end());
 	});
 
 	for (const auto& node_type : nodes)
@@ -497,7 +613,7 @@ void Graph::load_from_file()
 	{
 		js = nlohmann::json::parse(input);
 	}
-	catch (const nlohmann::json::parse_error& e)
+	catch (const std::exception& e)
 	{
 		logger.add_persistent_log({
 			.type = ELogType::Error, .message = std::string("failed to read graph file: ") + e.what()
@@ -575,6 +691,27 @@ void Graph::save_to_file()
 	output << std::setw(4) << js << std::endl;
 }
 
+void Graph::remap_uuid_in_json(nlohmann::json& in_json)
+{
+	std::unordered_map<size_t, size_t> uuid_map;
+
+	for (const auto& node : in_json)
+		uuid_map[node["uuid"]] = gen_uuid();
+	for (auto& node : in_json)
+	{
+		if (node.contains("uuid"))
+			node["uuid"] = uuid_map[node["uuid"]];
+		if (node.contains("inputs"))
+			for (auto& input : node["inputs"])
+			{
+				if (input.contains("uuid") && uuid_map.contains(input["uuid"]))
+					input["uuid"] = uuid_map[input["uuid"]];
+				else if (input.contains("uuid"))
+					input.erase(input.find("uuid"));
+			}
+	}
+}
+
 void Graph::register_node(const NodeInfo& node_infos)
 {
 	if (!registered_nodes)
@@ -588,7 +725,7 @@ std::shared_ptr<Node> Graph::spawn_by_name(const std::string& type_name)
 	if (found != registered_nodes->end())
 	{
 		const auto node = found->second.constructor();
-		node->internal_init();
+		node->internal_init(gen_uuid());
 		node->name = found->second.alias[0];
 		node->type_name = found->first;
 		node->owning_graph = this;

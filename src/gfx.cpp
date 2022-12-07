@@ -109,7 +109,7 @@ Gfx::Gfx(const std::string& window_name, uint32_t window_x, uint32_t window_y)
 	}
 
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	io. BackendFlags
+	io.BackendFlags
 		|=
 		ImGuiBackendFlags_HasMouseCursors;
 	io
@@ -349,4 +349,14 @@ bool Gfx::draw()
 Gfx& Gfx::get()
 {
 	return *instance;
+}
+
+std::string Gfx::get_clipboard() const
+{
+	return glfwGetClipboardString(main_window);
+}
+
+void Gfx::set_clipboard(const std::string& data) const
+{
+	glfwSetClipboardString(main_window, data.c_str());
 }

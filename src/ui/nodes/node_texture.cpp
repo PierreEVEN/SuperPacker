@@ -82,6 +82,7 @@ NodeTexture::NodeTexture()
 NodeTexture::~NodeTexture()
 {
 	texture_uniform->unregister();
+	enabled_uniform->unregister();
 }
 
 void NodeTexture::register_uniform(CodeContext& ctx)

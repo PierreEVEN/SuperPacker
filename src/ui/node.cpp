@@ -12,8 +12,6 @@
 #include "graph.h"
 #include "out_shader.h"
 
-static int64_t node_uuids = 0;
-
 void Node::draw_connections(const Graph& graph) const
 {
 	for (const auto& input : inputs)
@@ -91,7 +89,7 @@ void Node::deserialize(const nlohmann::json& input)
 {
 	name = input["name"];
 	uuid = input["uuid"];
-	node_uuids = max(uuid + 1, node_uuids);
+	get_graph().push_uuid(uuid);
 	position = ImVec2{input["x"], input["y"]};
 	size = ImVec2{input["width"], input["height"]};
 	if (input.contains("summary"))
@@ -333,9 +331,9 @@ void Node::mark_dirty()
 	on_update();
 }
 
-void Node::internal_init()
+void Node::internal_init(size_t new_uuid)
 {
-	uuid = node_uuids++;
+	uuid = new_uuid;
 	position = {20, 20};
 	size = {300, 200};
 }
