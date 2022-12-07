@@ -72,7 +72,8 @@ public:
 
 	void open_context_menu();
 
-	template<typename T> static void register_node()
+	template <typename T>
+	static void register_node()
 	{
 		register_node(typeid(T).name(), []() { return std::make_shared<T>(); });
 	}
@@ -89,6 +90,8 @@ private:
 	void begin_in_out(std::shared_ptr<NodeInput> start);
 	void end_in_out(std::shared_ptr<NodeOutput> end);
 
+	void display_node_context_menu(ImDrawList* window_draw_list);
+
 	std::unordered_set<Node*> selected_nodes;
 	std::shared_ptr<Node> hovered_node;
 	bool moving_node = false;
@@ -101,5 +104,7 @@ private:
 	std::vector<std::shared_ptr<Node>> nodes;
 	std::shared_ptr<ImVec2> selection_rect_start;
 	bool is_in_context_menu = false;
+	bool focused_search_context = false;
+	char context_menu_search[256] = {};
 	ImVec2 context_menu_pos;
 };

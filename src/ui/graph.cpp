@@ -149,6 +149,8 @@ void Graph::open_context_menu()
 	ImGui::OpenPopup(("ContextMenu_" + name).c_str());
 	is_in_context_menu = true;
 	context_menu_pos = ImGui::GetMousePos();
+	focused_search_context = false;
+	memset(context_menu_search, 0, sizeof context_menu_search);
 }
 
 
@@ -170,37 +172,8 @@ void Graph::draw()
 	}
 
 	if (ImGui::BeginChild(name.c_str(), ImGui::GetContentRegionAvail(), true,
-	                      ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar))
+	                      ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar))
 	{
-		// Draw main menu
-		if (ImGui::BeginMenuBar())
-		{
-			if (ImGui::BeginMenu("file"))
-			{
-				if (ImGui::MenuItem("Save"))
-				{
-					save_to_file();
-				}
-				ImGui::EndMenu();
-			}
-			if (ImGui::BeginMenu("new"))
-			{
-				for (const auto& node_type : registered_nodes)
-				{
-					if (ImGui::MenuItem(node_type.first.c_str()))
-					{
-						spawn_by_name(node_type.first);
-					}
-				}
-				ImGui::EndMenu();
-			}
-			ImGui::Dummy({ImGui::GetContentRegionAvail().x - 10 - ImGui::CalcTextSize(name.c_str()).x, 0});
-			ImGui::SameLine();
-			ImGui::Text(name.c_str());
-			ImGui::EndMenuBar();
-		}
-
-
 		// Handle zoom
 		{
 			const float zoom_delta = ImGui::GetIO().MouseWheel * zoom * 0.1f;
@@ -246,6 +219,8 @@ void Graph::draw()
 				clear_selection();
 			open_context_menu();
 		}
+		if (ImGui::IsKeyPressed(ImGuiKey_Space) && !hovered_node && no_drag_before_release)
+			open_context_menu();
 
 		// Handle drag
 		if (moving_node && ImGui::IsMouseDragging(ImGuiMouseButton_Left) && ImGui::GetActiveID() !=
@@ -335,13 +310,12 @@ void Graph::draw()
 
 		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) && !is_in_context_menu)
 		{
-			if (out_to_in)
+			if (out_to_in || in_to_out)
 			{
 				open_context_menu();
 			}
 			if (in_to_out && in_to_out->target())
 				in_to_out->link_to(nullptr);
-			in_to_out = nullptr;
 		}
 
 		if (out_to_in)
@@ -352,32 +326,20 @@ void Graph::draw()
 
 		if (in_to_out)
 		{
-			draw_connection(ImGui::GetMousePos(), in_to_out->position, EType::Undefined);
+			draw_connection(is_in_context_menu ? context_menu_pos : ImGui::GetMousePos(), in_to_out->position,
+			                EType::Undefined);
 		}
 
 		const auto window_draw_list = ImGui::GetWindowDrawList();
 
 		if (ImGui::BeginPopup(("ContextMenu_" + name).c_str()))
 		{
-			for (const auto& node_type : registered_nodes)
-			{
-				if (ImGui::MenuItem(node_type.first.c_str()))
-				{
-					if (const auto node = spawn_by_name(node_type.first))
-					{
-						node->position = pos_to_graph(context_menu_pos, window_draw_list);
-						if (out_to_in && !node->inputs.empty())
-							node->inputs[0]->link_to(out_to_in);
-					}
-					ImGui::CloseCurrentPopup();
-				}
-			}
-
-
+			display_node_context_menu(window_draw_list);
 			ImGui::EndPopup();
 		}
 		else if (is_in_context_menu)
 		{
+			in_to_out = nullptr;
 			out_to_in = nullptr;
 			is_in_context_menu = false;
 		}
@@ -416,6 +378,82 @@ void Graph::end_in_out(std::shared_ptr<NodeOutput> end)
 	in_to_out = nullptr;
 }
 
+void Graph::display_node_context_menu(ImDrawList* window_draw_list)
+{
+	if (!focused_search_context)
+	{
+		ImGui::SetKeyboardFocusHere(0);
+		focused_search_context = true;
+	}
+	const bool confirm = ImGui::InputText("##search", context_menu_search, sizeof context_menu_search,
+	                                      ImGuiInputTextFlags_EnterReturnsTrue);
+
+	const auto is_same = [](char a, char b)
+	{
+		if (a == b)
+			return true;
+
+		if (a >= 'a' && a <= 'z')
+			if (a - 'a' + 'A' == b)
+				return true;
+
+		if (a >= 'A' && a <= 'Z')
+			if (a - 'A' + 'a' == b)
+				return true;
+
+		return false;
+	};
+
+	const auto pass_filter = [&](const std::vector<std::string>& alias)
+	{
+		if (context_menu_search[0] == '\0')
+			return true;
+		const int64_t search_len = strlen(context_menu_search);
+		for (const auto& text : alias)
+		{
+			int64_t start = 0;
+			int64_t end = 0;
+
+			for (int64_t i = 0; i < static_cast<int64_t>(text.size()); ++i)
+			{
+				if (end - start >= search_len)
+					break;
+				if (is_same(text[i], context_menu_search[i - start]))
+					end = i + 1L;
+				else
+					start = i + 1;
+			}
+			if (end - start == search_len)
+				return true;
+		}
+		return false;
+	};
+
+
+	for (const auto& node_type : registered_nodes)
+	{
+		if (!pass_filter({node_type.first}))
+			continue;
+
+		if (ImGui::MenuItem(node_type.first.c_str()) || confirm || (ImGui::IsKeyPressed(ImGuiKey_Enter) &&
+			ImGui::GetFocusID() == ImGui::GetCurrentWindow()->GetID(node_type.first.c_str())))
+		{
+			if (const auto node = spawn_by_name(node_type.first))
+			{
+				node->position = pos_to_graph(context_menu_pos, window_draw_list);
+				if (out_to_in && !node->inputs.empty())
+					node->inputs[0]->link_to(out_to_in);
+				if (in_to_out && !node->outputs.empty())
+					in_to_out->link_to(node->outputs[0]);
+				add_to_selection(node);
+			}
+			ImGui::CloseCurrentPopup();
+			if (confirm)
+				break;
+		}
+	}
+}
+
 void Graph::bring_to_front(const Node* node)
 {
 	if (nodes.empty())
@@ -445,14 +483,15 @@ void Graph::load_from_file()
 
 	std::ifstream input(path + ".json");
 	nlohmann::json js;
-	std::cout << "a" << std::endl;
 	try
 	{
 		js = nlohmann::json::parse(input);
 	}
 	catch (const nlohmann::json::parse_error& e)
 	{
-		logger.add_persistent_log({.type = ELogType::Error, .message = std::string("failed to read graph file: ") + e.what()});
+		logger.add_persistent_log({
+			.type = ELogType::Error, .message = std::string("failed to read graph file: ") + e.what()
+		});
 		return;
 	}
 

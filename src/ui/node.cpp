@@ -196,6 +196,10 @@ void Node::display_internal(Graph& graph)
 			(screen_min.x + screen_max.x) / 2 - title_size.x / 2, screen_min.y + 5.f * get_graph().zoom
 		};
 
+
+		if (get_graph().is_hovered(this) && ImGui::IsMouseHoveringRect(title_pos, title_pos + title_size))
+			ImGui::SetMouseCursor(ImGuiMouseCursor_TextInput);
+
 		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 		{
 			if (get_graph().is_selected(this) && ImGui::IsMouseHoveringRect(
@@ -209,12 +213,16 @@ void Node::display_internal(Graph& graph)
 		// Draw name
 		if (edit_name)
 		{
-			ImGui::SetCursorScreenPos(screen_min + ImVec2{10, 5} * get_graph().zoom);
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {0, (25 * get_graph().zoom - title_size.y) / 2});
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 60 * get_graph().zoom);
+			ImGui::SetCursorScreenPos(screen_min + ImVec2{25, 5} * get_graph().zoom);
 			char name_str[256] = {};
 			memcpy(name_str, name.c_str(), min(name.size() + 1, sizeof name_str));
-			if (ImGui::InputText(std::string("##name" + std::to_string(uuid)).c_str(), name_str, sizeof name_str, ImGuiInputTextFlags_EnterReturnsTrue))
+			if (ImGui::InputText(std::string("##name" + std::to_string(uuid)).c_str(), name_str, sizeof name_str,
+			                     ImGuiInputTextFlags_EnterReturnsTrue))
 				edit_name = false;
 			name = name_str;
+			ImGui::PopStyleVar();
 		}
 		else
 			dl->AddText(title_pos, ImGui::ColorConvertFloat4ToU32({1, 1, 1, 1}), name.c_str());
@@ -254,7 +262,8 @@ void Node::display_internal(Graph& graph)
 		{
 			ImGui::SetCursorScreenPos(ImVec2{screen_max.x - 25 * graph.zoom, screen_min.y + 5 * graph.zoom});
 			ImGui::Checkbox(("##summary_" + std::to_string(uuid)).c_str(), &display_in_summary);
-			if (ImGui::IsItemHovered()) {
+			if (ImGui::IsItemHovered())
+			{
 				ImGui::BeginTooltip();
 				ImGui::Text("Should display node in summary mode");
 				ImGui::EndTooltip();
@@ -265,7 +274,7 @@ void Node::display_internal(Graph& graph)
 
 	ImGui::SetWindowFontScale(1);
 
-	if (hovered)
+	if (hovered && false)
 	{
 		if (!outputs.empty() && (outputs[0]->on_get_type.execute() == EType::Float || outputs[0]->on_get_type.execute()
 			== EType::Float2 || outputs[0]->on_get_type.execute() == EType::Float3 || outputs[0]->on_get_type.execute()
