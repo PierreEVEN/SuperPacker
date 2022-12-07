@@ -1,35 +1,13 @@
 {
     "name": "test",
     "nodes": {
-        "Append TOTO_217": {
-            "height": 110.0,
-            "inputs": {
-                "A": {
-                    "from": "result",
-                    "to": "A",
-                    "uuid": 218
-                },
-                "B": {
-                    "from": "result",
-                    "to": "B",
-                    "uuid": 216
-                }
-            },
-            "name": "Append TOTO",
-            "summary": true,
-            "type": "class AppendText",
-            "uuid": 217,
-            "width": 300.0,
-            "x": 1413.012451171875,
-            "y": -449.6941223144531
-        },
         "Append Text_187": {
             "height": 110.0,
             "inputs": {
                 "A": {
-                    "from": "result",
+                    "from": "dir",
                     "to": "A",
-                    "uuid": 99
+                    "uuid": 234
                 },
                 "B": {
                     "from": "result",
@@ -49,9 +27,9 @@
             "height": 110.0,
             "inputs": {
                 "A": {
-                    "from": "result",
+                    "from": "dir",
                     "to": "A",
-                    "uuid": 99
+                    "uuid": 234
                 },
                 "B": {
                     "from": "result",
@@ -67,13 +45,35 @@
             "x": 288.5277099609375,
             "y": 584.4376220703125
         },
+        "Append Text_247": {
+            "height": 110.0,
+            "inputs": {
+                "A": {
+                    "from": "dir",
+                    "to": "A",
+                    "uuid": 234
+                },
+                "B": {
+                    "from": "result",
+                    "to": "B",
+                    "uuid": 246
+                }
+            },
+            "name": "Append Text",
+            "summary": true,
+            "type": "class AppendText",
+            "uuid": 247,
+            "width": 300.0,
+            "x": 1617.3271484375,
+            "y": 784.885009765625
+        },
         "Append Text_98": {
             "height": 110.0,
             "inputs": {
                 "A": {
-                    "from": "result",
+                    "from": "dir",
                     "to": "A",
-                    "uuid": 99
+                    "uuid": 234
                 },
                 "B": {
                     "from": "result",
@@ -89,17 +89,17 @@
             "x": 256.5031433105469,
             "y": -84.46675872802734
         },
-        "EAFAZFAZ_216": {
+        "Directory_234": {
             "height": 70.0,
             "inputs": null,
-            "name": "EAFAZFAZ",
+            "name": "Directory",
             "summary": true,
-            "type": "class TextInput",
-            "uuid": 216,
-            "value": "times_square.jpg",
+            "type": "class DirectoryInput",
+            "uuid": 234,
+            "value": "C:\\Users\\pierre\\Documents\\projects\\SuperPacker\\resources\\",
             "width": 300.0,
-            "x": 968.465087890625,
-            "y": -354.4016418457031
+            "x": -845.5869140625,
+            "y": 289.7273864746094
         },
         "Float_63": {
             "height": 70.0,
@@ -110,12 +110,17 @@
             "uuid": 63,
             "value": 0.49000000953674316,
             "width": 300.0,
-            "x": 0.0,
-            "y": 0.0
+            "x": 824.9464111328125,
+            "y": -17.07405662536621
         },
         "Image Write_6": {
             "height": 110.0,
             "inputs": {
+                "Path": {
+                    "from": "Result",
+                    "to": "Path",
+                    "uuid": 247
+                },
                 "RGBA": {
                     "from": "result",
                     "to": "RGBA",
@@ -171,8 +176,8 @@
             "uuid": 186,
             "value": "appicon.ico",
             "width": 300.0,
-            "x": -86.140625,
-            "y": 371.57171630859375
+            "x": -130.9081573486328,
+            "y": 262.5726318359375
         },
         "Text_190": {
             "height": 70.0,
@@ -183,20 +188,20 @@
             "uuid": 190,
             "value": "icon.png",
             "width": 300.0,
-            "x": -184.45700073242188,
-            "y": 716.233642578125
+            "x": -108.67394256591797,
+            "y": 717.9042358398438
         },
-        "Text_218": {
+        "Text_246": {
             "height": 70.0,
             "inputs": null,
             "name": "Text",
             "summary": true,
             "type": "class TextInput",
-            "uuid": 218,
-            "value": "resources/",
+            "uuid": 246,
+            "value": "out.png",
             "width": 300.0,
-            "x": 914.979736328125,
-            "y": -510.0937194824219
+            "x": 1215.1522216796875,
+            "y": 923.3248291015625
         },
         "Text_80": {
             "height": 70.0,
@@ -207,20 +212,8 @@
             "uuid": 80,
             "value": "times_square.jpg",
             "width": 300.0,
-            "x": -188.0433807373047,
-            "y": 10.826072692871094
-        },
-        "Text_99": {
-            "height": 70.0,
-            "inputs": null,
-            "name": "Text",
-            "summary": true,
-            "type": "class TextInput",
-            "uuid": 99,
-            "value": "resources/",
-            "width": 300.0,
-            "x": -241.52883911132813,
-            "y": -144.86585998535156
+            "x": -125.90869903564453,
+            "y": 165.885009765625
         },
         "Texture_44": {
             "height": 230.0,
@@ -297,7 +290,7 @@
         }
     },
     "path": "resources/test",
-    "pos_x": -1273.72216796875,
-    "pos_y": -565.5370483398438,
-    "zoom": 0.5191291570663452
+    "pos_x": -1104.935302734375,
+    "pos_y": -467.26165771484375,
+    "zoom": 0.856903612613678
 }

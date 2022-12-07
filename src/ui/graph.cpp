@@ -197,8 +197,7 @@ void Graph::draw()
 			const float zoom_delta = ImGui::GetIO().MouseWheel * zoom * 0.1f;
 			zoom = std::clamp(zoom + zoom_delta, 0.01f, 4.f);
 
-			const ImVec2 percents = ((ImGui::GetMousePos() - ImGui::GetWindowPos()) / ImGui::GetWindowSize() - 0.5) * -
-				1;
+			const ImVec2 percents = ((ImGui::GetMousePos() - ImGui::GetWindowPos()) / ImGui::GetWindowSize() - 0.5) * -1;
 			if (zoom_delta != 0)
 				pos += ImGui::GetWindowSize() * zoom_delta / (zoom * zoom) * percents;
 		}

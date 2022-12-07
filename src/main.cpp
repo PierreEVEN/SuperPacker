@@ -6,7 +6,7 @@
 #include "ui/nodes/node_string.h"
 #include "ui/nodes/node_texture.h"
 #include "ui/nodes/nodes_misc.h"
-
+#include <nfd.hpp>
 #include "imgui_operators.h"
 #include "ui/graph_browser.h"
 
@@ -25,6 +25,7 @@ REGISTER_NODE(DirectoryInput, NodeInfo("", {"Directory", "Select Directory"}));
 
 int main(int argc, char** argv)
 {
+	NFD::Init();
 	Gfx gfx("Super Packer v3.0", 800, 600);
 
 	GraphBrowser browser;
@@ -39,6 +40,7 @@ int main(int argc, char** argv)
 
 	while (gfx.draw());
 	browser.save_all();
+	NFD::Quit();
 }
 
 

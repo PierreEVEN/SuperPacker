@@ -1,8 +1,11 @@
 #include "node_string.h"
 
+#include <codecvt>
 #include <iostream>
 
 #include "file_actions.h"
+
+#include <nfd.hpp>
 
 /**
  * \brief Text
@@ -55,20 +58,30 @@ DirectoryInput::DirectoryInput()
 {
 	const auto out = add_output("dir");
 	out->on_get_type.add_lambda([]
-		{
-			return EType::String;
-		});
+	{
+		return EType::String;
+	});
 	out->on_get_code.add_lambda([&](CodeContext& context)
-		{
-			return value;
-		});
+	{
+		return value;
+	});
 }
 
 void DirectoryInput::display()
 {
 	if (ImGui::Button((value + "##btn").c_str(), ImGui::GetContentRegionAvail()))
 	{
-		test();
+		nfdnchar_t* outPath;
+		const nfdnchar_t* valid_path = L".";
+		if (NFD::PickFolder(outPath, NULL) == NFD_OKAY)
+		{
+			std::wstring w_string_value(outPath);
+			std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
+			value = convert.to_bytes(std::u16string(w_string_value.begin(), w_string_value.end())) + "/";
+			//value = std::filesystem::path(value).relative_path().string();
+			NFD::FreePath(outPath);
+			mark_dirty();
+		}
 	}
 }
 

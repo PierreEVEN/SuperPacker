@@ -60,6 +60,8 @@ find_package(freeimage CONFIG REQUIRED)
 
 set(APP_ICON_RESOURCE_WINDOWS "${PROJECT_ROOT}/resources/appicon.rc")
 
+add_subdirectory(third_party/nativefiledialog-extended)
+
 file(GLOB_RECURSE SOURCES src/*.cpp src/*.h resources/** include/*.h)
 add_executable(SuperPacker WIN32 ${SOURCES} ${APP_ICON_RESOURCE_WINDOWS})
 configure_project(SuperPacker ${SOURCES})
@@ -72,4 +74,5 @@ target_link_libraries(SuperPacker PRIVATE unofficial::gl3w::gl3w)
 target_link_libraries(SuperPacker PRIVATE imgui::imgui)
 target_link_libraries(SuperPacker PRIVATE nlohmann_json::nlohmann_json)  
 target_link_libraries(SuperPacker PRIVATE freeimage::FreeImage freeimage::FreeImagePlus)
+target_link_libraries(SuperPacker PRIVATE nfd)
 source_group(TREE ${PROJECT_ROOT} FILES  ${SOURCES})
