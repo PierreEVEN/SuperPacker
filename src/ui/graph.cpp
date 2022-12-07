@@ -12,9 +12,9 @@
 
 static std::unordered_map<std::string, std::function<std::shared_ptr<Node>()>> registered_nodes;
 
-Graph::Graph(const std::string& in_name) : name(in_name), code_context(std::make_shared<CodeContext>())
+Graph::Graph(const std::string& in_path) : path(in_path), name(in_path), code_context(std::make_shared<CodeContext>())
 {
-	load_from_file(in_name);
+	load_from_file();
 }
 
 
@@ -169,9 +169,8 @@ void Graph::draw()
 		pos = pos + ImGui::GetMouseDragDelta(ImGuiMouseButton_Right) / zoom;
 	}
 
-	ImGui::SetNextWindowPos({0, 0});
-	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-	if (ImGui::Begin(name.c_str(), nullptr, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDecoration))
+	if (ImGui::BeginChild(name.c_str(), ImGui::GetContentRegionAvail(), true,
+	                      ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar))
 	{
 		// Draw main menu
 		if (ImGui::BeginMenuBar())
@@ -382,8 +381,12 @@ void Graph::draw()
 			out_to_in = nullptr;
 			is_in_context_menu = false;
 		}
+
+		logger.add_frame_log({.message = "F1"});
+		logger.add_frame_log({.message = "F2"});
+		logger.display();
 	}
-	ImGui::End();
+	ImGui::EndChild();
 
 	ImGui::ResetMouseDragDelta(ImGuiMouseButton_Right);
 }
@@ -435,14 +438,23 @@ void Graph::bring_to_front(const Node* node)
 	}
 }
 
-void Graph::load_from_file(const std::string& in_name)
+void Graph::load_from_file()
 {
-	if (!std::filesystem::exists(in_name + ".json"))
+	if (!std::filesystem::exists(path + ".json"))
 		return;
 
-	std::ifstream input(in_name + ".json");
+	std::ifstream input(path + ".json");
 	nlohmann::json js;
-	input >> js;
+	std::cout << "a" << std::endl;
+	try
+	{
+		js = nlohmann::json::parse(input);
+	}
+	catch (const nlohmann::json::parse_error& e)
+	{
+		logger.add_persistent_log({.type = ELogType::Error, .message = std::string("failed to read graph file: ") + e.what()});
+		return;
+	}
 
 	nodes.clear();
 	clear_selection();
@@ -450,6 +462,8 @@ void Graph::load_from_file(const std::string& in_name)
 	out_to_in = nullptr;
 	in_to_out = nullptr;
 
+	if (js.contains("path"))
+		path = js["path"];
 	name = js["name"];
 	pos.x = js["pos_x"];
 	pos.y = js["pos_y"];
@@ -491,7 +505,7 @@ void Graph::load_from_file(const std::string& in_name)
 
 void Graph::save_to_file()
 {
-	std::ofstream output(name + ".json");
+	std::ofstream output(path + ".json");
 
 	nlohmann::json js_nodes;
 
@@ -505,6 +519,7 @@ void Graph::save_to_file()
 		{"pos_y", pos.y},
 		{"zoom", zoom},
 		{"name", name},
+		{"path", path},
 		{"nodes", js_nodes},
 	};
 

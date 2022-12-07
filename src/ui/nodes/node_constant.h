@@ -14,6 +14,8 @@ public:
 	virtual nlohmann::json serialize(Graph& graph) override;
 	void deserialize(const nlohmann::json& json) override;
 
+	ESummaryMode summary_mode() const override { return ESummaryMode::Input; }
+
 private:
 	std::shared_ptr<ShaderUniform> uniform_var;
 	float value;

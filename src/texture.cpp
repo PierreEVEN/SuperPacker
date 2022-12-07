@@ -53,9 +53,9 @@ Texture::Texture(const std::filesystem::path& path) : internal_path(path.string(
 
 	for (size_t c = 0; c < channels; ++c)
 	{
-		int cc = c == 0 ? 2 : c == 2 ? 0 : c;
-		for (size_t i = 0; i < width * height; ++i)
-			channel_data[c].second[i] = img.accessPixels()[i * channels + cc];
+		const size_t cc = c == 0 ? 2 : c == 2 ? 0 : c;
+		for (size_t p = 0; p < width * height; ++p)
+			channel_data[c].second[p] = img.accessPixels()[p * channels + cc];
 	}
 
 	glGenTextures(1, &gl_id);

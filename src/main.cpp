@@ -1,10 +1,14 @@
 #include "gfx.h"
+#include "logger.h"
 #include "ui/graph.h"
 #include "ui/nodes/node_constant.h"
 #include "ui/nodes/node_maths.h"
 #include "ui/nodes/node_string.h"
 #include "ui/nodes/node_texture.h"
 #include "ui/nodes/nodes_misc.h"
+
+#include "imgui_operators.h"
+#include "ui/graph_browser.h"
 
 int main(int argc, char** argv)
 {
@@ -22,16 +26,18 @@ int main(int argc, char** argv)
 	Graph::register_node<MakeFloat2>();
 	Graph::register_node<BreakColor>();
 
-	Graph graph("test");
+	GraphBrowser browser;
+	browser.new_graph("test");
+	browser.new_graph("Demo2");
 
 	gfx.on_draw.add_lambda([&]
 	{
 		FileResource::refresh_file_resources();
-		graph.draw();
+		browser.display();
 	});
 
 	while (gfx.draw());
-	graph.save_to_file();
+	browser.save_all();
 }
 
 

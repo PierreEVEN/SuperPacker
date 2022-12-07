@@ -103,10 +103,9 @@ public:
 	void mark_dirty();
 
 	[[nodiscard]] Graph& get_graph() const { return *owning_graph; }
-	
+
 
 protected:
-
 	float calc_min_height() const;
 
 	virtual void register_uniform(CodeContext& ctx)
@@ -118,6 +117,15 @@ protected:
 	ImVec2 screen_min;
 	ImVec2 screen_max;
 
+	enum class ESummaryMode
+	{
+		Unavailable,
+		Input,
+		Output
+	};
+
+	[[nodiscard]] virtual ESummaryMode summary_mode() const { return ESummaryMode::Unavailable; }
+
 	std::string type_name;
 	std::vector<std::shared_ptr<NodeInput>> inputs;
 	std::vector<std::shared_ptr<NodeOutput>> outputs;
@@ -127,4 +135,7 @@ protected:
 	std::string name;
 	OutShader display_shader;
 	Graph* owning_graph = nullptr;
+private:
+	bool edit_name = false;
+	bool display_in_summary = true;
 };

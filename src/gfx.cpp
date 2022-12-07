@@ -14,6 +14,7 @@
 
 #include "resource.h"
 
+static Gfx* instance = nullptr;
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -26,6 +27,7 @@ static void glfw_error_callback(int error, const char* description)
 
 Gfx::Gfx(const std::string& window_name, uint32_t window_x, uint32_t window_y)
 {
+	instance = this;
 	glfwSetErrorCallback(glfw_error_callback);
 	{
 		if (!glfwInit()) { std::cerr << "Failed to initialize GFLW!" << std::endl; }
@@ -319,6 +321,8 @@ Gfx::Gfx(const std::string& window_name, uint32_t window_x, uint32_t window_y)
 
 bool Gfx::draw()
 {
+	delta_second = static_cast<float>(glfwGetTime() - last_time);
+	last_time = glfwGetTime();
 	glfwPollEvents();
 
 	glClearColor(0, 0, 0, 0);
@@ -340,4 +344,9 @@ bool Gfx::draw()
 	glfwSwapBuffers(main_window);
 	GL_CHECK_ERROR();
 	return !glfwWindowShouldClose(main_window);
+}
+
+Gfx& Gfx::get()
+{
+	return *instance;
 }

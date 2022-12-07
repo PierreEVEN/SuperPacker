@@ -90,7 +90,8 @@ nlohmann::json Node::serialize(Graph& graph)
 		{"y", position.y},
 		{"width", size.x},
 		{"height", size.y},
-		{"inputs", inputs_js}
+		{"inputs", inputs_js},
+		{"summary", display_in_summary}
 	};
 }
 
@@ -101,6 +102,8 @@ void Node::deserialize(const nlohmann::json& input)
 	node_uuids = max(uuid + 1, node_uuids);
 	position = ImVec2{input["x"], input["y"]};
 	size = ImVec2{input["width"], input["height"]};
+	if (input.contains("summary"))
+		display_in_summary = input["summary"];
 }
 
 #define BG_COLOR ImGui::ColorConvertFloat4ToU32({0.3f, 0.3f, 0.35f, 0.65f})
@@ -156,6 +159,7 @@ void Node::display_internal(Graph& graph)
 	{
 		ImGui::SetCursorScreenPos(screen_min + ImVec2{25 * graph.zoom, 30 * get_graph().zoom});
 		const auto dl = ImGui::GetWindowDrawList();
+
 		// Border
 		dl->AddRectFilled(screen_min - ImVec2{2, 2} * graph.zoom, screen_max + ImVec2{2, 2} * graph.zoom,
 		                  selected ? ImGui::ColorConvertFloat4ToU32({1, 1, 0, 1}) : BORDER_COLOR,
@@ -176,8 +180,9 @@ void Node::display_internal(Graph& graph)
 		                      ImGuiWindowFlags_NoBackground))
 		{
 			ImGui::SetWindowFontScale(get_graph().zoom);
-			dl->PushClipRect(screen_min + ImVec2{ 25 * graph.zoom, 30 * get_graph().zoom },
-				screen_min + ImVec2{ 25 * graph.zoom, 30 * get_graph().zoom } + ImGui::GetContentRegionAvail() - ImVec2{ 30 * graph.zoom, 2 * graph.zoom });
+			dl->PushClipRect(screen_min + ImVec2{25 * graph.zoom, 30 * get_graph().zoom},
+			                 screen_min + ImVec2{25 * graph.zoom, 30 * get_graph().zoom} +
+			                 ImGui::GetContentRegionAvail() - ImVec2{30 * graph.zoom, 2 * graph.zoom});
 			dl->AddCallback(custom_draw_callback, this);
 			dl->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 			dl->PopClipRect();
@@ -186,12 +191,27 @@ void Node::display_internal(Graph& graph)
 		}
 		ImGui::EndChild();
 
+		if (get_graph().is_selected(this))
+		{
+			edit_name = true;
+		}
+
 		// Draw name
-		dl->AddText({
-			            (screen_min.x + screen_max.x) / 2 - ImGui::CalcTextSize(name.c_str()).x / 2,
-			            screen_min.y + 5.f * get_graph().zoom
-		            },
-		            ImGui::ColorConvertFloat4ToU32({1, 1, 1, 1}), name.c_str());
+		if (edit_name)
+		{
+			ImGui::SetCursorScreenPos(screen_min + ImVec2{10, 5});
+			char name_str[256];
+			memset(name_str, 0, sizeof name_str);
+			memcpy(name_str, name.c_str(), min(name.size() + 1, sizeof name_str));
+			ImGui::InputText(std::string("##name" + std::to_string(uuid)).c_str(), name_str, sizeof name_str);
+			name = name_str;
+		}
+		else
+			dl->AddText({
+				            (screen_min.x + screen_max.x) / 2 - ImGui::CalcTextSize(name.c_str()).x / 2,
+				            screen_min.y + 5.f * get_graph().zoom
+			            },
+			            ImGui::ColorConvertFloat4ToU32({1, 1, 1, 1}), name.c_str());
 
 		// Draw outputs points
 		const ImVec2 dims = screen_max - (screen_min + ImVec2{0, 25 * get_graph().zoom + 10 * get_graph().zoom});
@@ -222,6 +242,12 @@ void Node::display_internal(Graph& graph)
 				               input->target() ? true : false,
 				               input->name, false);
 			}
+		}
+
+		if (summary_mode() != ESummaryMode::Unavailable)
+		{
+			ImGui::SetCursorScreenPos(ImVec2{screen_max.x - 25 * graph.zoom, screen_min.y + 5 * graph.zoom});
+			ImGui::Checkbox(("##summary_" + std::to_string(uuid)).c_str(), &display_in_summary);
 		}
 	}
 	ImGui::EndChild();

@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <vector>
 #include "event_manager.h"
+#include "logger.h"
 
 class CodeContext;
 enum class EType;
@@ -25,7 +26,7 @@ struct MouseHit
 class Graph
 {
 public:
-	Graph(const std::string& in_name);
+	Graph(const std::string& in_path);
 
 	void draw();
 
@@ -42,7 +43,7 @@ public:
 
 	void bring_to_front(const Node* node);
 
-	void load_from_file(const std::string& in_name);
+	void load_from_file();
 	void save_to_file();
 
 	std::shared_ptr<Node> spawn_by_name(const std::string& type_name);
@@ -76,7 +77,10 @@ public:
 		register_node(typeid(T).name(), []() { return std::make_shared<T>(); });
 	}
 
+	Logger logger;
+
 private:
+	std::string path;
 	static void register_node(const std::string& type_name, std::function<std::shared_ptr<Node>()> constructor);
 
 	void begin_out_in(std::shared_ptr<NodeOutput> start);

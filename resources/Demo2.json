@@ -1,0 +1,72 @@
+{
+    "name": "resources/Demo2",
+    "nodes": {
+        "Image Write_78": {
+            "height": 110.0,
+            "inputs": {
+                "Path": {
+                    "from": "text",
+                    "to": "Path",
+                    "uuid": 79
+                },
+                "RGBA": {
+                    "from": "RGBA",
+                    "to": "RGBA",
+                    "uuid": 76
+                }
+            },
+            "name": "Image Write",
+            "summary": false,
+            "type": "class ImageWriteNode",
+            "uuid": 78,
+            "width": 300.0,
+            "x": 231.0,
+            "y": -63.5
+        },
+        "String_77": {
+            "height": 70.0,
+            "inputs": null,
+            "name": "String",
+            "summary": false,
+            "type": "class NodeString",
+            "uuid": 77,
+            "value": "resources/icon.png",
+            "width": 300.0,
+            "x": -744.0,
+            "y": 11.5
+        },
+        "String_79": {
+            "height": 70.0,
+            "inputs": null,
+            "name": "String",
+            "summary": false,
+            "type": "class NodeString",
+            "uuid": 79,
+            "value": "out/Demo2.jpg",
+            "width": 300.0,
+            "x": -192.0,
+            "y": 240.5
+        },
+        "Texture_76": {
+            "height": 230.0,
+            "inputs": {
+                "path": {
+                    "from": "text",
+                    "to": "path",
+                    "uuid": 77
+                }
+            },
+            "name": "Texture",
+            "summary": false,
+            "type": "class NodeTexture",
+            "uuid": 76,
+            "width": 300.0,
+            "x": -390.0,
+            "y": -68.5
+        }
+    },
+    "path": "resources/Demo2",
+    "pos_x": 187.2680206298828,
+    "pos_y": -133.4935760498047,
+    "zoom": 0.7084730267524719
+}

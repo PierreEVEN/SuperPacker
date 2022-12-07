@@ -69,7 +69,14 @@ public:
 
     bool draw();
 
+    static Gfx& get();
+
+    float get_delta_second() const { return delta_second; }
+
 private:
+
+    float delta_second = 0;
+    double last_time = 0;
 
 	GLFWwindow* main_window;
     ImGuiContext* imgui_context;
