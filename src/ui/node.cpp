@@ -153,7 +153,7 @@ void Node::display_internal(Graph& graph)
 
 	// Draw window at location
 	ImGui::SetCursorScreenPos(screen_min - ImVec2{2, 2} * graph.zoom);
-	if (ImGui::BeginChild((name + std::to_string(uuid)).c_str(), screen_max - screen_min + ImVec2{4, 4} * graph.zoom,
+	if (ImGui::BeginChild(("node_" + std::to_string(uuid)).c_str(), screen_max - screen_min + ImVec2{4, 4} * graph.zoom,
 	                      false,
 	                      ImGuiWindowFlags_NoBackground))
 	{
@@ -191,27 +191,33 @@ void Node::display_internal(Graph& graph)
 		}
 		ImGui::EndChild();
 
-		if (get_graph().is_selected(this))
+		const auto title_size = ImGui::CalcTextSize(name.c_str());
+		const auto title_pos = ImVec2{
+			(screen_min.x + screen_max.x) / 2 - title_size.x / 2, screen_min.y + 5.f * get_graph().zoom
+		};
+
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 		{
-			edit_name = true;
+			if (get_graph().is_selected(this) && ImGui::IsMouseHoveringRect(
+				edit_name ? screen_min : title_pos,
+				edit_name ? ImVec2{screen_max.x, screen_min.y + 25 * get_graph().zoom} : title_pos + title_size))
+				edit_name = true;
+			else
+				edit_name = false;
 		}
 
 		// Draw name
 		if (edit_name)
 		{
-			ImGui::SetCursorScreenPos(screen_min + ImVec2{10, 5});
-			char name_str[256];
-			memset(name_str, 0, sizeof name_str);
+			ImGui::SetCursorScreenPos(screen_min + ImVec2{10, 5} * get_graph().zoom);
+			char name_str[256] = {};
 			memcpy(name_str, name.c_str(), min(name.size() + 1, sizeof name_str));
-			ImGui::InputText(std::string("##name" + std::to_string(uuid)).c_str(), name_str, sizeof name_str);
+			if (ImGui::InputText(std::string("##name" + std::to_string(uuid)).c_str(), name_str, sizeof name_str, ImGuiInputTextFlags_EnterReturnsTrue))
+				edit_name = false;
 			name = name_str;
 		}
 		else
-			dl->AddText({
-				            (screen_min.x + screen_max.x) / 2 - ImGui::CalcTextSize(name.c_str()).x / 2,
-				            screen_min.y + 5.f * get_graph().zoom
-			            },
-			            ImGui::ColorConvertFloat4ToU32({1, 1, 1, 1}), name.c_str());
+			dl->AddText(title_pos, ImGui::ColorConvertFloat4ToU32({1, 1, 1, 1}), name.c_str());
 
 		// Draw outputs points
 		const ImVec2 dims = screen_max - (screen_min + ImVec2{0, 25 * get_graph().zoom + 10 * get_graph().zoom});
@@ -248,6 +254,11 @@ void Node::display_internal(Graph& graph)
 		{
 			ImGui::SetCursorScreenPos(ImVec2{screen_max.x - 25 * graph.zoom, screen_min.y + 5 * graph.zoom});
 			ImGui::Checkbox(("##summary_" + std::to_string(uuid)).c_str(), &display_in_summary);
+			if (ImGui::IsItemHovered()) {
+				ImGui::BeginTooltip();
+				ImGui::Text("Should display node in summary mode");
+				ImGui::EndTooltip();
+			}
 		}
 	}
 	ImGui::EndChild();
