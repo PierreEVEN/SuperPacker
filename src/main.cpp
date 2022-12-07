@@ -19,12 +19,13 @@ int main(int argc, char** argv)
 	Graph::register_node<NodeMult>();
 	Graph::register_node<NodeFloat>();
 	Graph::register_node<NodeTexture>();
-	Graph::register_node<NodeString>();
-	Graph::register_node<AppendString>();
+	Graph::register_node<TextInput>();
+	Graph::register_node<AppendText>();
 	Graph::register_node<MakeFloat4>();
 	Graph::register_node<MakeFloat3>();
 	Graph::register_node<MakeFloat2>();
 	Graph::register_node<BreakColor>();
+	Graph::register_node<DirectoryInput>();
 
 	GraphBrowser browser;
 	browser.new_graph("test");

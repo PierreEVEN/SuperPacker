@@ -2,9 +2,14 @@
 
 #include <iostream>
 
-NodeString::NodeString() : Node("String")
+#include "file_actions.h"
+
+/**
+ * \brief Text
+ */
+TextInput::TextInput() : Node("Text")
 {
-	const auto out = add_output("text");
+	const auto out = add_output("result");
 	out->on_get_type.add_lambda([]
 	{
 		return EType::String;
@@ -15,7 +20,7 @@ NodeString::NodeString() : Node("String")
 	});
 }
 
-void NodeString::display()
+void TextInput::display()
 {
 	char buf[2048];
 
@@ -28,21 +33,60 @@ void NodeString::display()
 	}
 }
 
-nlohmann::json NodeString::serialize(Graph& graph)
+nlohmann::json TextInput::serialize(Graph& graph)
 {
 	auto js = Node::serialize(graph);
 	js["value"] = value;
 	return js;
 }
 
-void NodeString::deserialize(const nlohmann::json& json)
+void TextInput::deserialize(const nlohmann::json& json)
 {
 	Node::deserialize(json);
 	if (json.contains("value"))
 		value = json["value"];
 }
 
-AppendString::AppendString() : Node("Append String")
+/// <summary>
+/// Directory
+/// </summary>
+
+DirectoryInput::DirectoryInput() : Node("Directory")
+{
+	const auto out = add_output("dir");
+	out->on_get_type.add_lambda([]
+		{
+			return EType::String;
+		});
+	out->on_get_code.add_lambda([&](CodeContext& context)
+		{
+			return value;
+		});
+}
+
+void DirectoryInput::display()
+{
+	if (ImGui::Button((value + "##btn").c_str(), ImGui::GetContentRegionAvail()))
+	{
+		test();
+	}
+}
+
+nlohmann::json DirectoryInput::serialize(Graph& graph)
+{
+	auto js = Node::serialize(graph);
+	js["value"] = value;
+	return js;
+}
+
+void DirectoryInput::deserialize(const nlohmann::json& json)
+{
+	Node::deserialize(json);
+	if (json.contains("value"))
+		value = json["value"];
+}
+
+AppendText::AppendText() : Node("Append Text")
 {
 	a = add_input("A");
 	b = add_input("B");
@@ -75,7 +119,7 @@ AppendString::AppendString() : Node("Append String")
 	});
 }
 
-void AppendString::display()
+void AppendText::display()
 {
 	ImGui::TextWrapped("%s", value.c_str());
 }

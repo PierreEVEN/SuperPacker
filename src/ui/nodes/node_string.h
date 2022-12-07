@@ -4,10 +4,10 @@
 
 class Graph;
 
-class NodeString : public Node
+class TextInput : public Node
 {
 public:
-	NodeString();
+	TextInput();
 	void display() override;
 
 	virtual nlohmann::json serialize(Graph& graph) override;
@@ -18,10 +18,23 @@ private:
 	std::string value;
 };
 
-class AppendString : public Node
+class DirectoryInput : public Node
 {
 public:
-	AppendString();
+	DirectoryInput();
+	void display() override;
+
+	virtual nlohmann::json serialize(Graph& graph) override;
+	void deserialize(const nlohmann::json& json) override;
+
+private:
+	std::string value;
+};
+
+class AppendText : public Node
+{
+public:
+	AppendText();
 	void display() override;
 
 private:
