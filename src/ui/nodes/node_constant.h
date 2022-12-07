@@ -18,5 +18,5 @@ public:
 
 private:
 	std::shared_ptr<ShaderUniform> uniform_var;
-	float value;
+	float value = 0;
 };

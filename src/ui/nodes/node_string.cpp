@@ -7,7 +7,7 @@
 /**
  * \brief Text
  */
-TextInput::TextInput() : Node("Text")
+TextInput::TextInput()
 {
 	const auto out = add_output("result");
 	out->on_get_type.add_lambda([]
@@ -51,7 +51,7 @@ void TextInput::deserialize(const nlohmann::json& json)
 /// Directory
 /// </summary>
 
-DirectoryInput::DirectoryInput() : Node("Directory")
+DirectoryInput::DirectoryInput()
 {
 	const auto out = add_output("dir");
 	out->on_get_type.add_lambda([]
@@ -86,7 +86,7 @@ void DirectoryInput::deserialize(const nlohmann::json& json)
 		value = json["value"];
 }
 
-AppendText::AppendText() : Node("Append Text")
+AppendText::AppendText()
 {
 	a = add_input("A");
 	b = add_input("B");

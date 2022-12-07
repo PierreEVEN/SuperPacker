@@ -83,7 +83,6 @@ void Logger::display()
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
 		{
 			display_grow = !display_grow;
-			std::cout << "toto" << std::endl;
 		}
 	}
 	new_frame();

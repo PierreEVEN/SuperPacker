@@ -5,14 +5,38 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
-#include "event_manager.h"
 #include "logger.h"
+
+#define REGISTER_NODE(type, infos) \
+struct __node_registerer_##type { \
+	__node_registerer_##type() { \
+		Graph::register_node<type>(infos); \
+	} \
+}; \
+__node_registerer_##type __instance##type
+
 
 class CodeContext;
 enum class EType;
 class Node;
 class NodeInput;
 class NodeOutput;
+
+class NodeInfo
+{
+public:
+	NodeInfo() = default;
+
+	NodeInfo(std::string in_category, std::vector<std::string> in_alias) : alias(std::move(in_alias)),
+	                                                                       category(std::move(in_category))
+	{
+	}
+
+	std::string internal_name;
+	std::vector<std::string> alias;
+	std::string category;
+	std::function<std::shared_ptr<Node>()> constructor;
+};
 
 struct MouseHit
 {
@@ -73,16 +97,18 @@ public:
 	void open_context_menu();
 
 	template <typename T>
-	static void register_node()
+	static void register_node(NodeInfo node_infos)
 	{
-		register_node(typeid(T).name(), []() { return std::make_shared<T>(); });
+		node_infos.constructor = [] { return std::make_shared<T>(); };
+		node_infos.internal_name = typeid(T).name();
+		register_node(node_infos);
 	}
 
 	Logger logger;
 
 private:
 	std::string path;
-	static void register_node(const std::string& type_name, std::function<std::shared_ptr<Node>()> constructor);
+	static void register_node(const NodeInfo& node_infos);
 
 	void begin_out_in(std::shared_ptr<NodeOutput> start);
 	void end_out_in(std::shared_ptr<NodeInput> end);

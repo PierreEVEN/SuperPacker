@@ -60,14 +60,6 @@ void NodeInput::link_to(const std::shared_ptr<NodeOutput>& output)
 	}
 }
 
-Node::Node(std::string in_name) : name(std::move(in_name))
-{
-	uuid = node_uuids++;
-	position = {20, 20};
-	size = {300, 200};
-}
-
-
 nlohmann::json Node::serialize(Graph& graph)
 {
 	nlohmann::json inputs_js;
@@ -200,15 +192,15 @@ void Node::display_internal(Graph& graph)
 		if (get_graph().is_hovered(this) && ImGui::IsMouseHoveringRect(title_pos, title_pos + title_size))
 			ImGui::SetMouseCursor(ImGuiMouseCursor_TextInput);
 
-		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+		if (get_graph().is_selected(this) && ImGui::IsMouseHoveringRect(
+			edit_name ? screen_min : title_pos,
+			edit_name ? ImVec2{screen_max.x, screen_min.y + 25 * get_graph().zoom} : title_pos + title_size))
 		{
-			if (get_graph().is_selected(this) && ImGui::IsMouseHoveringRect(
-				edit_name ? screen_min : title_pos,
-				edit_name ? ImVec2{screen_max.x, screen_min.y + 25 * get_graph().zoom} : title_pos + title_size))
+			if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 				edit_name = true;
-			else
-				edit_name = false;
 		}
+		else if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+			edit_name = false;
 
 		// Draw name
 		if (edit_name)
@@ -339,6 +331,13 @@ void Node::mark_dirty()
 	for (const auto& output : outputs)
 		output->mark_dirty();
 	on_update();
+}
+
+void Node::internal_init()
+{
+	uuid = node_uuids++;
+	position = {20, 20};
+	size = {300, 200};
 }
 
 float Node::calc_min_height() const

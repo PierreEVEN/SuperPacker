@@ -6,7 +6,6 @@
 #include "gfx.h"
 
 NodeFloat::NodeFloat()
-	: Node("Float"), value(0)
 {
 	const auto out = add_output("value"); 
 	out->on_get_type.add_lambda([]() { return EType::Float; });

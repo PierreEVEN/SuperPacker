@@ -1,6 +1,6 @@
 #include "nodes_misc.h"
 
-MakeFloat4::MakeFloat4() : Node("Make Float4")
+MakeFloat4::MakeFloat4()
 {
 	r = add_input("r");
 	g = add_input("g");
@@ -50,7 +50,7 @@ MakeFloat4::MakeFloat4() : Node("Make Float4")
 	});
 }
 
-MakeFloat3::MakeFloat3() : Node("Make Float3")
+MakeFloat3::MakeFloat3()
 {
 	r = add_input("r");
 	g = add_input("g");
@@ -93,7 +93,7 @@ MakeFloat3::MakeFloat3() : Node("Make Float3")
 	});
 }
 
-MakeFloat2::MakeFloat2() : Node("Make Float2")
+MakeFloat2::MakeFloat2()
 {
 	r = add_input("r");
 	g = add_input("g");
@@ -127,7 +127,7 @@ MakeFloat2::MakeFloat2() : Node("Make Float2")
 	});
 }
 
-BreakColor::BreakColor() : Node("Break Color")
+BreakColor::BreakColor()
 {
 	in = add_input("In");
 	const auto r = add_output("R");

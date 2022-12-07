@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-NodeAdd::NodeAdd() : Node("add")
+NodeAdd::NodeAdd()
 {
 	a = add_input("a");
 	b = add_input("b");
@@ -64,7 +64,7 @@ void NodeAdd::display()
 {
 }
 
-NodeMult::NodeMult() : Node("mult")
+NodeMult::NodeMult()
 {
 	a = add_input("a");
 	b = add_input("b");

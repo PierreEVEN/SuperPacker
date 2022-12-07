@@ -10,7 +10,7 @@
 #include "imgui_operators.h"
 #include "node.h"
 
-static std::unordered_map<std::string, std::function<std::shared_ptr<Node>()>> registered_nodes;
+static std::unique_ptr<std::unordered_map<std::string, NodeInfo>> registered_nodes = nullptr;
 
 Graph::Graph(const std::string& in_path) : path(in_path), name(in_path), code_context(std::make_shared<CodeContext>())
 {
@@ -34,7 +34,7 @@ uint32_t type_color(EType type, float brightness = 1.f)
 		return ImGui::ColorConvertFloat4ToU32({brightness, 0, brightness, 1});
 	case EType::Undefined:
 	default:
-		return ImGui::ColorConvertFloat4ToU32({0.1f, 0.1f, 0.1f, 1});
+		return ImGui::ColorConvertFloat4ToU32({0.3f, 0.3f, 0.3f, 1});
 	}
 }
 
@@ -344,8 +344,6 @@ void Graph::draw()
 			is_in_context_menu = false;
 		}
 
-		logger.add_frame_log({.message = "F1"});
-		logger.add_frame_log({.message = "F2"});
 		logger.display();
 	}
 	ImGui::EndChild();
@@ -429,16 +427,28 @@ void Graph::display_node_context_menu(ImDrawList* window_draw_list)
 		return false;
 	};
 
+	std::vector<const NodeInfo*> nodes;
+	nodes.reserve(registered_nodes->size());
+	
+	for (const auto& node_type : *registered_nodes)
+		nodes.emplace_back(&node_type.second);
 
-	for (const auto& node_type : registered_nodes)
+	std::sort(nodes.begin(), nodes.end(), [](const NodeInfo* a, const NodeInfo* b)
 	{
-		if (!pass_filter({node_type.first}))
-			continue;
+		const std::string& display_name_a = a->alias.empty() ? a->internal_name : a->alias[0];
+		const std::string& display_name_b = b->alias.empty() ? b->internal_name : b->alias[0];
+		return std::lexicographical_compare(display_name_a.begin(), display_name_a.end(), display_name_b.begin(), display_name_b.end());
+	});
 
-		if (ImGui::MenuItem(node_type.first.c_str()) || confirm || (ImGui::IsKeyPressed(ImGuiKey_Enter) &&
-			ImGui::GetFocusID() == ImGui::GetCurrentWindow()->GetID(node_type.first.c_str())))
+	for (const auto& node_type : nodes)
+	{
+		if (!pass_filter(node_type->alias))
+			continue;
+		std::string display_name = node_type->alias.empty() ? node_type->internal_name : node_type->alias[0];
+		if (ImGui::MenuItem(display_name.c_str()) || confirm || (ImGui::IsKeyPressed(ImGuiKey_Enter) &&
+			ImGui::GetFocusID() == ImGui::GetCurrentWindow()->GetID(display_name.c_str())))
 		{
-			if (const auto node = spawn_by_name(node_type.first))
+			if (const auto node = spawn_by_name(node_type->internal_name))
 			{
 				node->position = pos_to_graph(context_menu_pos, window_draw_list);
 				if (out_to_in && !node->inputs.empty())
@@ -565,18 +575,22 @@ void Graph::save_to_file()
 	output << std::setw(4) << js << std::endl;
 }
 
-void Graph::register_node(const std::string& type_name, std::function<std::shared_ptr<Node>()> constructor)
+void Graph::register_node(const NodeInfo& node_infos)
 {
-	registered_nodes[type_name] = constructor;
+	if (!registered_nodes)
+		registered_nodes = std::make_unique<std::unordered_map<std::string, NodeInfo>>();
+	(*registered_nodes)[node_infos.internal_name] = node_infos;
 }
 
 std::shared_ptr<Node> Graph::spawn_by_name(const std::string& type_name)
 {
-	const auto found = registered_nodes.find(type_name);
-	if (found != registered_nodes.end())
+	const auto found = registered_nodes->find(type_name);
+	if (found != registered_nodes->end())
 	{
-		const auto node = found->second();
-		node->type_name = type_name;
+		const auto node = found->second.constructor();
+		node->internal_init();
+		node->name = found->second.alias[0];
+		node->type_name = found->first;
 		node->owning_graph = this;
 		node->register_uniform(*code_context);
 		nodes.emplace_back(node);

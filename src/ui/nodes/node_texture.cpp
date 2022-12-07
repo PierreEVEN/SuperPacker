@@ -10,7 +10,6 @@
  */
 
 NodeTexture::NodeTexture()
-	: Node("Texture")
 {
 	const auto col = add_output("RGBA");
 	col->on_get_type.add_lambda([]() { return EType::Float4; });
@@ -119,7 +118,6 @@ void NodeTexture::display()
  */
 
 ImageWriteNode::ImageWriteNode()
-	: Node("Image Write")
 {
 	rgba_input = add_input("RGBA");
 	path_input = add_input("Path");
