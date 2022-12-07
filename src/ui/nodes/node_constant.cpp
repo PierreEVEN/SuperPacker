@@ -24,7 +24,11 @@ NodeFloat::~NodeFloat()
 
 void NodeFloat::display()
 {
-	ImGui::DragFloat("value", &value, 0.01f);
+	//ImGui::ShowDemoWindow();
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0, ImGui::GetContentRegionAvail().y / 2 - ImGui::CalcTextSize("a").y / 2 });
+	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);	
+	ImGui::DragFloat("##value", &value, 0.01f);
+	ImGui::PopStyleVar();
 }
 
 void NodeFloat::register_uniform(CodeContext& ctx)
