@@ -32,6 +32,20 @@ private:
 	std::string value;
 };
 
+class FileInput : public Node
+{
+public:
+	FileInput();
+	void display() override;
+
+	virtual nlohmann::json serialize(Graph& graph) override;
+	void deserialize(const nlohmann::json& json) override;
+
+	ESummaryMode summary_mode() const override { return ESummaryMode::Input; }
+private:
+	std::string value;
+};
+
 class AppendText : public Node
 {
 public:

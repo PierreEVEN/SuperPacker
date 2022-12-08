@@ -23,28 +23,6 @@
             "x": 292.2935485839844,
             "y": 268.9786376953125
         },
-        "Append Text_191": {
-            "height": 110.0,
-            "inputs": {
-                "A": {
-                    "from": "dir",
-                    "to": "A",
-                    "uuid": 234
-                },
-                "B": {
-                    "from": "result",
-                    "to": "B",
-                    "uuid": 190
-                }
-            },
-            "name": "Append Text",
-            "summary": true,
-            "type": "class AppendText",
-            "uuid": 191,
-            "width": 300.0,
-            "x": 313.0345458984375,
-            "y": 606.6104736328125
-        },
         "Append Text_247": {
             "height": 110.0,
             "inputs": {
@@ -96,10 +74,22 @@
             "summary": true,
             "type": "class DirectoryInput",
             "uuid": 234,
-            "value": "C:\\Users\\pierre\\Documents\\projects\\SuperPacker\\resources/",
+            "value": "resources/",
             "width": 300.0,
             "x": -845.5869140625,
             "y": 289.7273864746094
+        },
+        "File_261": {
+            "height": 70.0,
+            "inputs": null,
+            "name": "File",
+            "summary": true,
+            "type": "class FileInput",
+            "uuid": 261,
+            "value": "resources\\icon.png",
+            "width": 300.0,
+            "x": 488.4585876464844,
+            "y": 634.695556640625
         },
         "Float_63": {
             "height": 70.0,
@@ -179,18 +169,6 @@
             "x": -255.32301330566406,
             "y": 403.2863464355469
         },
-        "Text_190": {
-            "height": 70.0,
-            "inputs": null,
-            "name": "Text",
-            "summary": true,
-            "type": "class TextInput",
-            "uuid": 190,
-            "value": "icon.png",
-            "width": 300.0,
-            "x": -245.69424438476563,
-            "y": 619.849365234375
-        },
         "Text_246": {
             "height": 70.0,
             "inputs": null,
@@ -236,9 +214,9 @@
             "height": 230.0,
             "inputs": {
                 "path": {
-                    "from": "Result",
+                    "from": "dir",
                     "to": "path",
-                    "uuid": 191
+                    "uuid": 261
                 }
             },
             "name": "Texture",
@@ -290,7 +268,7 @@
         }
     },
     "path": "resources/test",
-    "pos_x": 572.7272338867188,
-    "pos_y": -257.6140441894531,
-    "zoom": 1.0368534326553345
+    "pos_x": -636.3776245117188,
+    "pos_y": -228.7544403076172,
+    "zoom": 0.6273024678230286
 }

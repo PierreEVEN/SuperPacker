@@ -7,6 +7,15 @@
 
 #include <nfd.hpp>
 
+static std::string wstring_to_string(std::wstring w_string)
+{
+	std::string ret;
+	std::ranges::transform(w_string, std::back_inserter(ret),
+		[](wchar_t c) { return static_cast<char>(c); });
+	return ret;
+}
+
+
 /**
  * \brief Text
  */
@@ -68,15 +77,6 @@ DirectoryInput::DirectoryInput()
 }
 
 
-std::string wstring_to_string(std::wstring w_string)
-{
-	std::string ret;
-	std::ranges::transform(w_string, std::back_inserter(ret),
-	                       [](wchar_t c) { return static_cast<char>(c); });
-	return ret;
-}
-
-
 void DirectoryInput::display()
 {
 	if (ImGui::Button((value + "##btn").c_str(), ImGui::GetContentRegionAvail()))
@@ -84,7 +84,7 @@ void DirectoryInput::display()
 		nfdnchar_t* outPath;
 		if (NFD::PickFolder(outPath, nullptr) == NFD_OKAY)
 		{
-			value = wstring_to_string(outPath) + "/";
+			value = std::filesystem::relative(wstring_to_string(outPath)).string() + "/";
 			NFD::FreePath(outPath);
 			mark_dirty();
 		}
@@ -99,6 +99,47 @@ nlohmann::json DirectoryInput::serialize(Graph& graph)
 }
 
 void DirectoryInput::deserialize(const nlohmann::json& json)
+{
+	Node::deserialize(json);
+	if (json.contains("value"))
+		value = json["value"];
+}
+
+FileInput::FileInput()
+{
+	const auto out = add_output("dir");
+	out->on_get_type.add_lambda([]
+		{
+			return EType::String;
+		});
+	out->on_get_code.add_lambda([&](CodeContext& context)
+		{
+			return value;
+		});
+}
+
+void FileInput::display()
+{
+	if (ImGui::Button((value + "##btn").c_str(), ImGui::GetContentRegionAvail()))
+	{
+		nfdnchar_t* outPath;
+		if (NFD::OpenDialog(outPath) == NFD_OKAY)
+		{
+			value = std::filesystem::relative(wstring_to_string(outPath)).string();
+			NFD::FreePath(outPath);
+			mark_dirty();
+		}
+	}
+}
+
+nlohmann::json FileInput::serialize(Graph& graph)
+{
+	auto js = Node::serialize(graph);
+	js["value"] = value;
+	return js;
+}
+
+void FileInput::deserialize(const nlohmann::json& json)
 {
 	Node::deserialize(json);
 	if (json.contains("value"))
@@ -142,3 +183,8 @@ void AppendText::display()
 {
 	ImGui::TextWrapped("%s", value.c_str());
 }
+
+REGISTER_NODE(TextInput, NodeInfo("", { "Text", "String" }));
+REGISTER_NODE(AppendText, NodeInfo("", { "Append Text", "Concatenate" }));
+REGISTER_NODE(DirectoryInput, NodeInfo("", { "Directory", "Select Directory" }));
+REGISTER_NODE(FileInput, NodeInfo("", { "File", "Select File" }));
