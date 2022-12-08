@@ -77,7 +77,6 @@ class Node
 {
 	friend class Graph;
 public:
-
 	virtual nlohmann::json serialize(Graph& graph);
 	virtual void deserialize(const nlohmann::json& json);
 
@@ -133,6 +132,11 @@ protected:
 	std::string name;
 	OutShader display_shader;
 	Graph* owning_graph = nullptr;
+
+	virtual void display_summary()
+	{
+	}
+
 private:
 	bool edit_name = false;
 	bool display_in_summary = true;

@@ -156,313 +156,334 @@ void Graph::open_context_menu()
 
 void Graph::draw()
 {
-	hits.clear();
-
-	if (ImGui::IsKeyPressed(ImGuiKey_Delete))
+	if (summary_mode)
 	{
-		while (!selected_nodes.empty())
-			remove_node(*selected_nodes.begin());
-	}
-
-	// Handle drag
-	if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
-	{
-		pos = pos + ImGui::GetMouseDragDelta(ImGuiMouseButton_Right) / zoom;
-	}
-
-	if (ImGui::BeginChild(name.c_str(), ImGui::GetContentRegionAvail(), true,
-	                      ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar))
-	{
-		if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && (ImGui::IsKeyPressed(ImGuiKey_C, false) || ImGui::IsKeyPressed(
-			ImGuiKey_X, false)))
-		{
-			nlohmann::json clipboard;
-
-			for (const auto& node : selected_nodes)
-			{
-				if (node)
-					clipboard[std::to_string(node->uuid)] = node->serialize(*this);
-			}
-
-			std::stringstream serialized;
-			serialized << clipboard;
-			Gfx::get().set_clipboard(serialized.str());
-			if (ImGui::IsKeyPressed(ImGuiKey_X, false))
-				while (!selected_nodes.empty())
-					remove_node(*selected_nodes.begin());
-		}
-
-		// Handle zoom
-		{
-			const float zoom_delta = ImGui::GetIO().MouseWheel * zoom * 0.1f;
-			zoom = std::clamp(zoom + zoom_delta, 0.01f, 4.f);
-
-			const ImVec2 percents = ((ImGui::GetMousePos() - ImGui::GetWindowPos()) / ImGui::GetWindowSize() - 0.5) * -1;
-			if (zoom_delta != 0)
-				pos += ImGui::GetWindowSize() * zoom_delta / (zoom * zoom) * percents;
-		}
-
-		// Update transformations
-		hovered_node = nullptr;
+		ImGui::Columns(2);
 		for (const auto& node : nodes)
 		{
-			node->update_nodes_positions();
-			if (ImGui::IsMouseHoveringRect(node->screen_min + ImVec2{node->inputs.empty() ? 0 : 39 * zoom, 0},
-			                               node->screen_max - ImVec2{node->outputs.empty() ? 0 : 39 * zoom, 0}))
-				hovered_node = node;
+			if (node->display_in_summary && node->summary_mode() == Node::ESummaryMode::Input)
+				node->display_summary();
 		}
-		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !is_selected(hovered_node.get()))
+		ImGui::NextColumn();
+		for (const auto& node : nodes)
 		{
-			if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
-				clear_selection();
-			if (hovered_node)
-				add_to_selection(hovered_node);
+			if (node->display_in_summary && node->summary_mode() == Node::ESummaryMode::Output)
+				node->display_summary();
 		}
-		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && hovered_node)
-		{
-			moving_node = true;
-		}
-		if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-			no_drag_before_release = true;
-		if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
-			no_drag_before_release = false;
+		ImGui::Columns(1);
+	}
+	else
+	{
+		hits.clear();
 
-		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-			moving_node = false;
-
-		if (ImGui::IsMouseReleased(ImGuiMouseButton_Right) && !hovered_node && no_drag_before_release)
+		if (ImGui::IsKeyPressed(ImGuiKey_Delete))
 		{
-			if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
-				clear_selection();
-			open_context_menu();
+			while (!selected_nodes.empty())
+				remove_node(*selected_nodes.begin());
 		}
-		if (ImGui::IsKeyPressed(ImGuiKey_Space) && !hovered_node && no_drag_before_release)
-			open_context_menu();
 
 		// Handle drag
-		if (moving_node && ImGui::IsMouseDragging(ImGuiMouseButton_Left) && ImGui::GetActiveID() !=
-			ImGui::GetFocusID())
+		if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
 		{
-			const auto pos_min = ImGui::GetWindowPos();
-			const auto pos_max = ImGui::GetWindowPos() + ImGui::GetWindowSize();
-			const auto mouse_pos = ImGui::GetMousePos();
-			ImVec2 offscreen_delta = {};
-			offscreen_delta.x += Gfx::get().get_delta_second() * static_cast<float>(std::pow(
-				std::clamp(pos_min.x + 40 - mouse_pos.x, 0.f, 40.f) / 40, 4) * 10000);
-			offscreen_delta.y += Gfx::get().get_delta_second() * static_cast<float>(std::pow(
-				std::clamp(pos_min.y + 40 - mouse_pos.y, 0.f, 40.f) / 40, 4) * 10000);
-			offscreen_delta.x -= Gfx::get().get_delta_second() * static_cast<float>(std::pow(
-				std::clamp(40 + mouse_pos.x - pos_max.x, 0.f, 40.f) / 40, 4) * 10000);
-			offscreen_delta.y -= Gfx::get().get_delta_second() * static_cast<float>(std::pow(
-				std::clamp(40 + mouse_pos.y - pos_max.y, 0.f, 40.f) / 40, 4) * 10000);
+			pos = pos + ImGui::GetMouseDragDelta(ImGuiMouseButton_Right) / zoom;
+		}
 
-			pos += offscreen_delta;
-
-			for (auto& c_node : selected_nodes)
+		if (ImGui::BeginChild(name.c_str(), ImGui::GetContentRegionAvail(), true,
+		                      ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar))
+		{
+			if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && (ImGui::IsKeyPressed(ImGuiKey_C, false) || ImGui::IsKeyPressed(
+				ImGuiKey_X, false)))
 			{
-				Node* node = c_node;
-				node->position += ImGui::GetMouseDragDelta(ImGuiMouseButton_Left) / zoom - offscreen_delta;
-				node->update_nodes_positions();
+				nlohmann::json clipboard;
+
+				for (const auto& node : selected_nodes)
+				{
+					if (node)
+						clipboard[std::to_string(node->uuid)] = node->serialize(*this);
+				}
+
+				std::stringstream serialized;
+				serialized << clipboard;
+				Gfx::get().set_clipboard(serialized.str());
+				if (ImGui::IsKeyPressed(ImGuiKey_X, false))
+					while (!selected_nodes.empty())
+						remove_node(*selected_nodes.begin());
 			}
-			ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
-		}
 
-		if (ImGui::IsKeyPressed(ImGuiKey_F))
-		{
-			ImVec2 avg;
-			for (const auto node : selected_nodes)
-				avg = avg - node->position;
-			avg = avg / static_cast<float>(selected_nodes.size());
-
-			pos = avg;
-		}
-
-		if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_A, true))
-		{
-			if (selected_nodes.size() == nodes.size())
-				clear_selection();
-			else
-				for (const auto node : nodes)
-					add_to_selection(node, false);
-		}
-		// Draw connections
-		for (const auto& node : nodes)
-			node->draw_connections(*this);
-
-		// Draw nodes
-		for (const auto& node : nodes)
-			node->display_internal(*this);
-
-		// Handle mouse hits
-		const MouseHit* closest_hit = nullptr;
-		float closest_distance = 0;
-		for (auto& hit : hits)
-		{
-			const ImVec2 d2 = {
-				std::abs(hit.position.x - ImGui::GetMousePos().x), std::abs(hit.position.y - ImGui::GetMousePos().y)
-			};
-			const float distance = min(d2.x, d2.y);
-			if (distance < closest_distance || ! closest_hit)
+			// Handle zoom
 			{
-				closest_distance = distance;
-				closest_hit = &hit;
+				const float zoom_delta = ImGui::GetIO().MouseWheel * zoom * 0.1f;
+				zoom = std::clamp(zoom + zoom_delta, 0.01f, 4.f);
+
+				const ImVec2 percents = ((ImGui::GetMousePos() - ImGui::GetWindowPos()) / ImGui::GetWindowSize() - 0.5)
+					* -1;
+				if (zoom_delta != 0)
+					pos += ImGui::GetWindowSize() * zoom_delta / (zoom * zoom) * percents;
 			}
-		}
-		if (closest_hit)
-		{
-			if (closest_hit->node_output || closest_hit->node_input)
-			{
-				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-					if (closest_hit->node_input)
-						begin_in_out(closest_hit->node_input);
-					else if (closest_hit->node_output)
-						begin_out_in(closest_hit->node_output);
-				if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-					if (closest_hit->node_input)
-						end_out_in(closest_hit->node_input);
-					else if (closest_hit->node_output)
-						end_in_out(closest_hit->node_output);
-			}
-		}
-		else
-		{
-			if (!hovered_node && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-				selection_rect_start = std::make_shared<ImVec2>(ImGui::GetMousePos() * zoom + pos);
-		}
-		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-			selection_rect_start = nullptr;
 
-		if (selection_rect_start)
-		{
-			const ImVec2 selection_rect_end = ImGui::GetMousePos() * zoom + pos;
-
-			const ImVec2 screen_a = (*selection_rect_start - pos) / zoom;
-			const ImVec2 screen_b = (selection_rect_end - pos) / zoom;
-			const ImVec2 screen_min = {min(screen_a.x, screen_b.x), min(screen_a.y, screen_b.y)};
-			const ImVec2 screen_max = {max(screen_a.x, screen_b.x), max(screen_a.y, screen_b.y)};
-			ImGui::GetForegroundDrawList()->AddRectFilled(screen_min, screen_max,
-			                                              ImGui::ColorConvertFloat4ToU32({1, 1, 1, 0.2f}));
-			ImGui::GetForegroundDrawList()->AddRect(screen_min, screen_max,
-			                                        ImGui::ColorConvertFloat4ToU32({1, 1, 1, 1.f}));
-
-			if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
-				clear_selection();
+			// Update transformations
+			hovered_node = nullptr;
 			for (const auto& node : nodes)
 			{
-				if (screen_max.x > node->screen_min.x && screen_max.y > node->screen_min.y && screen_min.x < node->
-					screen_max.x && screen_min.y < node->screen_max.y)
-				{
-					add_to_selection(node, false);
-				}
+				node->update_nodes_positions();
+				if (ImGui::IsMouseHoveringRect(node->screen_min + ImVec2{node->inputs.empty() ? 0 : 39 * zoom, 0},
+				                               node->screen_max - ImVec2{node->outputs.empty() ? 0 : 39 * zoom, 0}))
+					hovered_node = node;
 			}
-		}
-
-		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) && !is_in_context_menu)
-		{
-			if (out_to_in || in_to_out)
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !is_selected(hovered_node.get()))
 			{
+				if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
+					clear_selection();
+				if (hovered_node)
+					add_to_selection(hovered_node);
+			}
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && hovered_node)
+			{
+				moving_node = true;
+			}
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+				no_drag_before_release = true;
+			if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+				no_drag_before_release = false;
+
+			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+				moving_node = false;
+
+			if (ImGui::IsMouseReleased(ImGuiMouseButton_Right) && !hovered_node && no_drag_before_release)
+			{
+				if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
+					clear_selection();
 				open_context_menu();
 			}
-			if (in_to_out && in_to_out->target())
-				in_to_out->link_to(nullptr);
-		}
+			if (ImGui::IsKeyPressed(ImGuiKey_Space) && !hovered_node && no_drag_before_release)
+				open_context_menu();
 
-		if (out_to_in)
-		{
-			draw_connection(out_to_in->position, is_in_context_menu ? context_menu_pos : ImGui::GetMousePos(),
-			                out_to_in->on_get_type.execute());
-		}
-
-		if (in_to_out)
-		{
-			draw_connection(is_in_context_menu ? context_menu_pos : ImGui::GetMousePos(), in_to_out->position,
-			                EType::Undefined);
-		}
-
-		const auto window_draw_list = ImGui::GetWindowDrawList();
-
-		if (ImGui::BeginPopup(("ContextMenu_" + name).c_str()))
-		{
-			display_node_context_menu(window_draw_list);
-			ImGui::EndPopup();
-		}
-		else if (is_in_context_menu)
-		{
-			in_to_out = nullptr;
-			out_to_in = nullptr;
-			is_in_context_menu = false;
-		}
-
-		logger.display();
-
-		if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_V, false))
-		{
-			try
+			// Handle drag
+			if (moving_node && ImGui::IsMouseDragging(ImGuiMouseButton_Left) && ImGui::GetActiveID() !=
+				ImGui::GetFocusID())
 			{
-				nlohmann::json clipboard = nlohmann::json::parse(Gfx::get().get_clipboard());
+				const auto pos_min = ImGui::GetWindowPos();
+				const auto pos_max = ImGui::GetWindowPos() + ImGui::GetWindowSize();
+				const auto mouse_pos = ImGui::GetMousePos();
+				ImVec2 offscreen_delta = {};
+				offscreen_delta.x += Gfx::get().get_delta_second() * static_cast<float>(std::pow(
+					std::clamp(pos_min.x + 40 - mouse_pos.x, 0.f, 40.f) / 40, 4) * 10000);
+				offscreen_delta.y += Gfx::get().get_delta_second() * static_cast<float>(std::pow(
+					std::clamp(pos_min.y + 40 - mouse_pos.y, 0.f, 40.f) / 40, 4) * 10000);
+				offscreen_delta.x -= Gfx::get().get_delta_second() * static_cast<float>(std::pow(
+					std::clamp(40 + mouse_pos.x - pos_max.x, 0.f, 40.f) / 40, 4) * 10000);
+				offscreen_delta.y -= Gfx::get().get_delta_second() * static_cast<float>(std::pow(
+					std::clamp(40 + mouse_pos.y - pos_max.y, 0.f, 40.f) / 40, 4) * 10000);
 
-				remap_uuid_in_json(clipboard);
+				pos += offscreen_delta;
 
-				clear_selection();
-
-				std::vector<std::shared_ptr<Node>> added_nodes;
-				ImVec2 average_pos = {};
-				for (const auto& node_js : clipboard)
+				for (auto& c_node : selected_nodes)
 				{
-					const auto node = spawn_by_name(node_js["type"]);
-					if (!node)
-					{
-						std::cerr << "failed to spawn node of type " << node_js["type"] << std::endl;
-						logger.add_persistent_log({
-							.type = ELogType::Error,
-							.message = std::string("failed to spawn node of type ") + std::string(node_js["type"])
-						});
-						continue;
-					}
-					node->deserialize(node_js);
-					add_to_selection(node, false);
-					added_nodes.emplace_back(node);
-					average_pos += node->position;
+					Node* node = c_node;
+					node->position += ImGui::GetMouseDragDelta(ImGuiMouseButton_Left) / zoom - offscreen_delta;
+					node->update_nodes_positions();
 				}
-				average_pos = average_pos / static_cast<float>(added_nodes.size());
-				for (const auto& node_js : clipboard)
-				{
-					const auto link_target = find_node(node_js["uuid"]);
-					if (!link_target)
-						continue;
-					for (const auto& connection : node_js["inputs"])
-					{
-						if (!connection.contains("from") || !connection.contains("to") || !connection.contains("uuid"))
-							continue;
-						const auto link_source = find_node(connection["uuid"]);
-						if (!link_source)
-							continue;
-
-						const auto connection_source = link_source->output_by_name(connection["from"]);
-						const auto connection_target = link_target->input_by_name(connection["to"]);
-
-						if (!connection_source || !connection_target)
-							continue;
-
-						connection_target->link_to(connection_source);
-					}
-				}
-
-				ImVec2 delta = pos_to_graph(ImGui::GetMousePos()) - average_pos;
-				for (const auto& node : added_nodes)
-					node->position += delta;
+				ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
 			}
-			catch (const std::exception& e)
+
+			if (ImGui::IsKeyPressed(ImGuiKey_F))
 			{
-				logger.add_persistent_log({
-					.type = ELogType::Error, .message = std::string("Failed to past value : ") + e.what()
-				});
-			}
-		}
+				ImVec2 avg;
+				for (const auto node : selected_nodes)
+					avg = avg - node->position;
+				avg = avg / static_cast<float>(selected_nodes.size());
 
-		ImGui::ResetMouseDragDelta(ImGuiMouseButton_Right);
+				pos = avg;
+			}
+
+			if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_A, true))
+			{
+				if (selected_nodes.size() == nodes.size())
+					clear_selection();
+				else
+					for (const auto node : nodes)
+						add_to_selection(node, false);
+			}
+			// Draw connections
+			for (const auto& node : nodes)
+				node->draw_connections(*this);
+
+			// Draw nodes
+			for (const auto& node : nodes)
+				node->display_internal(*this);
+
+			// Handle mouse hits
+			const MouseHit* closest_hit = nullptr;
+			float closest_distance = 0;
+			for (auto& hit : hits)
+			{
+				const ImVec2 d2 = {
+					std::abs(hit.position.x - ImGui::GetMousePos().x), std::abs(hit.position.y - ImGui::GetMousePos().y)
+				};
+				const float distance = min(d2.x, d2.y);
+				if (distance < closest_distance || ! closest_hit)
+				{
+					closest_distance = distance;
+					closest_hit = &hit;
+				}
+			}
+			if (closest_hit)
+			{
+				if (closest_hit->node_output || closest_hit->node_input)
+				{
+					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+						if (closest_hit->node_input)
+							begin_in_out(closest_hit->node_input);
+						else if (closest_hit->node_output)
+							begin_out_in(closest_hit->node_output);
+					if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+						if (closest_hit->node_input)
+							end_out_in(closest_hit->node_input);
+						else if (closest_hit->node_output)
+							end_in_out(closest_hit->node_output);
+				}
+			}
+			else
+			{
+				if (!hovered_node && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+					selection_rect_start = std::make_shared<ImVec2>(ImGui::GetMousePos() * zoom + pos);
+			}
+			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+				selection_rect_start = nullptr;
+
+			if (selection_rect_start)
+			{
+				const ImVec2 selection_rect_end = ImGui::GetMousePos() * zoom + pos;
+
+				const ImVec2 screen_a = (*selection_rect_start - pos) / zoom;
+				const ImVec2 screen_b = (selection_rect_end - pos) / zoom;
+				const ImVec2 screen_min = {min(screen_a.x, screen_b.x), min(screen_a.y, screen_b.y)};
+				const ImVec2 screen_max = {max(screen_a.x, screen_b.x), max(screen_a.y, screen_b.y)};
+				ImGui::GetForegroundDrawList()->AddRectFilled(screen_min, screen_max,
+				                                              ImGui::ColorConvertFloat4ToU32({1, 1, 1, 0.2f}));
+				ImGui::GetForegroundDrawList()->AddRect(screen_min, screen_max,
+				                                        ImGui::ColorConvertFloat4ToU32({1, 1, 1, 1.f}));
+
+				if (!ImGui::IsKeyDown(ImGuiKey_ModCtrl))
+					clear_selection();
+				for (const auto& node : nodes)
+				{
+					if (screen_max.x > node->screen_min.x && screen_max.y > node->screen_min.y && screen_min.x < node->
+						screen_max.x && screen_min.y < node->screen_max.y)
+					{
+						add_to_selection(node, false);
+					}
+				}
+			}
+
+			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) && !is_in_context_menu)
+			{
+				if (out_to_in || in_to_out)
+				{
+					open_context_menu();
+				}
+				if (in_to_out && in_to_out->target())
+					in_to_out->link_to(nullptr);
+			}
+
+			if (out_to_in)
+			{
+				draw_connection(out_to_in->position, is_in_context_menu ? context_menu_pos : ImGui::GetMousePos(),
+				                out_to_in->on_get_type.execute());
+			}
+
+			if (in_to_out)
+			{
+				draw_connection(is_in_context_menu ? context_menu_pos : ImGui::GetMousePos(), in_to_out->position,
+				                EType::Undefined);
+			}
+
+			const auto window_draw_list = ImGui::GetWindowDrawList();
+
+			if (ImGui::BeginPopup(("ContextMenu_" + name).c_str()))
+			{
+				display_node_context_menu(window_draw_list);
+				ImGui::EndPopup();
+			}
+			else if (is_in_context_menu)
+			{
+				in_to_out = nullptr;
+				out_to_in = nullptr;
+				is_in_context_menu = false;
+			}
+
+			logger.display();
+
+			if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_V, false))
+			{
+				try
+				{
+					nlohmann::json clipboard = nlohmann::json::parse(Gfx::get().get_clipboard());
+
+					remap_uuid_in_json(clipboard);
+
+					clear_selection();
+
+					std::vector<std::shared_ptr<Node>> added_nodes;
+					ImVec2 average_pos = {};
+					for (const auto& node_js : clipboard)
+					{
+						const auto node = spawn_by_name(node_js["type"]);
+						if (!node)
+						{
+							std::cerr << "failed to spawn node of type " << node_js["type"] << std::endl;
+							logger.add_persistent_log({
+								.type = ELogType::Error,
+								.message = std::string("failed to spawn node of type ") + std::string(node_js["type"])
+							});
+							continue;
+						}
+						node->deserialize(node_js);
+						add_to_selection(node, false);
+						added_nodes.emplace_back(node);
+						average_pos += node->position;
+					}
+					average_pos = average_pos / static_cast<float>(added_nodes.size());
+					for (const auto& node_js : clipboard)
+					{
+						const auto link_target = find_node(node_js["uuid"]);
+						if (!link_target)
+							continue;
+						for (const auto& connection : node_js["inputs"])
+						{
+							if (!connection.contains("from") || !connection.contains("to") || !connection.contains(
+								"uuid"))
+								continue;
+							const auto link_source = find_node(connection["uuid"]);
+							if (!link_source)
+								continue;
+
+							const auto connection_source = link_source->output_by_name(connection["from"]);
+							const auto connection_target = link_target->input_by_name(connection["to"]);
+
+							if (!connection_source || !connection_target)
+								continue;
+
+							connection_target->link_to(connection_source);
+						}
+					}
+
+					ImVec2 delta = pos_to_graph(ImGui::GetMousePos()) - average_pos;
+					for (const auto& node : added_nodes)
+						node->position += delta;
+				}
+				catch (const std::exception& e)
+				{
+					logger.add_persistent_log({
+						.type = ELogType::Error, .message = std::string("Failed to past value : ") + e.what()
+					});
+				}
+			}
+
+			ImGui::ResetMouseDragDelta(ImGuiMouseButton_Right);
+		}
+		ImGui::EndChild();
 	}
-	ImGui::EndChild();
 }
 
 
@@ -628,6 +649,8 @@ void Graph::load_from_file()
 
 	if (js.contains("path"))
 		path = js["path"];
+	if (js.contains("summary_mode"))
+		summary_mode = js["summary_mode"];
 	name = js["name"];
 	pos.x = js["pos_x"];
 	pos.y = js["pos_y"];
@@ -685,6 +708,7 @@ void Graph::save_to_file()
 		{"name", name},
 		{"path", path},
 		{"nodes", js_nodes},
+		{"summary_mode", summary_mode}
 	};
 
 	output << std::setw(4) << js << std::endl;

@@ -60,10 +60,6 @@ NodeAdd::NodeAdd()
 	});
 }
 
-void NodeAdd::display()
-{
-}
-
 NodeMult::NodeMult()
 {
 	a = add_input("a");
@@ -122,6 +118,5 @@ NodeMult::NodeMult()
 	});
 }
 
-void NodeMult::display()
-{
-}
+REGISTER_NODE(NodeAdd, NodeInfo("", {"Add", "+"}));
+REGISTER_NODE(NodeMult, NodeInfo("", {"Mult", "*"}));

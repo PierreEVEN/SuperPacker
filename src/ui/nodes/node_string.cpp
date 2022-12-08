@@ -1,9 +1,6 @@
 #include "node_string.h"
 
 #include <codecvt>
-#include <iostream>
-
-#include "file_actions.h"
 
 #include <nfd.hpp>
 
@@ -11,7 +8,7 @@ static std::string wstring_to_string(std::wstring w_string)
 {
 	std::string ret;
 	std::ranges::transform(w_string, std::back_inserter(ret),
-		[](wchar_t c) { return static_cast<char>(c); });
+	                       [](wchar_t c) { return static_cast<char>(c); });
 	return ret;
 }
 
@@ -59,6 +56,21 @@ void TextInput::deserialize(const nlohmann::json& json)
 		value = json["value"];
 }
 
+void TextInput::display_summary()
+{
+	Node::display_summary();
+
+	char buf[2048];
+
+	strcpy_s(buf, std::min(value.length() + 1, static_cast<size_t>(256)), value.c_str());
+	if (ImGui::InputTextMultiline(("value##" + std::to_string(uuid)).c_str(), buf, 2048, {ImGui::GetContentRegionAvail().x, 100},
+	                              ImGuiInputTextFlags_CtrlEnterForNewLine))
+	{
+		value = buf;
+		mark_dirty();
+	}
+}
+
 /// <summary>
 /// Directory
 /// </summary>
@@ -79,7 +91,7 @@ DirectoryInput::DirectoryInput()
 
 void DirectoryInput::display()
 {
-	if (ImGui::Button((value + "##btn").c_str(), ImGui::GetContentRegionAvail()))
+	if (ImGui::Button((value + "##btn" + std::to_string(uuid)).c_str(), ImGui::GetContentRegionAvail()))
 	{
 		nfdnchar_t* outPath;
 		if (NFD::PickFolder(outPath, nullptr) == NFD_OKAY)
@@ -105,17 +117,32 @@ void DirectoryInput::deserialize(const nlohmann::json& json)
 		value = json["value"];
 }
 
+void DirectoryInput::display_summary()
+{
+	Node::display_summary();
+	if (ImGui::Button((value + "##btn_" + std::to_string(uuid)).c_str(), {ImGui::GetContentRegionAvail().x, 100}))
+	{
+		nfdnchar_t* outPath;
+		if (NFD::PickFolder(outPath, nullptr) == NFD_OKAY)
+		{
+			value = std::filesystem::relative(wstring_to_string(outPath)).string() + "/";
+			NFD::FreePath(outPath);
+			mark_dirty();
+		}
+	}
+}
+
 FileInput::FileInput()
 {
 	const auto out = add_output("dir");
 	out->on_get_type.add_lambda([]
-		{
-			return EType::String;
-		});
+	{
+		return EType::String;
+	});
 	out->on_get_code.add_lambda([&](CodeContext& context)
-		{
-			return value;
-		});
+	{
+		return value;
+	});
 }
 
 void FileInput::display()
@@ -144,6 +171,22 @@ void FileInput::deserialize(const nlohmann::json& json)
 	Node::deserialize(json);
 	if (json.contains("value"))
 		value = json["value"];
+}
+
+void FileInput::display_summary()
+{
+	Node::display_summary();
+	
+	if (ImGui::Button((value + "##btn" + std::to_string(uuid)).c_str(), {ImGui::GetContentRegionAvail().x, 100}))
+	{
+		nfdnchar_t* outPath;
+		if (NFD::OpenDialog(outPath) == NFD_OKAY)
+		{
+			value = std::filesystem::relative(wstring_to_string(outPath)).string();
+			NFD::FreePath(outPath);
+			mark_dirty();
+		}
+	}
 }
 
 AppendText::AppendText()

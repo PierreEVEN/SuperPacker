@@ -6,7 +6,7 @@ class NodeAdd : public Node
 public:
 	NodeAdd();
 
-	void display() override;
+	void display() override {}
 
 private:
 	std::shared_ptr<NodeInput> a;
@@ -18,7 +18,7 @@ class NodeMult : public Node
 public:
 	NodeMult();
 
-	void display() override;
+	void display() override {}
 
 private:
 	std::shared_ptr<NodeInput> a;

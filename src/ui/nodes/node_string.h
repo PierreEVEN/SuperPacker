@@ -14,6 +14,8 @@ public:
 	void deserialize(const nlohmann::json& json) override;
 	
 	ESummaryMode summary_mode() const override { return ESummaryMode::Input; }
+
+	void display_summary() override;
 private:
 	std::string value;
 };
@@ -28,6 +30,7 @@ public:
 	void deserialize(const nlohmann::json& json) override;
 
 	ESummaryMode summary_mode() const override { return ESummaryMode::Input; }
+	void display_summary() override;
 private:
 	std::string value;
 };
@@ -42,6 +45,7 @@ public:
 	void deserialize(const nlohmann::json& json) override;
 
 	ESummaryMode summary_mode() const override { return ESummaryMode::Input; }
+	void display_summary() override;
 private:
 	std::string value;
 };

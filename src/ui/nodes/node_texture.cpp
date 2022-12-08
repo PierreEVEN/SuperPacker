@@ -141,8 +141,19 @@ void ImageWriteNode::display()
 	if (!path_input->target() || path_input->target()->get_type() != EType::String)
 		return;
 
-	if (ImGui::Button("Generate"))
+	if (ImGui::Button("Export", ImGui::GetContentRegionAvail()))
 	{
 		std::cout << "output to " << path_input->target()->get_code(get_graph().code_ctx()) << std::endl;
 	}
 }
+
+void ImageWriteNode::display_summary()
+{	
+	if (ImGui::Button("Export", {ImGui::GetContentRegionAvail().x, 100}))
+	{
+		std::cout << "output to " << path_input->target()->get_code(get_graph().code_ctx()) << std::endl;
+	}
+}
+
+REGISTER_NODE(ImageWriteNode, NodeInfo("", {"Image Write"}));
+REGISTER_NODE(NodeTexture, NodeInfo("", {"Texture"}));

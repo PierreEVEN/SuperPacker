@@ -85,5 +85,6 @@
     "path": "resources/Demo2",
     "pos_x": 0.2501220703125,
     "pos_y": -0.488739013671875,
+    "summary_mode": true,
     "zoom": 0.6805564761161804
 }

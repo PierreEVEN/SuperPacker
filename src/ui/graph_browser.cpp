@@ -1,6 +1,80 @@
 #include "graph_browser.h"
 
+#include <fstream>
+#include <iostream>
+
+#include "gfx.h"
 #include "graph.h"
+
+void GraphBrowser::load_defaults(const std::string& layout_name)
+{
+	loaded_layout_name = layout_name;
+	std::ifstream file(save_path + "/" + layout_name + ".json");
+	if (file.is_open())
+	{
+		try
+		{
+			const auto json = nlohmann::json::parse(file);
+			window_saved_width = json["win_width"];
+			window_saved_height = json["win_width"];
+
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << "failed to load json : " << e.what() << std::endl;
+		}
+	}
+}
+
+void GraphBrowser::load_layout()
+{	std::ifstream file(save_path + "/" + loaded_layout_name + ".json");
+	if (file.is_open())
+	{
+		try
+		{
+			const auto json = nlohmann::json::parse(file);
+
+
+			for (const auto& graph : json["graphes"])
+			{
+				new_graph(graph["name"]);
+			}
+
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << "failed to load json : " << e.what() << std::endl;
+		}
+	}
+}
+
+void GraphBrowser::save_layout()
+{
+	save_all();
+	
+	std::ofstream file(save_path + "/" + loaded_layout_name + ".json");
+	if (file.is_open())
+	{
+		nlohmann::json js_graph;
+
+		for (const auto& graph : graphes)
+		{
+			js_graph[graph->name] = {
+				{"name", graph->name}
+			};
+		}
+		
+		window_saved_width = Gfx::get().get_window_width();
+		window_saved_height = Gfx::get().get_window_height();
+
+		nlohmann::json js = {
+			{"win_width", window_saved_width},
+			{"win_height", window_saved_height},
+			{"graphes", js_graph}
+		};
+		file << js;
+	}
+}
 
 void GraphBrowser::new_graph(std::string graph_name)
 {
@@ -25,11 +99,13 @@ void GraphBrowser::display()
 						draw_toolbar(*graph);
 					}
 					ImGui::EndChild();
-
-
-
+					if (will_toggle_summary_mode)
+					{
+						graph->toggle_summary_mode();
+						will_toggle_summary_mode = false;
+					}
 					graph->draw();
-					
+
 					ImGui::EndTabItem();
 				}
 			}
@@ -49,7 +125,7 @@ void GraphBrowser::draw_toolbar(Graph& graph)
 {
 	if (ImGui::Button("Toggle\nEdit\nMode", {50, 50}))
 	{
-		edit_mode = !edit_mode;
+		will_toggle_summary_mode = true;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Save\nAll", {50, 50}))

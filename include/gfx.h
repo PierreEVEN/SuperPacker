@@ -79,6 +79,9 @@ public:
 	[[nodiscard]] std::string get_clipboard() const;
 	void set_clipboard(const std::string& data) const;
 
+	int get_window_width() const;
+	int get_window_height() const;
+
 private:
 	float delta_second = 0;
 	double last_time = 0;

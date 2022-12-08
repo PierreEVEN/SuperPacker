@@ -360,3 +360,17 @@ void Gfx::set_clipboard(const std::string& data) const
 {
 	glfwSetClipboardString(main_window, data.c_str());
 }
+
+int Gfx::get_window_width() const
+{
+	int x, y;
+	glfwGetWindowSize(main_window, &x, &y);
+	return x;
+}
+
+int Gfx::get_window_height() const
+{
+	int x, y;
+	glfwGetWindowSize(main_window, &x, &y);
+	return y;
+}

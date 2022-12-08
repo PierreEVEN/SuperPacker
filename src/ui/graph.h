@@ -108,6 +108,9 @@ public:
 
 	size_t gen_uuid() { return last_generated_id++; }
 	void push_uuid(size_t uuid) { last_generated_id = uuid + 1 > last_generated_id ? uuid + 1 : last_generated_id; }
+
+	void toggle_summary_mode() { summary_mode = !summary_mode; }
+
 private:
 	void remap_uuid_in_json(nlohmann::json& in_json);
 
@@ -138,4 +141,6 @@ private:
 	char context_menu_search[256] = {};
 	ImVec2 context_menu_pos;
 	size_t last_generated_id = 0;
+
+	bool summary_mode = true;
 };

@@ -55,3 +55,15 @@ void NodeFloat::deserialize(const nlohmann::json& json)
 	if (json.contains("value"))
 		value = json["value"];
 }
+
+void NodeFloat::display_summary()
+{
+	Node::display_summary();
+	
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0, 100 / 2 - ImGui::CalcTextSize("a").y / 2 });
+	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);	
+	ImGui::DragFloat("##value", &value, 0.01f);
+	ImGui::PopStyleVar();
+}
+
+REGISTER_NODE(NodeFloat, NodeInfo("", {"Constant", "float"}));

@@ -199,3 +199,8 @@ BreakColor::BreakColor()
 		);
 	});
 }
+
+REGISTER_NODE(MakeFloat4, NodeInfo("", {"Make Float4", "Append Float4", "Merge To Float 4"}));
+REGISTER_NODE(MakeFloat3, NodeInfo("", {"Make Float3", "Append Float3", "Merge To Float 3"}));
+REGISTER_NODE(MakeFloat2, NodeInfo("", {"Make Float2", "Append Float2", "Merge To Float 2"}));
+REGISTER_NODE(BreakColor, NodeInfo("", {"Break Color", "Break Channels", "Split Channels"}));

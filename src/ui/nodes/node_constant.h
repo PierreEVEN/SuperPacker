@@ -16,6 +16,8 @@ public:
 
 	ESummaryMode summary_mode() const override { return ESummaryMode::Input; }
 
+	void display_summary() override;
+
 private:
 	std::shared_ptr<ShaderUniform> uniform_var;
 	float value = 0;
