@@ -67,18 +67,24 @@ DirectoryInput::DirectoryInput()
 	});
 }
 
+
+std::string wstring_to_string(std::wstring w_string)
+{
+	std::string ret;
+	std::ranges::transform(w_string, std::back_inserter(ret),
+	                       [](wchar_t c) { return static_cast<char>(c); });
+	return ret;
+}
+
+
 void DirectoryInput::display()
 {
 	if (ImGui::Button((value + "##btn").c_str(), ImGui::GetContentRegionAvail()))
 	{
 		nfdnchar_t* outPath;
-		const nfdnchar_t* valid_path = L".";
-		if (NFD::PickFolder(outPath, NULL) == NFD_OKAY)
+		if (NFD::PickFolder(outPath, nullptr) == NFD_OKAY)
 		{
-			std::wstring w_string_value(outPath);
-			std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
-			value = convert.to_bytes(std::u16string(w_string_value.begin(), w_string_value.end())) + "/";
-			//value = std::filesystem::path(value).relative_path().string();
+			value = wstring_to_string(outPath) + "/";
 			NFD::FreePath(outPath);
 			mark_dirty();
 		}
