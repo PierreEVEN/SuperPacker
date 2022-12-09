@@ -1,0 +1,275 @@
+{
+    "name": "test.spg",
+    "nodes": {
+        "Append Text_187": {
+            "height": 110.0,
+            "inputs": {
+                "A": {
+                    "from": "dir",
+                    "to": "A",
+                    "uuid": 234
+                },
+                "B": {
+                    "from": "result",
+                    "to": "B",
+                    "uuid": 186
+                }
+            },
+            "name": "Append Text",
+            "summary": true,
+            "type": "class AppendText",
+            "uuid": 187,
+            "width": 300.0,
+            "x": 292.2935485839844,
+            "y": 268.9786376953125
+        },
+        "Append Text_247": {
+            "height": 110.0,
+            "inputs": {
+                "A": {
+                    "from": "dir",
+                    "to": "A",
+                    "uuid": 234
+                },
+                "B": {
+                    "from": "result",
+                    "to": "B",
+                    "uuid": 246
+                }
+            },
+            "name": "Append Text",
+            "summary": true,
+            "type": "class AppendText",
+            "uuid": 247,
+            "width": 300.0,
+            "x": 1664.643798828125,
+            "y": 585.3292236328125
+        },
+        "Append Text_98": {
+            "height": 110.0,
+            "inputs": {
+                "A": {
+                    "from": "dir",
+                    "to": "A",
+                    "uuid": 234
+                },
+                "B": {
+                    "from": "result",
+                    "to": "B",
+                    "uuid": 80
+                }
+            },
+            "name": "Append Text",
+            "summary": true,
+            "type": "class AppendText",
+            "uuid": 98,
+            "width": 300.0,
+            "x": 256.5031433105469,
+            "y": -84.46675872802734
+        },
+        "Directory_234": {
+            "height": 70.0,
+            "inputs": null,
+            "name": "Directory",
+            "summary": true,
+            "type": "class DirectoryInput",
+            "uuid": 234,
+            "value": "resources/",
+            "width": 300.0,
+            "x": -845.5869140625,
+            "y": 289.7273864746094
+        },
+        "File_261": {
+            "height": 70.0,
+            "inputs": null,
+            "name": "File",
+            "summary": true,
+            "type": "class FileInput",
+            "uuid": 261,
+            "value": "resources\\icon.png",
+            "width": 300.0,
+            "x": 488.4585876464844,
+            "y": 634.695556640625
+        },
+        "Float_63": {
+            "height": 70.0,
+            "inputs": null,
+            "name": "Float",
+            "summary": true,
+            "type": "class NodeFloat",
+            "uuid": 63,
+            "value": -0.6499999761581421,
+            "width": 300.0,
+            "x": 824.9464111328125,
+            "y": -17.07405662536621
+        },
+        "Image Write_6": {
+            "height": 110.0,
+            "inputs": {
+                "Path": {
+                    "from": "Result",
+                    "to": "Path",
+                    "uuid": 247
+                },
+                "RGBA": {
+                    "from": "result",
+                    "to": "RGBA",
+                    "uuid": 50
+                }
+            },
+            "name": "Image Write",
+            "summary": true,
+            "type": "class ImageWriteNode",
+            "uuid": 6,
+            "width": 300.0,
+            "x": 2262.945556640625,
+            "y": 353.21295166015625
+        },
+        "Make Float4_50": {
+            "height": 190.0,
+            "inputs": {
+                "a": {
+                    "from": "A",
+                    "to": "a",
+                    "uuid": 47
+                },
+                "b": {
+                    "from": "result",
+                    "to": "b",
+                    "uuid": 62
+                },
+                "g": {
+                    "from": "G",
+                    "to": "g",
+                    "uuid": 5
+                },
+                "r": {
+                    "from": "B",
+                    "to": "r",
+                    "uuid": 44
+                }
+            },
+            "name": "Make Float4",
+            "summary": true,
+            "type": "class MakeFloat4",
+            "uuid": 50,
+            "width": 300.0,
+            "x": 1747.4674072265625,
+            "y": 201.4334716796875
+        },
+        "Text_186": {
+            "height": 70.0,
+            "inputs": null,
+            "name": "Text",
+            "summary": true,
+            "type": "class TextInput",
+            "uuid": 186,
+            "value": "appicon.ico",
+            "width": 300.0,
+            "x": -255.32301330566406,
+            "y": 403.2863464355469
+        },
+        "Text_246": {
+            "height": 70.0,
+            "inputs": null,
+            "name": "Text",
+            "summary": true,
+            "type": "class TextInput",
+            "uuid": 246,
+            "value": "appicon.ico",
+            "width": 300.0,
+            "x": 1315.93896484375,
+            "y": 668.7083129882813
+        },
+        "Text_80": {
+            "height": 70.0,
+            "inputs": null,
+            "name": "Text",
+            "summary": true,
+            "type": "class TextInput",
+            "uuid": 80,
+            "value": "times_square.jpg",
+            "width": 300.0,
+            "x": -252.44544982910156,
+            "y": 207.93545532226563
+        },
+        "Texture_44": {
+            "height": 230.0,
+            "inputs": {
+                "path": {
+                    "from": "Result",
+                    "to": "path",
+                    "uuid": 187
+                }
+            },
+            "name": "Texture",
+            "summary": true,
+            "type": "class NodeTexture",
+            "uuid": 44,
+            "width": 300.0,
+            "x": 830.1116333007813,
+            "y": 319.6453857421875
+        },
+        "Texture_47": {
+            "height": 230.0,
+            "inputs": {
+                "path": {
+                    "from": "dir",
+                    "to": "path",
+                    "uuid": 261
+                }
+            },
+            "name": "Texture",
+            "summary": true,
+            "type": "class NodeTexture",
+            "uuid": 47,
+            "width": 300.0,
+            "x": 832.2868041992188,
+            "y": 552.330810546875
+        },
+        "Texture_5": {
+            "height": 230.0,
+            "inputs": {
+                "path": {
+                    "from": "Result",
+                    "to": "path",
+                    "uuid": 98
+                }
+            },
+            "name": "Texture",
+            "summary": true,
+            "type": "class NodeTexture",
+            "uuid": 5,
+            "width": 300.0,
+            "x": 824.71533203125,
+            "y": 84.48563385009766
+        },
+        "add_62": {
+            "height": 110.0,
+            "inputs": {
+                "a": {
+                    "from": "R",
+                    "to": "a",
+                    "uuid": 44
+                },
+                "b": {
+                    "from": "value",
+                    "to": "b",
+                    "uuid": 63
+                }
+            },
+            "name": "add",
+            "summary": true,
+            "type": "class NodeAdd",
+            "uuid": 62,
+            "width": 300.0,
+            "x": 1258.07763671875,
+            "y": 264.1744689941406
+        }
+    },
+    "path": "resources/test",
+    "pos_x": -1312.9801025390625,
+    "pos_y": -340.5351257324219,
+    "summary_mode": true,
+    "zoom": 0.604119062423706
+}

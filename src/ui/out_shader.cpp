@@ -104,7 +104,7 @@ void OutShader::set_code(const std::string& code)
 	GL_CHECK_ERROR();
 }
 
-bool OutShader::bind(ImVec4 clip_rect)
+bool OutShader::bind()
 {
 	if (!compiled)
 		return false;

@@ -50,7 +50,7 @@ struct MouseHit
 class Graph
 {
 public:
-	Graph(const std::string& in_path);
+	Graph(const std::filesystem::path& in_path);
 
 	void draw();
 
@@ -111,10 +111,12 @@ public:
 
 	void toggle_summary_mode() { summary_mode = !summary_mode; }
 
+	std::filesystem::path get_path() const { return path; }
+
 private:
 	void remap_uuid_in_json(nlohmann::json& in_json);
 
-	std::string path;
+	std::filesystem::path path;
 	static void register_node(const NodeInfo& node_infos);
 
 	void begin_out_in(std::shared_ptr<NodeOutput> start);

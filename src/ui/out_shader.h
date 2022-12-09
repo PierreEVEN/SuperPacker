@@ -13,7 +13,7 @@ public:
 	~OutShader();
 	void set_code(const std::string& code);
 	void draw();
-	bool bind(ImVec4 clip_rect);
+	bool bind();
 private:
 	size_t last_hash = std::hash<std::string>{}(std::string(""));
 	int glsl_program = 0;

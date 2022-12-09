@@ -3,24 +3,23 @@
 #include <string>
 #include <vector>
 
+#include "nodes/node_maths.h"
+
 class Graph;
 
-class GraphBrowser
+class GraphManager
 {
 public:
-	GraphBrowser(const std::string& in_save_path = "resources") : save_path(in_save_path)
-	{
-	}
+	GraphManager(std::filesystem::path in_user_data_path = "resources");
 
-	void load_defaults(const std::string& layout_name);
 	void load_layout();
 	void save_layout();
 
-	void new_graph(std::string graph_name);
+	void load_or_create_graph(const std::filesystem::path& graph_path);
 
 	void display();
 
-	void save_all();
+	void save_all() const;
 
 	[[nodiscard]] int get_saved_window_width() const { return window_saved_width; }
 	[[nodiscard]] int get_saved_window_height() const { return window_saved_height; }
@@ -32,6 +31,8 @@ public:
 		return window_saved_pos;
 	}
 
+	std::shared_ptr<Graph> get_graph_by_name(const std::string& in_name) const;
+
 private:
 	int window_saved_width = 800;
 	int window_saved_height = 600;
@@ -41,9 +42,14 @@ private:
 
 	void draw_toolbar(Graph& graph);
 
-	std::vector<std::shared_ptr<Graph>> graphes;
-	std::string save_path;
-	std::string loaded_layout_name;
+	std::vector<std::shared_ptr<Graph>> loaded_graphs;
+	const std::filesystem::path user_data_path;
 
 	bool will_toggle_summary_mode = false;
+	bool display_left_tab = false;
+
+	bool is_creating_file = false;
+	bool want_keyboard_focus = false;
+
+	std::shared_ptr<Graph> selected_graph = nullptr;
 };

@@ -109,7 +109,7 @@ Gfx::Gfx(const std::string& window_name, uint32_t window_x, uint32_t window_y, i
 		UnlockResource(font_data_handle);
 		FreeResource(font_data_handle);
 	}
-
+	io.MouseDragThreshold = 1.f;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	io.BackendFlags
 		|=
@@ -216,7 +216,7 @@ Gfx::Gfx(const std::string& window_name, uint32_t window_x, uint32_t window_y, i
 		PopupBorderSize
 		=
 		1;
-
+	
 	style
 		.
 		Colors[ImGuiCol_Text] = COLOR_BR(232, 232, 232, 255);
@@ -240,13 +240,13 @@ Gfx::Gfx(const std::string& window_name, uint32_t window_x, uint32_t window_y, i
 		Colors[ImGuiCol_Border] = COLOR(0, 0, 0, 255);
 	style
 		.
-		Colors[ImGuiCol_Button] = COLOR(100, 100, 100, 255);
+		Colors[ImGuiCol_Button] = COLOR(100, 100, 100, 0);
 	style
 		.
-		Colors[ImGuiCol_ButtonHovered] = COLOR(140, 140, 140, 255);
+		Colors[ImGuiCol_ButtonHovered] = COLOR(140, 140, 140, 50);
 	style
 		.
-		Colors[ImGuiCol_ButtonActive] = COLOR(78, 78, 78, 255);
+		Colors[ImGuiCol_ButtonActive] = COLOR(78, 78, 78, 80);
 	style
 		.
 		Colors[ImGuiCol_CheckMark] = COLOR(255, 222, 139, 255);

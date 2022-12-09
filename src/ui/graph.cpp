@@ -12,8 +12,9 @@
 
 static std::unique_ptr<std::unordered_map<std::string, NodeInfo>> registered_nodes = nullptr;
 
-Graph::Graph(const std::string& in_path) : path(in_path), name(in_path), code_context(std::make_shared<CodeContext>())
+Graph::Graph(const std::filesystem::path& in_path) : path(in_path), code_context(std::make_shared<CodeContext>())
 {
+	name = path.filename().string();
 	load_from_file();
 }
 
@@ -158,19 +159,22 @@ void Graph::draw()
 {
 	if (summary_mode)
 	{
-		ImGui::Columns(2);
-		for (const auto& node : nodes)
-		{
-			if (node->display_in_summary && node->summary_mode() == Node::ESummaryMode::Input)
-				node->display_summary();
+		if (ImGui::BeginChild("summary")) {
+			ImGui::Columns(2);
+			for (const auto& node : nodes)
+			{
+				if (node->display_in_summary && node->summary_mode() == Node::ESummaryMode::Input)
+					node->display_summary();
+			}
+			ImGui::NextColumn();
+			for (const auto& node : nodes)
+			{
+				if (node->display_in_summary && node->summary_mode() == Node::ESummaryMode::Output)
+					node->display_summary();
+			}
+			ImGui::Columns(1);
 		}
-		ImGui::NextColumn();
-		for (const auto& node : nodes)
-		{
-			if (node->display_in_summary && node->summary_mode() == Node::ESummaryMode::Output)
-				node->display_summary();
-		}
-		ImGui::Columns(1);
+		ImGui::EndChild();
 	}
 	else
 	{
@@ -624,10 +628,11 @@ void Graph::bring_to_front(const Node* node)
 
 void Graph::load_from_file()
 {
-	if (!std::filesystem::exists(path + ".json"))
+	// Ensure file is valid
+	if (!exists(path) || !std::filesystem::is_regular_file(path))
 		return;
 
-	std::ifstream input(path + ".json");
+	std::ifstream input(path);
 	nlohmann::json js;
 	try
 	{
@@ -648,7 +653,7 @@ void Graph::load_from_file()
 	in_to_out = nullptr;
 
 	if (js.contains("path"))
-		path = js["path"];
+		path = std::string(js["path"]);
 	if (js.contains("summary_mode"))
 		summary_mode = js["summary_mode"];
 	name = js["name"];
@@ -692,7 +697,14 @@ void Graph::load_from_file()
 
 void Graph::save_to_file()
 {
-	std::ofstream output(path + ".json");
+	if (!exists(path.parent_path()))
+		if (!create_directories(path.parent_path()))
+			std::cerr << "failed to create directory to save graph to" << std::endl;
+
+	std::ofstream output(path);
+
+	if (!output.is_open())
+		return;
 
 	nlohmann::json js_nodes;
 
@@ -701,12 +713,12 @@ void Graph::save_to_file()
 		js_nodes[node->get_internal_name()] = node->serialize(*this);
 	}
 
-	nlohmann::json js = {
+	const nlohmann::json js = {
 		{"pos_x", pos.x},
 		{"pos_y", pos.y},
 		{"zoom", zoom},
 		{"name", name},
-		{"path", path},
+		{"path", path.string()},
 		{"nodes", js_nodes},
 		{"summary_mode", summary_mode}
 	};

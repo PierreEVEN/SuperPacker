@@ -106,7 +106,7 @@ static void custom_draw_callback(const ImDrawList* parent_list, const ImDrawCmd*
 	GL_CHECK_ERROR();
 	const auto node = static_cast<Node*>(cmd->UserCallbackData);
 
-	if (node->get_display_shader().bind(cmd->ClipRect))
+	if (node->get_display_shader().bind())
 	{
 		node->get_graph().code_ctx().update_uniforms();
 
@@ -163,7 +163,7 @@ void Node::display_internal(Graph& graph)
 		dl->AddRectFilled(screen_min, {screen_max.x, screen_min.y + 60 * get_graph().zoom}, TITLE_BG_COLOR,
 		                  20 * graph.zoom);
 		dl->PopClipRect();
-
+		
 		// Draw content
 		if (ImGui::BeginChild((name + "_content_" + std::to_string(uuid)).c_str(),
 		                      ImGui::GetContentRegionAvail() - ImVec2{30 * graph.zoom, 2 * graph.zoom}, false,
@@ -172,7 +172,7 @@ void Node::display_internal(Graph& graph)
 			ImGui::SetWindowFontScale(get_graph().zoom);
 			dl->PushClipRect(screen_min + ImVec2{25 * graph.zoom, 30 * get_graph().zoom},
 			                 screen_min + ImVec2{25 * graph.zoom, 30 * get_graph().zoom} +
-			                 ImGui::GetContentRegionAvail() - ImVec2{30 * graph.zoom, 2 * graph.zoom});
+			                 ImGui::GetContentRegionAvail() - ImVec2{30 * graph.zoom, 2 * graph.zoom}, false);
 			dl->AddCallback(custom_draw_callback, this);
 			dl->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 			dl->PopClipRect();

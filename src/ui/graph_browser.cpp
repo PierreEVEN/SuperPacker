@@ -1,26 +1,31 @@
 #include "graph_browser.h"
 
 #include <fstream>
+#include <imgui_internal.h>
 #include <iostream>
 
 #include "gfx.h"
 #include "graph.h"
+#include "window_interface.h"
+#include "imgui_operators.h"
 
-void GraphBrowser::load_defaults(const std::string& layout_name)
+#define CONFIG_FILE "Config.json"
+#define GRAPH_PATH "UserGraph"
+
+GraphManager::GraphManager(std::filesystem::path in_user_data_path)
+	: user_data_path(std::move(in_user_data_path))
 {
-	loaded_layout_name = layout_name;
 	window_saved_width = 800;
 	window_saved_height = 600;
 	window_saved_pos_x = 0;
 	window_saved_pos_y = 0;
 	window_saved_pos = false;
-	std::ifstream file(save_path + "/" + layout_name + ".json");
-	if (file.is_open())
+	if (std::ifstream config_file(user_data_path / CONFIG_FILE); config_file.is_open())
 	{
 		try
 		{
 			window_saved_pos = true;
-			const auto json = nlohmann::json::parse(file);
+			const auto json = nlohmann::json::parse(config_file);
 			if (json.contains("win_width"))
 				window_saved_width = json["win_width"];
 			if (json.contains("win_height"))
@@ -33,6 +38,8 @@ void GraphBrowser::load_defaults(const std::string& layout_name)
 				window_saved_pos_y = json["win_pos_y"];
 			else
 				window_saved_pos = false;
+			if (json.contains("recent_open"))
+				display_left_tab = json["recent_open"];
 		}
 		catch (const std::exception& e)
 		{
@@ -41,19 +48,25 @@ void GraphBrowser::load_defaults(const std::string& layout_name)
 	}
 }
 
-void GraphBrowser::load_layout()
+void GraphManager::load_layout()
 {
-	graphes.clear();
-	std::ifstream file(save_path + "/" + loaded_layout_name + ".json");
-	if (file.is_open())
+	loaded_graphs.clear();
+	if (std::ifstream config_file(user_data_path / CONFIG_FILE); config_file.is_open())
 	{
 		try
 		{
-			const auto json = nlohmann::json::parse(file);
-			for (const auto& graph : json["graphes"])
+			const auto json = nlohmann::json::parse(config_file);
+			std::shared_ptr<Graph> last_selected_graph = nullptr;
+			for (const auto& graph : json["loaded_graphs"])
 			{
-				new_graph(graph["name"]);
+				if (!std::filesystem::exists(graph["path"]))
+					continue;
+
+				load_or_create_graph(graph["path"]);
+				if (json.contains("selected_graph") && graph["path"] == json["selected_graph"])
+					last_selected_graph = selected_graph;
 			}
+			selected_graph = last_selected_graph;
 		}
 		catch (const std::exception& e)
 		{
@@ -62,19 +75,24 @@ void GraphBrowser::load_layout()
 	}
 }
 
-void GraphBrowser::save_layout()
+void GraphManager::save_layout()
 {
-	save_all();
+	const auto config_path = user_data_path / CONFIG_FILE;
 
-	std::ofstream file(save_path + "/" + loaded_layout_name + ".json");
-	if (file.is_open())
+	// Create user directory if not exists
+	if (!exists(config_path.parent_path()))
+		if (!create_directories(config_path.parent_path()))
+			std::cerr << "failed to create config directory" << std::endl;
+
+
+	if (std::ofstream config_file(user_data_path / CONFIG_FILE); config_file.is_open())
 	{
 		nlohmann::json js_graph;
 
-		for (const auto& graph : graphes)
+		for (const auto& graph : loaded_graphs)
 		{
-			js_graph[graph->name] = {
-				{"name", graph->name}
+			js_graph[graph->get_path().string()] = {
+				{"path", graph->get_path().string()}
 			};
 		}
 
@@ -83,63 +101,222 @@ void GraphBrowser::save_layout()
 		window_saved_pos_x = Gfx::get().get_window_pos_x();
 		window_saved_pos_y = Gfx::get().get_window_pos_y();
 
-		nlohmann::json js = {
-			{"win_width", window_saved_width},
-			{"win_height", window_saved_height},
-			{"win_pos_x", window_saved_pos_x},
-			{"win_pos_y", window_saved_pos_y},
-			{"graphes", js_graph}
+		const nlohmann::json js = {
+			{"window_width", window_saved_width},
+			{"window_height", window_saved_height},
+			{"window_pos_x", window_saved_pos_x},
+			{"window_pos_y", window_saved_pos_y},
+			{"loaded_graphs", js_graph},
+			{"selected_graph", selected_graph ? selected_graph->get_path().string() : ""},
+			{"recent_open", display_left_tab}
 		};
-		file << js;
+		config_file << js;
 	}
+	save_all();
 }
 
-void GraphBrowser::new_graph(std::string graph_name)
+void GraphManager::load_or_create_graph(const std::filesystem::path& graph_path)
 {
-	graphes.emplace_back(std::make_shared<Graph>(save_path + "/" + graph_name));
+	for (const auto& graph : loaded_graphs)
+		if (graph->get_path() == graph_path)
+		{
+			selected_graph = graph;
+			return;
+		}
+
+	loaded_graphs.emplace_back(std::make_shared<Graph>(graph_path));
+	selected_graph = loaded_graphs.back();
 }
 
-void GraphBrowser::display()
+#define FOOTER_HEIGHT 24
+#define BUTTON_SIZE 50
+#define FILE_BUTTON_HEIGHT 30
+#define LEFT_PANEL_WIDTH 200
+#define COLOR(r, g, b, a) ImGui::ColorConvertFloat4ToU32(ImVec4((r) / 255.f, (g) / 255.f, (b) / 255.f, (a) / 255.f))
+
+void GraphManager::display()
 {
+	ImGui::GetStyle().FrameBorderSize = {0};
+	ImGui::GetStyle().ItemSpacing = {0, 0};
+	ImGui::GetStyle().WindowPadding = {0, 0};
+
 	ImGui::SetNextWindowPos({0, 0});
-	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-	if (ImGui::Begin("graphes", nullptr,
+	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize - ImVec2{0, FOOTER_HEIGHT});
+	if (ImGui::Begin("loaded_graphs", nullptr,
 	                 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBringToFrontOnFocus))
 	{
-		if (ImGui::BeginTabBar("GraphicSettingsTab"))
+		ImGui::BeginGroup();
+		// Create new graph
+		if (ImGui::Button("+", {BUTTON_SIZE, BUTTON_SIZE}))
 		{
-			for (const auto& graph : graphes)
-			{
-				if (ImGui::BeginTabItem(graph->name.c_str()))
-				{
-					if (ImGui::BeginChild("toolbar", {ImGui::GetContentRegionAvail().x, 50}))
-					{
-						draw_toolbar(*graph);
-					}
-					ImGui::EndChild();
-					if (will_toggle_summary_mode)
-					{
-						graph->toggle_summary_mode();
-						will_toggle_summary_mode = false;
-					}
-					graph->draw();
+			is_creating_file = true;
+			want_keyboard_focus = true;
+			display_left_tab = true;
+		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("new project");
+			ImGui::EndTooltip();
+		}
 
-					ImGui::EndTabItem();
+		// Open existing graph
+		if (ImGui::Button("O", {BUTTON_SIZE, BUTTON_SIZE}))
+		{
+			if (const auto new_file = windows::pick_graph_file(); exists(new_file))
+			{
+				load_or_create_graph(new_file);
+				display_left_tab = true;
+			}
+		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Open project from file (*.spg)");
+			ImGui::EndTooltip();
+		}
+
+		// Show recent graph
+		bool pushed_color = false;
+		if (display_left_tab)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Button, COLOR(100, 100, 100, 80));
+			pushed_color = true;
+		}
+		if (ImGui::Button("R", {BUTTON_SIZE, BUTTON_SIZE}))
+			display_left_tab = !display_left_tab;
+		if (pushed_color)
+			ImGui::PopStyleColor();
+
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Show recent projects");
+			ImGui::EndTooltip();
+		}
+
+		ImGui::Dummy({0, ImGui::GetContentRegionAvail().y - BUTTON_SIZE});
+
+		// Info
+		if (ImGui::Button("I", {BUTTON_SIZE, BUTTON_SIZE}))
+			std::cout << "help" << std::endl;
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("System information");
+			ImGui::EndTooltip();
+		}
+
+		ImGui::EndGroup();
+
+		if (display_left_tab)
+		{
+			ImGui::SameLine();
+
+			ImGui::BeginGroup();
+			if (ImGui::BeginChild("graph_list", {LEFT_PANEL_WIDTH, ImGui::GetContentRegionAvail().y}))
+			{
+				ImGui::Dummy(ImVec2{0, 10});
+				ImGui::PushStyleColor(ImGuiCol_Text, COLOR(255, 255, 255, 200));
+				ImGui::Text("Recent Projects");
+				ImGui::PopStyleColor();
+				ImGui::Dummy(ImVec2{0, 10});
+				ImGui::Separator();
+
+				// Create new project input
+				if (is_creating_file)
+				{
+					ImGui::SetNextItemWidth(LEFT_PANEL_WIDTH);
+					if (want_keyboard_focus)
+					{
+						ImGui::SetKeyboardFocusHere(0);
+					}
+					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {
+						                    0, FILE_BUTTON_HEIGHT / 2 - ImGui::CalcTextSize("a").y / 2
+					                    });
+					if (char buf[256] = {"my_project"}; ImGui::InputText("##new_file_name", buf, sizeof buf,
+					                                                     ImGuiInputTextFlags_EnterReturnsTrue))
+					{
+						if (!get_graph_by_name(buf))
+						{
+							load_or_create_graph(user_data_path / GRAPH_PATH / (std::string(buf) + ".spg"));
+							is_creating_file = false;
+						}
+					}
+
+					// Cancel
+					if (!want_keyboard_focus && ImGui::GetCurrentWindow()->GetID("##new_file_name") !=
+						ImGui::GetCurrentContext()->ActiveId)
+						is_creating_file = false;
+					want_keyboard_focus = false;
+					ImGui::PopStyleVar();
+				}
+
+				// Display project list
+				for (const auto& graph : loaded_graphs)
+				{
+					if (selected_graph == graph)
+					{
+						ImGui::PushStyleColor(ImGuiCol_Button, COLOR(100, 100, 100, 20));
+						ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetCursorScreenPos(),
+						                                          ImGui::GetCursorScreenPos() + ImVec2{
+							                                          5, FILE_BUTTON_HEIGHT
+						                                          }, COLOR(255, 255, 255, 255));
+					}
+					else
+						ImGui::PushStyleColor(ImGuiCol_Text, COLOR(255, 255, 255, 150));
+					if (ImGui::Button(graph->name.c_str(), {ImGui::GetContentRegionAvail().x, FILE_BUTTON_HEIGHT}))
+						selected_graph = graph;
+					ImGui::PopStyleColor();
 				}
 			}
-			ImGui::EndTabBar();
+			ImGui::EndChild();
 		}
+
+		ImGui::SameLine();
+		if (ImGui::BeginChild("graph_window"))
+		{
+			if (selected_graph)
+			{
+				if (ImGui::Button("Edit\nMode", ImVec2{60, 60}))
+					selected_graph->toggle_summary_mode();
+
+				ImGui::Separator();
+
+				ImGui::PushStyleColor(ImGuiCol_ChildBg, COLOR(0, 0, 0, 70));
+				selected_graph->draw();
+				ImGui::PopStyleColor();
+			}
+		}
+		ImGui::EndChild();
+	}
+	ImGui::End();
+
+	ImGui::SetNextWindowPos(ImVec2{0, ImGui::GetIO().DisplaySize.y - FOOTER_HEIGHT});
+	ImGui::SetNextWindowSize(ImVec2{ImGui::GetIO().DisplaySize.x, FOOTER_HEIGHT});
+	if (ImGui::Begin("bottom_logs", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBringToFrontOnFocus))
+	{
+		ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetWindowPos(), ImGui::GetWindowPos() + ImGui::GetWindowSize(),
+		                                          COLOR(0, 120, 200, 255));
 	}
 	ImGui::End();
 }
 
-void GraphBrowser::save_all()
+void GraphManager::save_all() const
 {
-	for (const auto& graph : graphes)
+	for (const auto& graph : loaded_graphs)
 		graph->save_to_file();
 }
 
-void GraphBrowser::draw_toolbar(Graph& graph)
+std::shared_ptr<Graph> GraphManager::get_graph_by_name(const std::string& in_name) const
+{
+	for (const auto& graph : loaded_graphs)
+		if (graph->name == in_name)
+			return graph;
+	return nullptr;
+}
+
+void GraphManager::draw_toolbar(Graph& graph)
 {
 	if (ImGui::Button("Toggle\nEdit\nMode", {50, 50}))
 	{
@@ -148,7 +325,7 @@ void GraphBrowser::draw_toolbar(Graph& graph)
 	ImGui::SameLine();
 	if (ImGui::Button("Save\nAll", {50, 50}))
 	{
-		save_all();
+		save_layout();
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Save", {50, 50}))

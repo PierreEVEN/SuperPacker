@@ -1,5 +1,5 @@
 {
-    "name": "resources/Demo2",
+    "name": "Demo2.spg",
     "nodes": {
         "Append TOTO_3": {
             "height": 110.0,
