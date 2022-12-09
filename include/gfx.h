@@ -66,7 +66,7 @@ inline void GL_CHECK_ERROR()
 class Gfx
 {
 public:
-	Gfx(const std::string& window_name, uint32_t window_x, uint32_t window_y);
+	Gfx(const std::string& window_name, uint32_t window_x, uint32_t window_y, int* pos_x = nullptr, int* pos_y = nullptr);
 
 	EventDraw on_draw;
 
@@ -81,7 +81,9 @@ public:
 
 	int get_window_width() const;
 	int get_window_height() const;
-
+	
+	int get_window_pos_x() const;
+	int get_window_pos_y() const;
 private:
 	float delta_second = 0;
 	double last_time = 0;

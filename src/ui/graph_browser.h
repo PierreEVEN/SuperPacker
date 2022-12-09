@@ -22,13 +22,22 @@ public:
 
 	void save_all();
 
-	int get_saved_window_width() { return window_saved_width;}
-	int get_saved_window_height() { return window_saved_height;}
+	[[nodiscard]] int get_saved_window_width() const { return window_saved_width; }
+	[[nodiscard]] int get_saved_window_height() const { return window_saved_height; }
+
+	bool get_saved_window_pos(int& x, int& y) const
+	{
+		x = window_saved_pos_x;
+		y = window_saved_pos_y;
+		return window_saved_pos;
+	}
 
 private:
-
 	int window_saved_width = 800;
 	int window_saved_height = 600;
+	int window_saved_pos_x = 0;
+	int window_saved_pos_y = 0;
+	bool window_saved_pos = false;
 
 	void draw_toolbar(Graph& graph);
 

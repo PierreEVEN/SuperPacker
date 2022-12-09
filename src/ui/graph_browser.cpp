@@ -9,15 +9,30 @@
 void GraphBrowser::load_defaults(const std::string& layout_name)
 {
 	loaded_layout_name = layout_name;
+	window_saved_width = 800;
+	window_saved_height = 600;
+	window_saved_pos_x = 0;
+	window_saved_pos_y = 0;
+	window_saved_pos = false;
 	std::ifstream file(save_path + "/" + layout_name + ".json");
 	if (file.is_open())
 	{
 		try
 		{
+			window_saved_pos = true;
 			const auto json = nlohmann::json::parse(file);
-			window_saved_width = json["win_width"];
-			window_saved_height = json["win_width"];
-
+			if (json.contains("win_width"))
+				window_saved_width = json["win_width"];
+			if (json.contains("win_height"))
+				window_saved_height = json["win_width"];
+			if (json.contains("win_pos_x"))
+				window_saved_pos_x = json["win_pos_x"];
+			else
+				window_saved_pos = false;
+			if (json.contains("win_pos_y"))
+				window_saved_pos_y = json["win_pos_y"];
+			else
+				window_saved_pos = false;
 		}
 		catch (const std::exception& e)
 		{
@@ -27,19 +42,18 @@ void GraphBrowser::load_defaults(const std::string& layout_name)
 }
 
 void GraphBrowser::load_layout()
-{	std::ifstream file(save_path + "/" + loaded_layout_name + ".json");
+{
+	graphes.clear();
+	std::ifstream file(save_path + "/" + loaded_layout_name + ".json");
 	if (file.is_open())
 	{
 		try
 		{
 			const auto json = nlohmann::json::parse(file);
-
-
 			for (const auto& graph : json["graphes"])
 			{
 				new_graph(graph["name"]);
 			}
-
 		}
 		catch (const std::exception& e)
 		{
@@ -51,7 +65,7 @@ void GraphBrowser::load_layout()
 void GraphBrowser::save_layout()
 {
 	save_all();
-	
+
 	std::ofstream file(save_path + "/" + loaded_layout_name + ".json");
 	if (file.is_open())
 	{
@@ -63,13 +77,17 @@ void GraphBrowser::save_layout()
 				{"name", graph->name}
 			};
 		}
-		
+
 		window_saved_width = Gfx::get().get_window_width();
 		window_saved_height = Gfx::get().get_window_height();
+		window_saved_pos_x = Gfx::get().get_window_pos_x();
+		window_saved_pos_y = Gfx::get().get_window_pos_y();
 
 		nlohmann::json js = {
 			{"win_width", window_saved_width},
 			{"win_height", window_saved_height},
+			{"win_pos_x", window_saved_pos_x},
+			{"win_pos_y", window_saved_pos_y},
 			{"graphes", js_graph}
 		};
 		file << js;

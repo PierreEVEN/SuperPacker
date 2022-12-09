@@ -25,7 +25,7 @@ static void glfw_error_callback(int error, const char* description)
 #define COLOR(r, g, b, a) ImVec4(r / COLOR_DARKNESS, g / COLOR_DARKNESS, b / COLOR_DARKNESS, a / 255.f)
 #define COLOR_BR(r, g, b, a) ImVec4(r / 255.f, g / 255.f, b / 255.f, a / 255.f)
 
-Gfx::Gfx(const std::string& window_name, uint32_t window_x, uint32_t window_y)
+Gfx::Gfx(const std::string& window_name, uint32_t window_x, uint32_t window_y, int* pos_x, int* pos_y)
 {
 	instance = this;
 	glfwSetErrorCallback(glfw_error_callback);
@@ -50,8 +50,10 @@ Gfx::Gfx(const std::string& window_name, uint32_t window_x, uint32_t window_y)
 	}
 	glfwMakeContextCurrent(main_window);
 
-	bool err = gl3wInit() != 0;
-	if (err) { std::cerr << "Failed to initialize OpenGL loader!" << std::endl; }
+	if (pos_x && pos_y)
+		glfwSetWindowPos(main_window, *pos_x, *pos_y);
+
+	if (gl3wInit() != 0) { std::cerr << "Failed to initialize OpenGL loader!" << std::endl; }
 
 	glfwSwapInterval(1); // Enable vsync
 	glfwSetWindowUserPointer(main_window, this);
@@ -372,5 +374,19 @@ int Gfx::get_window_height() const
 {
 	int x, y;
 	glfwGetWindowSize(main_window, &x, &y);
+	return y;
+}
+
+int Gfx::get_window_pos_x() const
+{	
+	int x, y;
+	glfwGetWindowPos(main_window, &x, &y);
+	return x;
+}
+
+int Gfx::get_window_pos_y() const
+{
+	int x, y;
+	glfwGetWindowPos(main_window, &x, &y);
 	return y;
 }
