@@ -62,7 +62,8 @@ NodeTexture::NodeTexture()
 	{
 		if (texture_data.is_valid())
 		{
-			texture = Texture::create(texture_data.get_path());
+			texture = Texture::create();
+			texture->load_from_disc(texture_data.get_path());
 		}
 		else
 		{

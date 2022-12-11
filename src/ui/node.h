@@ -81,7 +81,9 @@ public:
 	virtual void deserialize(const nlohmann::json& json);
 
 
-	virtual void display_internal(Graph& graph);
+	void display_internal(Graph& graph);
+	void display_summary_internal();
+
 	virtual void display() = 0;
 	void draw_connections(const Graph& graph) const;
 
@@ -103,6 +105,9 @@ public:
 	[[nodiscard]] Graph& get_graph() const { return *owning_graph; }
 
 protected:
+	virtual void display_summary()
+	{
+	}
 	float calc_min_height() const;
 
 	virtual void register_uniform(CodeContext& ctx)
@@ -132,10 +137,6 @@ protected:
 	std::string name;
 	OutShader display_shader;
 	Graph* owning_graph = nullptr;
-
-	virtual void display_summary()
-	{
-	}
 
 private:
 	bool edit_name = false;

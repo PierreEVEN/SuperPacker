@@ -213,7 +213,6 @@ void GraphManager::display()
 		{
 			ImGui::SameLine();
 
-			ImGui::BeginGroup();
 			if (ImGui::BeginChild("graph_list", {LEFT_PANEL_WIDTH, ImGui::GetContentRegionAvail().y}))
 			{
 				ImGui::Dummy(ImVec2{0, 10});

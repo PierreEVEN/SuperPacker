@@ -21,19 +21,58 @@ float Texture::get_color(uint8_t channel, float pos_x, float pos_y, bool filter)
 	return channel_data[channel].second[static_cast<int>(pos_x) + static_cast<int>(pos_y) * width] / 255.f;
 }
 
-std::string Texture::get_path() const
+void Texture::make_gpu_available()
 {
-	return internal_path;
+	if (gl_id)
+	{
+	}
 }
 
-Texture::Texture(const std::filesystem::path& path) : internal_path(path.string())
+void Texture::load_from_disc(const std::filesystem::path& path)
 {
-	is_ready = false;
+	if (!is_valid_image_file(path))
+	{
+		Logger::get().add_persistent_log({ELogType::Error, "failed to load texture from path : " + path.string()});
+		return;
+	}
+
+	is_valid = false;
 	channels = 4;
 
 	fipImage img;
 	if (!img.load(path.string().c_str()))
 		return;
+
+	uint8_t channels = 0;
+	EPixelFormat pixel_format = EPixelFormat::UNDEFINED;
+	switch (img.getImageType())
+	{
+	case FIT_BITMAP:
+		pixel_format = EPixelFormat::FLOAT32;
+		switch (img.getColorType())
+		{
+		case FIC_RGB:
+			channels = 3;
+		case FIC_RGBALPHA:
+			channels = 4;
+			break;
+		default:
+			std::cerr << "unhandled image color_type : " << img.getColorType() << std::endl;
+		}
+		break;
+	case FIT_RGBF:
+		channels = 3;
+		pixel_format = EPixelFormat::FLOAT32;
+		break;
+	case FIT_RGBAF:
+		channels = 4;
+		pixel_format = EPixelFormat::FLOAT32;
+		break;
+	default:
+		std::cerr << "unhandled image type : " << img.getImageType() << std::endl;
+	}
+
+	set_format(img.getWidth(), img.getHeight(), channels, pixel_format);
 
 	width = img.getWidth();
 	height = img.getHeight();
@@ -74,13 +113,82 @@ Texture::Texture(const std::filesystem::path& path) : internal_path(path.string(
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	delete[] display_data;
-	is_ready = true;
+	is_valid = true;
+}
+
+void Texture::reset_memory()
+{
+	invalidate_data();
+
+	if (width <= 0 || height <= 0 || channels <= 0 || channels > 4)
+		return;
+
+	const int pixel_count = width * height * channels;
+
+	switch (pixel_format)
+	{
+	case EPixelFormat::UINT8:
+		cpu_data = new uint8_t[pixel_count];
+		clear_channels<uint8_t>(0, 255);
+		break;
+	case EPixelFormat::FLOAT32:
+		cpu_data = new float[pixel_count];
+		clear_channels<float>(0.f, 1.f);
+		break;
+	}
+
+	if (cpu_data)
+	{
+		is_valid = true;
+	}
+}
+
+bool Texture::is_valid_image_file(const std::filesystem::path& path)
+{
+	if (!exists(path))
+		return false;
+
+	fipImage image;
+	return image.load(path.string().c_str(), FIF_LOAD_NOPIXELS);
+}
+
+uint8_t Texture::bits_per_pixel(EPixelFormat format)
+{
+	switch (format)
+	{
+	case EPixelFormat::UINT8: return 1;
+	case EPixelFormat::FLOAT32: return 4;
+	}
+	Logger::get().add_persistent_log({ELogType::Error, "unhandled pixel format type"});
+	return 0;
+}
+
+void Texture::set_format(int new_width, int new_height, uint8_t new_channels, EPixelFormat new_format)
+{
+	if (width == new_width && height == new_height && channels == new_channels && pixel_format == new_format)
+		return;
+
+	pixel_format = new_format;
+	width = new_width;
+	height = new_height;
+	channels = new_channels;
+	invalidate_data();
+}
+
+Texture::Texture()
+{
 }
 
 Texture::~Texture()
 {
 	for (auto& channel : channel_data)
 		delete[] channel.second;
+}
+
+uint32_t Texture::get_id()
+{
+	make_gpu_available();
+	return gl_id;
 }
 
 void Texture::export_to(const std::filesystem::path& path)

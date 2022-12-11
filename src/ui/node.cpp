@@ -163,7 +163,7 @@ void Node::display_internal(Graph& graph)
 		dl->AddRectFilled(screen_min, {screen_max.x, screen_min.y + 60 * get_graph().zoom}, TITLE_BG_COLOR,
 		                  20 * graph.zoom);
 		dl->PopClipRect();
-		
+
 		// Draw content
 		if (ImGui::BeginChild((name + "_content_" + std::to_string(uuid)).c_str(),
 		                      ImGui::GetContentRegionAvail() - ImVec2{30 * graph.zoom, 2 * graph.zoom}, false,
@@ -276,6 +276,14 @@ void Node::display_internal(Graph& graph)
 			ImGui::EndTooltip();
 		}
 	}
+}
+
+void Node::display_summary_internal()
+{
+	ImGui::Text(name.c_str());
+	ImGui::SameLine();
+	display_summary();
+	ImGui::Separator();
 }
 
 std::shared_ptr<NodeInput> Node::add_input(std::string name)

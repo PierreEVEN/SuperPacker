@@ -13,6 +13,12 @@ enum class ELogType
 class Log
 {
 public:
+	Log() = default;
+
+	Log(ELogType in_type, std::string in_message) : type(in_type), message(std::move(in_message))
+	{
+	}
+
 	ELogType type = ELogType::Info;
 	std::string message;
 };

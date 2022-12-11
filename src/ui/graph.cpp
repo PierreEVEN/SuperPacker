@@ -159,19 +159,16 @@ void Graph::draw()
 {
 	if (summary_mode)
 	{
-		if (ImGui::BeginChild("summary")) {
+		if (ImGui::BeginChild("summary"))
+		{
 			ImGui::Columns(2);
 			for (const auto& node : nodes)
-			{
 				if (node->display_in_summary && node->summary_mode() == Node::ESummaryMode::Input)
-					node->display_summary();
-			}
+					node->display_summary_internal();
 			ImGui::NextColumn();
 			for (const auto& node : nodes)
-			{
 				if (node->display_in_summary && node->summary_mode() == Node::ESummaryMode::Output)
-					node->display_summary();
-			}
+					node->display_summary_internal();
 			ImGui::Columns(1);
 		}
 		ImGui::EndChild();
@@ -437,8 +434,8 @@ void Graph::draw()
 						{
 							std::cerr << "failed to spawn node of type " << node_js["type"] << std::endl;
 							logger.add_persistent_log({
-								.type = ELogType::Error,
-								.message = std::string("failed to spawn node of type ") + std::string(node_js["type"])
+								ELogType::Error,
+								std::string("failed to spawn node of type ") + std::string(node_js["type"])
 							});
 							continue;
 						}
@@ -479,7 +476,7 @@ void Graph::draw()
 				catch (const std::exception& e)
 				{
 					logger.add_persistent_log({
-						.type = ELogType::Error, .message = std::string("Failed to past value : ") + e.what()
+						ELogType::Error, std::string("Failed to past value : ") + e.what()
 					});
 				}
 			}
@@ -641,7 +638,7 @@ void Graph::load_from_file()
 	catch (const std::exception& e)
 	{
 		logger.add_persistent_log({
-			.type = ELogType::Error, .message = std::string("failed to read graph file: ") + e.what()
+			ELogType::Error, std::string("failed to read graph file: ") + e.what()
 		});
 		return;
 	}

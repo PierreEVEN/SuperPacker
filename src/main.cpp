@@ -23,7 +23,7 @@ int main(int argc, char** argv)
 	int pos_x, pos_y;
 	const bool valid_pos = browser.get_saved_window_pos(pos_x, pos_y);
 	Gfx gfx(
-		"Super Packer -OpenGL - v3.0",
+		"Super Packer - OpenGL - v3.0",
 		browser.get_saved_window_width(),
 		browser.get_saved_window_height(),
 		valid_pos ? &pos_x : nullptr,

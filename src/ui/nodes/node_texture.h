@@ -27,6 +27,7 @@ public:
 	ESummaryMode summary_mode() const override { return ESummaryMode::Output; }
 	void display_summary() override;
 private:
+	std::filesystem::path default_path;
 	std::shared_ptr<NodeInput> path_input;
 	std::shared_ptr<NodeInput> rgba_input;
 };
