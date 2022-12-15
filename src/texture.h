@@ -76,7 +76,18 @@ public:
 
 	[[nodiscard]] bool is_valid_pixel(int x, int y, int c) const
 	{
-		return x >= 0 && x < width&& y >= 0 && y < height&& c >= 0 && c < channels;
+		return x >= 0 && x < width && y >= 0 && y < height && c >= 0 && c < channels;
+	}
+
+	template <typename T>
+	void set_channel(uint8_t c, T* source_data)
+	{
+		if (!is_valid)
+			return;
+		
+		for (int y = 0; y < height; ++y)
+			for (int x = 0; x < width; ++x)
+				set_pixel<T>(x, y, c, source_data[x + y * width]);
 	}
 
 private:

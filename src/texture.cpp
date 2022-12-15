@@ -43,36 +43,36 @@ void Texture::load_from_disc(const std::filesystem::path& path)
 	if (!img.load(path.string().c_str()))
 		return;
 
-	uint8_t channels = 0;
-	EPixelFormat pixel_format = EPixelFormat::UNDEFINED;
-	switch (img.getImageType())
-	{
-	case FIT_BITMAP:
-		pixel_format = EPixelFormat::FLOAT32;
-		switch (img.getColorType())
-		{
-		case FIC_RGB:
-			channels = 3;
-		case FIC_RGBALPHA:
-			channels = 4;
-			break;
-		default:
-			std::cerr << "unhandled image color_type : " << img.getColorType() << std::endl;
-		}
-		break;
-	case FIT_RGBF:
-		channels = 3;
-		pixel_format = EPixelFormat::FLOAT32;
-		break;
-	case FIT_RGBAF:
-		channels = 4;
-		pixel_format = EPixelFormat::FLOAT32;
-		break;
-	default:
-		std::cerr << "unhandled image type : " << img.getImageType() << std::endl;
-	}
+	fipImage r;
+	const bool has_r = img.getChannel(r, FICC_RED);
+	fipImage g;
+	const bool has_g = img.getChannel(g, FICC_GREEN);
+	fipImage b;
+	const bool has_b = img.getChannel(b, FICC_BLUE);
+	fipImage a;
+	const bool has_a = img.getChannel(a, FICC_ALPHA);
+
+	if (has_r)
+		if (has_g)
+			if (has_b)
+				if (has_a)
+					channels = 4;
+				else
+					channels = 3;
+			else
+				channels = 2;
+		else
+			channels = 1;
+	else
+		channels = 0;
 
 	set_format(img.getWidth(), img.getHeight(), channels, pixel_format);
+	reset_memory();
+
+	set_channel<uint8_t>(0, r.accessPixels());
+	set_channel<uint8_t>(1, g.accessPixels());
+	set_channel<uint8_t>(2, b.accessPixels());
+	set_channel<uint8_t>(3, a.accessPixels());
 
 	width = img.getWidth();
 	height = img.getHeight();

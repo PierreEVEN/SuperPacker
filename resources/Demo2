@@ -1,5 +1,5 @@
 {
-    "name": "resources/Demo2",
+    "name": "Demo2.spg",
     "nodes": {
         "Append TOTO_3": {
             "height": 110.0,
@@ -83,8 +83,8 @@
         }
     },
     "path": "resources/Demo2",
-    "pos_x": 373.4741516113281,
-    "pos_y": -44.57032012939453,
-    "summary_mode": true,
+    "pos_x": 0.2501220703125,
+    "pos_y": -0.488739013671875,
+    "summary_mode": false,
     "zoom": 0.6805564761161804
 }
