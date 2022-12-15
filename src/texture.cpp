@@ -6,25 +6,36 @@
 #include <iostream>
 #include <gl/gl3w.h>
 
-float Texture::get_color(uint8_t channel, float pos_x, float pos_y, bool filter)
-{
-	if (!channel_data[channel].first)
-		return -1;
-
-	int pixel_index = static_cast<int>(pos_x + pos_y * width);
-	if (pixel_index < 0 || pixel_index >= width * height)
-		return -1;
-
-	if (filter)
-		return -1; // not handled yet
-
-	return channel_data[channel].second[static_cast<int>(pos_x) + static_cast<int>(pos_y) * width] / 255.f;
-}
-
 void Texture::make_gpu_available()
 {
-	if (gl_id)
+	if (is_valid_cpu && !is_valid_gpu)
 	{
+		glGenTextures(1, &gl_id);
+
+		glBindTexture(GL_TEXTURE_2D, gl_id);
+
+		GLuint gl_format = 0;
+		switch (channels)
+		{
+		case 1:
+			gl_format = GL_RED;
+			break;
+		case 2:
+			gl_format = GL_RG;
+			break;
+		case 3:
+			gl_format = GL_RGB;
+			break;
+		case 4:
+			gl_format = GL_RGBA;
+			break;
+		}
+
+		glTexImage2D(GL_TEXTURE_2D, 0, gl_format, width, height, 0, gl_format, GL_UNSIGNED_BYTE, cpu_data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		is_valid_gpu = true;
 	}
 }
 
@@ -36,8 +47,7 @@ void Texture::load_from_disc(const std::filesystem::path& path)
 		return;
 	}
 
-	is_valid = false;
-	channels = 4;
+	uint8_t found_channels = 0;
 
 	fipImage img;
 	if (!img.load(path.string().c_str()))
@@ -56,64 +66,45 @@ void Texture::load_from_disc(const std::filesystem::path& path)
 		if (has_g)
 			if (has_b)
 				if (has_a)
-					channels = 4;
+					found_channels = 4;
 				else
-					channels = 3;
+					found_channels = 3;
 			else
-				channels = 2;
+				found_channels = 2;
 		else
-			channels = 1;
+			found_channels = 1;
 	else
-		channels = 0;
+		found_channels = 0;
 
-	set_format(img.getWidth(), img.getHeight(), channels, pixel_format);
+	EPixelFormat found_pixel_format = EPixelFormat::UNDEFINED;
+
+	switch (img.getBitsPerPixel() / found_channels / 8)
+	{
+	case 1:
+		found_pixel_format = EPixelFormat::UINT8;
+		break;
+	case 4:
+		found_pixel_format = EPixelFormat::FLOAT32;
+		break;
+	default:
+		Logger::get().add_persistent_log({
+			ELogType::Error,
+			"failed to find image pixel format :" + std::to_string(img.getBitsPerPixel() / found_channels / 8)
+		});
+		break;
+	}
+
+	set_format(img.getWidth(), img.getHeight(), found_channels, found_pixel_format);
 	reset_memory();
 
-	set_channel<uint8_t>(0, r.accessPixels());
-	set_channel<uint8_t>(1, g.accessPixels());
-	set_channel<uint8_t>(2, b.accessPixels());
-	set_channel<uint8_t>(3, a.accessPixels());
-
-	width = img.getWidth();
-	height = img.getHeight();
-	channels = img.getColorType() == FIC_RGB ? 3 : FIC_RGBALPHA ? 4 : 0;
-
-	size_t i = 0;
-	for (auto& channel : channel_data)
-	{
-		channel.first = false;
-		channel.second = new uint8_t[width * height * 4];
-		std::memset(channel.second, i++ == 3 ? 255 : 0, width * height * 4);
-	}
-
-	for (size_t i = 0; i < channels; ++i)
-		channel_data[i].first = true;
-
-
-	for (size_t c = 0; c < channels; ++c)
-	{
-		const size_t cc = c == 0 ? 2 : c == 2 ? 0 : c;
-		for (size_t p = 0; p < width * height; ++p)
-			channel_data[c].second[p] = img.accessPixels()[p * channels + cc];
-	}
-
-	glGenTextures(1, &gl_id);
-
-	glBindTexture(GL_TEXTURE_2D, gl_id);
-
-	uint8_t* display_data = new uint8_t[width * height * 4];
-
-	for (size_t i = 0; i < width * height; ++i)
-		for (size_t c = 0; c < 4; ++c)
-			display_data[i * 4 + c] = channel_data[c].second[i];
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, display_data);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	delete[] display_data;
-	is_valid = true;
+	if (has_r)
+		set_channel(0, found_pixel_format, r.accessPixels());
+	if (has_g)
+		set_channel(1, found_pixel_format, g.accessPixels());
+	if (has_b)
+		set_channel(2, found_pixel_format, b.accessPixels());
+	if (has_a)
+		set_channel(3, found_pixel_format, a.accessPixels());
 }
 
 void Texture::reset_memory()
@@ -139,7 +130,7 @@ void Texture::reset_memory()
 
 	if (cpu_data)
 	{
-		is_valid = true;
+		is_valid_cpu = true;
 	}
 }
 
@@ -175,14 +166,47 @@ void Texture::set_format(int new_width, int new_height, uint8_t new_channels, EP
 	invalidate_data();
 }
 
+void Texture::invalidate_data()
+{
+	if (is_valid_gpu)
+	{
+		glDeleteTextures(1, &gl_id);
+		gl_id = 0;
+	}
+	if (is_valid_cpu)
+	{
+		free(cpu_data);
+		cpu_data = nullptr;
+	}
+	is_valid_gpu = false;
+	is_valid_cpu = false;
+}
+
+void Texture::set_channel(uint8_t c, EPixelFormat pixel_format, void* source_data)
+{
+	switch (pixel_format)
+	{
+	case EPixelFormat::UINT8:
+		set_channel<uint8_t>(c, source_data);
+		break;
+	case EPixelFormat::FLOAT32:
+		set_channel<float>(c, source_data);
+		break;
+	case EPixelFormat::UNDEFINED:
+		Logger::get().add_persistent_log({ELogType::Error, "set_channel : undefined pixel format"});
+		break;
+	default:
+		Logger::get().add_persistent_log({ELogType::Error, "set_channel : unhandled pixel format"});
+	}
+}
+
 Texture::Texture()
 {
 }
 
 Texture::~Texture()
 {
-	for (auto& channel : channel_data)
-		delete[] channel.second;
+	invalidate_data();
 }
 
 uint32_t Texture::get_id()

@@ -128,7 +128,6 @@ void GraphManager::load_or_create_graph(const std::filesystem::path& graph_path)
 	selected_graph = loaded_graphs.back();
 }
 
-#define FOOTER_HEIGHT 24
 #define BUTTON_SIZE 50
 #define FILE_BUTTON_HEIGHT 30
 #define LEFT_PANEL_WIDTH 200
@@ -141,7 +140,7 @@ void GraphManager::display()
 	ImGui::GetStyle().WindowPadding = {0, 0};
 
 	ImGui::SetNextWindowPos({0, 0});
-	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize - ImVec2{0, FOOTER_HEIGHT});
+	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize - ImVec2{0, Logger::get().get_display_height()});
 	if (ImGui::Begin("loaded_graphs", nullptr,
 	                 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBringToFrontOnFocus))
 	{
@@ -291,12 +290,16 @@ void GraphManager::display()
 	}
 	ImGui::End();
 
-	ImGui::SetNextWindowPos(ImVec2{0, ImGui::GetIO().DisplaySize.y - FOOTER_HEIGHT});
-	ImGui::SetNextWindowSize(ImVec2{ImGui::GetIO().DisplaySize.x, FOOTER_HEIGHT});
+	ImGui::SetNextWindowPos(ImVec2{0, ImGui::GetIO().DisplaySize.y - Logger::get().get_display_height() });
+	ImGui::SetNextWindowSize(ImVec2{ImGui::GetIO().DisplaySize.x, Logger::get() .get_display_height()});
 	if (ImGui::Begin("bottom_logs", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBringToFrontOnFocus))
 	{
 		ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetWindowPos(), ImGui::GetWindowPos() + ImGui::GetWindowSize(),
 		                                          COLOR(0, 120, 200, 255));
+
+		Logger::get().display();
+
+
 	}
 	ImGui::End();
 }

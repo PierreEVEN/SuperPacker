@@ -413,7 +413,12 @@ void Graph::draw()
 				is_in_context_menu = false;
 			}
 
-			logger.display();
+			ImGui::SetCursorPos({ 0, ImGui::GetWindowSize().y - logger.get_display_height() });
+			if (ImGui::BeginChild("logger", { ImGui::GetWindowSize().x, logger.get_display_height() }))
+			{
+				logger.display();
+			}
+			ImGui::EndChild();
 
 			if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_V, false))
 			{

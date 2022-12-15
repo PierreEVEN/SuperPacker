@@ -65,27 +65,21 @@ Logger& Logger::get()
 void Logger::display()
 {
 	display_height = std::lerp(display_height, display_grow ? 200.f : 18.f, Gfx::get().get_delta_second() * 20.f);
-	ImGui::SetCursorPos({0, ImGui::GetWindowSize().y - display_height});
-	if (ImGui::BeginChild("logger", {ImGui::GetWindowSize().x, display_height}))
+	if (ImGui::BeginChild("logs"))
 	{
-		if (ImGui::BeginChild("logs"))
-		{
-			ImGui::Dummy({10, 0});
-			ImGui::SameLine();
-			ImGui::BeginGroup();
-			print_frame_logs();
-			print_persistent_logs();
-			ImGui::EndGroup();
-			if (!display_grow)
-				ImGui::SetScrollHereY(1);
-		}
-		ImGui::EndChild();
-		if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
-		{
-			display_grow = !display_grow;
-		}
+		ImGui::Dummy({10, 0});
+		ImGui::SameLine();
+		ImGui::BeginGroup();
+		print_frame_logs();
+		print_persistent_logs();
+		ImGui::EndGroup();
+		if (!display_grow)
+			ImGui::SetScrollHereY(1);
+	}
+	ImGui::EndChild();
+	if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+	{
+		display_grow = !display_grow;
 	}
 	new_frame();
-
-	ImGui::EndChild();
 }

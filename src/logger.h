@@ -30,7 +30,6 @@ public:
 
 	void add_frame_log(const Log& log);
 	void add_persistent_log(const Log& log);
-	void add_compilation_log(const Log& log);
 	void new_frame();
 	void set_max_logs(size_t count);
 	void print_persistent_logs() const;
@@ -40,6 +39,7 @@ public:
 
 	void display();
 
+	[[nodiscard]] float get_display_height() const { return display_height; }
 
 private:
 	std::vector<Log> persistent_logs;

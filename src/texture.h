@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -22,12 +23,10 @@ public:
 
 	~Texture();
 
-	[[nodiscard]] bool ready() const { return is_valid; }
+	[[nodiscard]] bool ready() const { return is_valid_cpu; }
 	[[nodiscard]] uint32_t get_id();
 	[[nodiscard]] int res_x() const { return width; }
 	[[nodiscard]] int res_y() const { return height; }
-
-	float get_color(uint8_t channel, float pos_x, float pos_y, bool filter = false);
 
 	void make_gpu_available();
 
@@ -37,15 +36,7 @@ public:
 	void reset_memory();
 	void set_format(int new_width, int new_height, uint8_t new_channels, EPixelFormat new_format = EPixelFormat::UINT8);
 
-	void invalidate_data()
-	{
-		is_valid = false;
-		if (cpu_data)
-		{
-			delete[] cpu_data;
-			cpu_data = nullptr;
-		}
-	}
+	void invalidate_data();
 
 	static bool is_valid_image_file(const std::filesystem::path& path);
 	static uint8_t bits_per_pixel(EPixelFormat format);
@@ -79,22 +70,22 @@ public:
 		return x >= 0 && x < width && y >= 0 && y < height && c >= 0 && c < channels;
 	}
 
-	template <typename T>
-	void set_channel(uint8_t c, T* source_data)
+	void set_channel(uint8_t c, EPixelFormat pixel_format, void* source_data);
+
+	template <typename T, typename U>
+	void set_channel(uint8_t c, U* source_data)
 	{
-		if (!is_valid)
+		if (!is_valid_cpu)
 			return;
-		
+
 		for (int y = 0; y < height; ++y)
 			for (int x = 0; x < width; ++x)
-				set_pixel<T>(x, y, c, source_data[x + y * width]);
+				set_pixel<T>(x, y, c, reinterpret_cast<T*>(source_data)[x + y * width]);
 	}
 
 private:
 	Texture();
 	uint32_t gl_id;
-
-	std::array<std::pair<bool, uint8_t*>, 4> channel_data;
 
 	void export_to(const std::filesystem::path& path);
 
@@ -103,6 +94,7 @@ private:
 	int height;
 	int channels;
 	EPixelFormat pixel_format;
-	bool is_valid = false;
+	bool is_valid_cpu = false;
+	bool is_valid_gpu = false;
 	void* cpu_data = nullptr;
 };
