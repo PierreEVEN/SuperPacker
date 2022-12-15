@@ -263,19 +263,6 @@ void Node::display_internal(Graph& graph)
 	ImGui::EndChild();
 
 	ImGui::SetWindowFontScale(1);
-
-	if (hovered && false)
-	{
-		if (!outputs.empty() && (outputs[0]->on_get_type.execute() == EType::Float || outputs[0]->on_get_type.execute()
-			== EType::Float2 || outputs[0]->on_get_type.execute() == EType::Float3 || outputs[0]->on_get_type.execute()
-			== EType::Float4))
-		{
-			ImGui::BeginTooltip();
-			ImGui::Text("code :\n%s",
-			            graph.code_ctx().generate_full_glsl(outputs[0]->get_code(graph.code_ctx())).c_str());
-			ImGui::EndTooltip();
-		}
-	}
 }
 
 void Node::display_summary_internal()

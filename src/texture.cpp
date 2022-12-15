@@ -14,6 +14,20 @@ void Texture::make_gpu_available()
 
 		glBindTexture(GL_TEXTURE_2D, gl_id);
 
+		GLuint gl_type = 0;
+
+		switch (pixel_format)
+		{
+		case EPixelFormat::UINT8:
+			gl_type = GL_UNSIGNED_BYTE;
+			break;
+		case EPixelFormat::FLOAT32:
+			gl_type = GL_FLOAT;
+			break;
+		case EPixelFormat::UNDEFINED:
+		default: ;
+		}
+
 		GLuint gl_format = 0;
 		switch (channels)
 		{
@@ -31,7 +45,7 @@ void Texture::make_gpu_available()
 			break;
 		}
 
-		glTexImage2D(GL_TEXTURE_2D, 0, gl_format, width, height, 0, gl_format, GL_UNSIGNED_BYTE, cpu_data);
+		glTexImage2D(GL_TEXTURE_2D, 0, gl_format, width, height, 0, gl_format, gl_type, cpu_data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

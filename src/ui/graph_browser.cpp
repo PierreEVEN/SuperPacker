@@ -26,16 +26,16 @@ GraphManager::GraphManager(std::filesystem::path in_user_data_path)
 		{
 			window_saved_pos = true;
 			const auto json = nlohmann::json::parse(config_file);
-			if (json.contains("win_width"))
-				window_saved_width = json["win_width"];
-			if (json.contains("win_height"))
-				window_saved_height = json["win_width"];
-			if (json.contains("win_pos_x"))
-				window_saved_pos_x = json["win_pos_x"];
+			if (json.contains("window_width"))
+				window_saved_width = json["window_width"];
+			if (json.contains("window_height"))
+				window_saved_height = json["window_height"];
+			if (json.contains("window_pos_x"))
+				window_saved_pos_x = json["window_pos_x"];
 			else
 				window_saved_pos = false;
-			if (json.contains("win_pos_y"))
-				window_saved_pos_y = json["win_pos_y"];
+			if (json.contains("window_pos_y"))
+				window_saved_pos_y = json["window_pos_y"];
 			else
 				window_saved_pos = false;
 			if (json.contains("recent_open"))
