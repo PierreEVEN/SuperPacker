@@ -1,6 +1,27 @@
 {
-    "name": "test",
+    "enabled_tool": 0,
     "nodes": {
+        "Add_62": {
+            "height": 110.0,
+            "inputs": {
+                "a": {
+                    "from": "R",
+                    "to": "a",
+                    "uuid": 44
+                },
+                "b": {
+                    "from": "value",
+                    "to": "b",
+                    "uuid": 63
+                }
+            },
+            "pin_name": "Add",
+            "type": "class NodeAdd",
+            "uuid": 62,
+            "width": 300.0,
+            "x": 1235.54638671875,
+            "y": 190.7193145751953
+        },
         "Append Text_247": {
             "height": 110.0,
             "inputs": {
@@ -15,37 +36,34 @@
                     "uuid": 246
                 }
             },
-            "name": "Append Text",
-            "summary": true,
+            "pin_name": "Append Text",
             "type": "class AppendText",
             "uuid": 247,
             "width": 300.0,
             "x": 1664.643798828125,
             "y": 585.3292236328125
         },
-        "Directory_234": {
+        "Constant_63": {
             "height": 70.0,
             "inputs": null,
-            "name": "Directory",
-            "summary": true,
-            "type": "class DirectoryInput",
-            "uuid": 234,
-            "value": "resources/",
-            "width": 300.0,
-            "x": 1242.1072998046875,
-            "y": 921.8839111328125
-        },
-        "Float_63": {
-            "height": 70.0,
-            "inputs": null,
-            "name": "Float",
-            "summary": true,
+            "pin_name": "Constant",
             "type": "class NodeFloat",
             "uuid": 63,
             "value": 0.36000001430511475,
             "width": 300.0,
             "x": 833.2820434570313,
             "y": 220.48577880859375
+        },
+        "Directory_234": {
+            "height": 70.0,
+            "inputs": null,
+            "pin_name": "Directory",
+            "type": "class DirectoryInput",
+            "uuid": 234,
+            "value": "resources/",
+            "width": 300.0,
+            "x": 1242.1072998046875,
+            "y": 921.8839111328125
         },
         "Image Write_6": {
             "height": 110.0,
@@ -61,8 +79,7 @@
                     "uuid": 50
                 }
             },
-            "name": "Image Write",
-            "summary": true,
+            "pin_name": "Image Write",
             "type": "class ImageWriteNode",
             "uuid": 6,
             "width": 300.0,
@@ -93,8 +110,7 @@
                     "uuid": 44
                 }
             },
-            "name": "Make Float4",
-            "summary": true,
+            "pin_name": "Make Float4",
             "type": "class MakeFloat4",
             "uuid": 50,
             "width": 300.0,
@@ -104,8 +120,7 @@
         "Text_246": {
             "height": 70.0,
             "inputs": null,
-            "name": "Text",
-            "summary": true,
+            "pin_name": "Text",
             "type": "class TextInput",
             "uuid": 246,
             "value": "appicon.ico",
@@ -116,9 +131,8 @@
         "Texture_44": {
             "height": 270.0,
             "inputs": null,
-            "name": "Texture",
+            "pin_name": "Texture",
             "source_file": "C:\\Users\\pierre\\Documents\\projects\\SuperPacker\\resources\\times_square.jpg",
-            "summary": true,
             "type": "class NodeTexture",
             "uuid": 44,
             "width": 300.0,
@@ -128,9 +142,8 @@
         "Texture_47": {
             "height": 270.0,
             "inputs": null,
-            "name": "Texture",
+            "pin_name": "Texture",
             "source_file": "C:\\Users\\pierre\\Documents\\projects\\SuperPacker\\resources\\icon.png",
-            "summary": true,
             "type": "class NodeTexture",
             "uuid": 47,
             "width": 300.0,
@@ -140,41 +153,18 @@
         "Texture_5": {
             "height": 270.0,
             "inputs": null,
-            "name": "Texture",
+            "pin_name": "Texture",
             "source_file": "C:\\Users\\pierre\\Documents\\projects\\SuperPacker\\resources\\appicon.ico",
-            "summary": true,
             "type": "class NodeTexture",
             "uuid": 5,
             "width": 300.0,
             "x": 1206.7413330078125,
             "y": -107.78765106201172
-        },
-        "add_62": {
-            "height": 110.0,
-            "inputs": {
-                "a": {
-                    "from": "R",
-                    "to": "a",
-                    "uuid": 44
-                },
-                "b": {
-                    "from": "value",
-                    "to": "b",
-                    "uuid": 63
-                }
-            },
-            "name": "add",
-            "summary": true,
-            "type": "class NodeAdd",
-            "uuid": 62,
-            "width": 300.0,
-            "x": 1235.54638671875,
-            "y": 190.7193145751953
         }
     },
     "path": "resources/test",
-    "pos_x": -1207.5084228515625,
-    "pos_y": -410.4471740722656,
-    "summary_mode": true,
+    "pin_name": "test",
+    "pos_x": -1717.50537109375,
+    "pos_y": -448.2247619628906,
     "zoom": 0.6352980136871338
 }

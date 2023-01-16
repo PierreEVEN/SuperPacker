@@ -4,6 +4,8 @@
 
 #include <nfd.hpp>
 
+#include "ui/pin.h"
+
 static std::string wstring_to_string(std::wstring w_string)
 {
 	std::string ret;
@@ -29,7 +31,7 @@ TextInput::TextInput()
 	});
 }
 
-void TextInput::display()
+void TextInput::display(ESpTool tool)
 {
 	char buf[2048];
 
@@ -89,7 +91,7 @@ DirectoryInput::DirectoryInput()
 }
 
 
-void DirectoryInput::display()
+void DirectoryInput::display(ESpTool tool)
 {
 	if (ImGui::Button((value + "##btn" + std::to_string(uuid)).c_str(), ImGui::GetContentRegionAvail()))
 	{
@@ -145,7 +147,7 @@ FileInput::FileInput()
 	});
 }
 
-void FileInput::display()
+void FileInput::display(ESpTool tool)
 {
 	if (ImGui::Button((value + "##btn").c_str(), ImGui::GetContentRegionAvail()))
 	{
@@ -197,16 +199,16 @@ AppendText::AppendText()
 	out->on_get_type.add_lambda([] { return EType::String; });
 	out->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		if (!*a && !*b)
+		if (!a->is_connected() && !b->is_connected())
 		{
 			return "";
 		}
 
-		if (!*b && *a)
+		if (!b->is_connected() && a->is_connected())
 		{
 			return a->target()->get_code(get_graph().code_ctx());
 		}
-		if (!*a && *b)
+		if (!a->is_connected() && b->is_connected())
 		{
 			return b->target()->get_code(get_graph().code_ctx());
 		}
@@ -222,7 +224,7 @@ AppendText::AppendText()
 	});
 }
 
-void AppendText::display()
+void AppendText::display(ESpTool tool)
 {
 	ImGui::TextWrapped("%s", value.c_str());
 }

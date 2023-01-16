@@ -1,4 +1,4 @@
-#include "graph_browser.h"
+#include "main_window.h"
 
 #include <fstream>
 #include <imgui_internal.h>
@@ -12,7 +12,7 @@
 #define CONFIG_FILE "Config.json"
 #define GRAPH_PATH "UserGraph"
 
-GraphManager::GraphManager(std::filesystem::path in_user_data_path)
+MainWindow::MainWindow(std::filesystem::path in_user_data_path)
 	: user_data_path(std::move(in_user_data_path))
 {
 	window_saved_width = 800;
@@ -50,7 +50,7 @@ GraphManager::GraphManager(std::filesystem::path in_user_data_path)
 	}
 }
 
-void GraphManager::load_layout()
+void MainWindow::load_layout()
 {
 	loaded_graphs.clear();
 	if (std::ifstream config_file(user_data_path / CONFIG_FILE); config_file.is_open())
@@ -77,7 +77,7 @@ void GraphManager::load_layout()
 	}
 }
 
-void GraphManager::save_layout()
+void MainWindow::save_layout()
 {
 	const auto config_path = user_data_path / CONFIG_FILE;
 
@@ -117,7 +117,7 @@ void GraphManager::save_layout()
 	save_all();
 }
 
-void GraphManager::load_or_create_graph(const std::filesystem::path& graph_path)
+void MainWindow::load_or_create_graph(const std::filesystem::path& graph_path)
 {
 	for (const auto& graph : loaded_graphs)
 		if (graph->get_path() == graph_path)
@@ -135,7 +135,7 @@ void GraphManager::load_or_create_graph(const std::filesystem::path& graph_path)
 #define LEFT_PANEL_WIDTH 200
 #define COLOR(r, g, b, a) ImGui::ColorConvertFloat4ToU32(ImVec4((r) / 255.f, (g) / 255.f, (b) / 255.f, (a) / 255.f))
 
-void GraphManager::display()
+void MainWindow::display()
 {
 	ImGui::GetStyle().FrameBorderSize = {0};
 	ImGui::GetStyle().ItemSpacing = {0, 0};
@@ -278,11 +278,14 @@ void GraphManager::display()
 		{
 			if (selected_graph)
 			{
-				if (ImGui::Button("Edit\nMode", ImVec2{60, 60}))
-					selected_graph->toggle_summary_mode();
+				if (ImGui::Button("Edit\nGraph", ImVec2{60, 60}))
+					selected_graph->set_enabled_tool(ESpTool::EditGraph);
 				ImGui::SameLine();
-				if (ImGui::Button("Export\nGraph", ImVec2{60, 60}))
-					;
+				if (ImGui::Button("Edit\nWidget", ImVec2{ 60, 60 }))
+					selected_graph->set_enabled_tool(ESpTool::EditWidget);
+				ImGui::SameLine();
+				if (ImGui::Button("Tool\nWidget", ImVec2{ 60, 60 }))
+					selected_graph->set_enabled_tool(ESpTool::RunWidget);
 
 				ImGui::Separator();
 
@@ -307,13 +310,13 @@ void GraphManager::display()
 	ImGui::End();
 }
 
-void GraphManager::save_all() const
+void MainWindow::save_all() const
 {
 	for (const auto& graph : loaded_graphs)
 		graph->save_to_file();
 }
 
-std::shared_ptr<Graph> GraphManager::get_graph_by_name(const std::string& in_name) const
+std::shared_ptr<Graph> MainWindow::get_graph_by_name(const std::string& in_name) const
 {
 	for (const auto& graph : loaded_graphs)
 		if (graph->name == in_name)
@@ -321,7 +324,7 @@ std::shared_ptr<Graph> GraphManager::get_graph_by_name(const std::string& in_nam
 	return nullptr;
 }
 
-void GraphManager::draw_toolbar(Graph& graph)
+void MainWindow::draw_toolbar(Graph& graph)
 {
 	if (ImGui::Button("Toggle\nEdit\nMode", {50, 50}))
 	{

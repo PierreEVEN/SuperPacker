@@ -3,7 +3,7 @@
 #include "file_resource.h"
 #include "nfd.hpp"
 #include "window_interface.h"
-#include "ui/graph_browser.h"
+#include "ui/main_window.h"
 
 
 int main(int argc, char** argv)
@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 	NFD::Init();
 
 	// Load saved config
-	GraphManager browser(roaming_dir);
+	MainWindow browser(roaming_dir);
 
 	// Init window
 	int pos_x, pos_y;

@@ -8,6 +8,8 @@
 #include "logger.h"
 #include <nlohmann/json.hpp>
 
+#include "packer/types.h"
+
 #define REGISTER_NODE(type, infos) \
 struct __node_registerer_##type { \
 	__node_registerer_##type() { \
@@ -19,8 +21,8 @@ __node_registerer_##type __instance##type
 class CodeContext;
 enum class EType;
 class Node;
-class NodeInput;
-class NodeOutput;
+class InputPin;
+class OutputPin;
 
 class NodeInfo
 {
@@ -42,8 +44,8 @@ struct MouseHit
 {
 	ImVec2 position;
 	ImVec2 radius;
-	std::shared_ptr<NodeInput> node_input;
-	std::shared_ptr<NodeOutput> node_output;
+	std::shared_ptr<InputPin> node_input;
+	std::shared_ptr<OutputPin> node_output;
 	std::shared_ptr<Node> node;
 };
 
@@ -109,9 +111,9 @@ public:
 	size_t gen_uuid() { return last_generated_id++; }
 	void push_uuid(size_t uuid) { last_generated_id = uuid + 1 > last_generated_id ? uuid + 1 : last_generated_id; }
 
-	void toggle_summary_mode() { summary_mode = !summary_mode; }
+	void set_enabled_tool(ESpTool new_enabled_tool) { enabled_tool = new_enabled_tool; }
 
-	std::filesystem::path get_path() const { return path; }
+	[[nodiscard]] std::filesystem::path get_path() const { return path; }
 
 private:
 	void remap_uuid_in_json(nlohmann::json& in_json);
@@ -119,11 +121,11 @@ private:
 	std::filesystem::path path;
 	static void register_node(const NodeInfo& node_infos);
 
-	void begin_out_in(std::shared_ptr<NodeOutput> start);
-	void end_out_in(std::shared_ptr<NodeInput> end);
+	void begin_out_in(std::shared_ptr<OutputPin> start);
+	void end_out_in(std::shared_ptr<InputPin> end);
 
-	void begin_in_out(std::shared_ptr<NodeInput> start);
-	void end_in_out(std::shared_ptr<NodeOutput> end);
+	void begin_in_out(std::shared_ptr<InputPin> start);
+	void end_in_out(std::shared_ptr<OutputPin> end);
 
 	void display_node_context_menu(ImDrawList* window_draw_list);
 
@@ -134,8 +136,8 @@ private:
 	std::vector<MouseHit> hits;
 
 	std::shared_ptr<CodeContext> code_context;
-	std::shared_ptr<NodeOutput> out_to_in = nullptr;
-	std::shared_ptr<NodeInput> in_to_out = nullptr;
+	std::shared_ptr<OutputPin> out_to_in = nullptr;
+	std::shared_ptr<InputPin> in_to_out = nullptr;
 	std::vector<std::shared_ptr<Node>> nodes;
 	std::shared_ptr<ImVec2> selection_rect_start;
 	bool is_in_context_menu = false;
@@ -144,5 +146,5 @@ private:
 	ImVec2 context_menu_pos;
 	size_t last_generated_id = 0;
 
-	bool summary_mode = true;
+	ESpTool enabled_tool = ESpTool::EditWidget;
 };

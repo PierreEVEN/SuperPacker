@@ -9,6 +9,8 @@
 #include "gfx.h"
 #include "imgui_operators.h"
 #include "node.h"
+#include "node_widget.h"
+#include "pin.h"
 
 static std::unique_ptr<std::unordered_map<std::string, NodeInfo>> registered_nodes = nullptr;
 
@@ -157,37 +159,10 @@ void Graph::open_context_menu()
 
 void Graph::draw()
 {
-	if (summary_mode)
+	switch (enabled_tool)
 	{
-		ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertFloat4ToU32({0.2f, 0.2f, 0.2f, 1}));
-		if (ImGui::BeginChild("summary"))
-		{
-			if (ImGui::BeginChild("input panel", ImGui::GetContentRegionAvail() * ImVec2(0.5f, 1.f)))
-			{
-				for (const auto& node : nodes)
-					if (node->display_in_summary && node->summary_mode() == Node::ESummaryMode::Input)
-					{
-						node->display_summary_internal();
-						ImGui::Separator();
-					}
-			}
-			ImGui::EndChild();
-			ImGui::SameLine();
+	case ESpTool::EditGraph:
 
-			ImGui::BeginChild("output panel", ImGui::GetContentRegionAvail());
-			for (const auto& node : nodes)
-				if (node->display_in_summary && node->summary_mode() == Node::ESummaryMode::Output)
-				{
-					node->display_summary_internal();
-					ImGui::Separator();
-				}
-			ImGui::EndChild();
-		}
-		ImGui::EndChild();
-		ImGui::PopStyleColor();
-	}
-	else
-	{
 		hits.clear();
 
 		if (ImGui::IsKeyPressed(ImGuiKey_Delete))
@@ -196,7 +171,7 @@ void Graph::draw()
 				remove_node(*selected_nodes.begin());
 		}
 
-		// Handle drag
+	// Handle drag
 		if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
 		{
 			pos = pos + ImGui::GetMouseDragDelta(ImGuiMouseButton_Right) / zoom;
@@ -240,8 +215,8 @@ void Graph::draw()
 			for (const auto& node : nodes)
 			{
 				node->update_nodes_positions();
-				if (ImGui::IsMouseHoveringRect(node->screen_min + ImVec2{node->inputs.empty() ? 0 : 39 * zoom, 0},
-				                               node->screen_max - ImVec2{node->outputs.empty() ? 0 : 39 * zoom, 0}))
+				if (ImGui::IsMouseHoveringRect(node->transform.screen_min + ImVec2{node->inputs.empty() ? 0 : 39 * zoom, 0},
+				                               node->transform.screen_max - ImVec2{node->outputs.empty() ? 0 : 39 * zoom, 0}))
 					hovered_node = node;
 			}
 			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !is_selected(hovered_node.get()))
@@ -294,7 +269,7 @@ void Graph::draw()
 				for (auto& c_node : selected_nodes)
 				{
 					Node* node = c_node;
-					node->position += ImGui::GetMouseDragDelta(ImGuiMouseButton_Left) / zoom - offscreen_delta;
+					node->transform.position += ImGui::GetMouseDragDelta(ImGuiMouseButton_Left) / zoom - offscreen_delta;
 					node->update_nodes_positions();
 				}
 				ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
@@ -304,7 +279,7 @@ void Graph::draw()
 			{
 				ImVec2 avg;
 				for (const auto node : selected_nodes)
-					avg = avg - node->position;
+					avg = avg - node->transform.position;
 				avg = avg / static_cast<float>(selected_nodes.size());
 
 				pos = avg;
@@ -324,7 +299,7 @@ void Graph::draw()
 
 			// Draw nodes
 			for (const auto& node : nodes)
-				node->display_internal(*this);
+				NodeWidget::display(this, &*node, ESpTool::EditGraph);
 
 			// Handle mouse hits
 			const MouseHit* closest_hit = nullptr;
@@ -335,7 +310,7 @@ void Graph::draw()
 					std::abs(hit.position.x - ImGui::GetMousePos().x), std::abs(hit.position.y - ImGui::GetMousePos().y)
 				};
 				const float distance = min(d2.x, d2.y);
-				if (distance < closest_distance || ! closest_hit)
+				if (distance < closest_distance || !closest_hit)
 				{
 					closest_distance = distance;
 					closest_hit = &hit;
@@ -382,8 +357,8 @@ void Graph::draw()
 					clear_selection();
 				for (const auto& node : nodes)
 				{
-					if (screen_max.x > node->screen_min.x && screen_max.y > node->screen_min.y && screen_min.x < node->
-						screen_max.x && screen_min.y < node->screen_max.y)
+					if (screen_max.x > node->transform.screen_min.x && screen_max.y > node->transform.screen_min.y && screen_min.x < node->
+						transform.screen_max.x && screen_min.y < node->transform.screen_max.y)
 					{
 						add_to_selection(node, false);
 					}
@@ -402,13 +377,15 @@ void Graph::draw()
 
 			if (out_to_in)
 			{
-				draw_connection(out_to_in->position, is_in_context_menu ? context_menu_pos : ImGui::GetMousePos(),
+				draw_connection(out_to_in->get_display_pos(),
+				                is_in_context_menu ? context_menu_pos : ImGui::GetMousePos(),
 				                out_to_in->on_get_type.execute());
 			}
 
 			if (in_to_out)
 			{
-				draw_connection(is_in_context_menu ? context_menu_pos : ImGui::GetMousePos(), in_to_out->position,
+				draw_connection(is_in_context_menu ? context_menu_pos : ImGui::GetMousePos(),
+				                in_to_out->get_display_pos(),
 				                EType::Undefined);
 			}
 
@@ -459,7 +436,7 @@ void Graph::draw()
 						node->deserialize(node_js);
 						add_to_selection(node, false);
 						added_nodes.emplace_back(node);
-						average_pos += node->position;
+						average_pos += node->transform.position;
 					}
 					average_pos = average_pos / static_cast<float>(added_nodes.size());
 					for (const auto& node_js : clipboard)
@@ -476,8 +453,8 @@ void Graph::draw()
 							if (!link_source)
 								continue;
 
-							const auto connection_source = link_source->output_by_name(connection["from"]);
-							const auto connection_target = link_target->input_by_name(connection["to"]);
+							const auto connection_source = link_source->find_output_by_name(connection["from"]);
+							const auto connection_target = link_target->find_input_by_name(connection["to"]);
 
 							if (!connection_source || !connection_target)
 								continue;
@@ -488,7 +465,7 @@ void Graph::draw()
 
 					ImVec2 delta = pos_to_graph(ImGui::GetMousePos()) - average_pos;
 					for (const auto& node : added_nodes)
-						node->position += delta;
+						node->transform.position += delta;
 				}
 				catch (const std::exception& e)
 				{
@@ -501,28 +478,51 @@ void Graph::draw()
 			ImGui::ResetMouseDragDelta(ImGuiMouseButton_Right);
 		}
 		ImGui::EndChild();
+		break;
+	case ESpTool::EditWidget: break;
+	case ESpTool::RunWidget:
+		ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertFloat4ToU32({0.2f, 0.2f, 0.2f, 1}));
+		if (ImGui::BeginChild("summary"))
+		{
+			if (ImGui::BeginChild("input panel", ImGui::GetContentRegionAvail() * ImVec2(0.5f, 1.f)))
+			{
+				for (const auto& node : nodes)
+					NodeWidget::display(this, &*node, ESpTool::RunWidget);
+			}
+			ImGui::EndChild();
+			ImGui::SameLine();
+
+			ImGui::BeginChild("output panel", ImGui::GetContentRegionAvail());
+			for (const auto& node : nodes);
+			ImGui::EndChild();
+		}
+		ImGui::EndChild();
+		ImGui::PopStyleColor();
+		break;
+	default: ;
+		logger.add_frame_log(Log{ELogType::Error, "unhandled tool mode"});
 	}
 }
 
 
-void Graph::begin_out_in(std::shared_ptr<NodeOutput> start)
+void Graph::begin_out_in(std::shared_ptr<OutputPin> start)
 {
 	if (out_to_in == nullptr)
 		out_to_in = start;
 }
 
-void Graph::end_out_in(std::shared_ptr<NodeInput> end)
+void Graph::end_out_in(std::shared_ptr<InputPin> end)
 {
 	end->link_to(out_to_in);
 	out_to_in = nullptr;
 }
 
-void Graph::begin_in_out(std::shared_ptr<NodeInput> start)
+void Graph::begin_in_out(std::shared_ptr<InputPin> start)
 {
 	in_to_out = start;
 }
 
-void Graph::end_in_out(std::shared_ptr<NodeOutput> end)
+void Graph::end_in_out(std::shared_ptr<OutputPin> end)
 {
 	if (in_to_out)
 		in_to_out->link_to(end);
@@ -604,7 +604,7 @@ void Graph::display_node_context_menu(ImDrawList* window_draw_list)
 		{
 			if (const auto node = spawn_by_name(node_type->internal_name))
 			{
-				node->position = pos_to_graph(context_menu_pos, window_draw_list);
+				node->transform.position = pos_to_graph(context_menu_pos, window_draw_list);
 				if (out_to_in && !node->inputs.empty())
 					node->inputs[0]->link_to(out_to_in);
 				if (in_to_out && !node->outputs.empty())
@@ -668,12 +668,16 @@ void Graph::load_from_file()
 
 	if (js.contains("path"))
 		path = std::string(js["path"]);
-	if (js.contains("summary_mode"))
-		summary_mode = js["summary_mode"];
-	name = js["name"];
-	pos.x = js["pos_x"];
-	pos.y = js["pos_y"];
-	zoom = js["zoom"];
+	if (js.contains("enabled_tool"))
+		enabled_tool = js["enabled_tool"];
+	if (js.contains("pin_name"))
+		name = js["pin_name"];
+	if (js.contains("pos_x"))
+		pos.x = js["pos_x"];
+	if (js.contains("pos_y"))
+		pos.y = js["pos_y"];
+	if (js.contains("zoom"))
+		zoom = js["zoom"];
 
 	for (const auto& node_js : js["nodes"])
 	{
@@ -700,8 +704,8 @@ void Graph::load_from_file()
 			if (!link_source)
 				continue;
 
-			const auto connection_source = link_source->output_by_name(connection["from"]);
-			const auto connection_target = link_target->input_by_name(connection["to"]);
+			const auto connection_source = link_source->find_output_by_name(connection["from"]);
+			const auto connection_target = link_target->find_input_by_name(connection["to"]);
 
 			if (!connection_source || !connection_target)
 				continue;
@@ -733,10 +737,10 @@ void Graph::save_to_file()
 		{"pos_x", pos.x},
 		{"pos_y", pos.y},
 		{"zoom", zoom},
-		{"name", name},
+		{"pin_name", name},
 		{"path", path.string()},
 		{"nodes", js_nodes},
-		{"summary_mode", summary_mode}
+		{"enabled_tool", enabled_tool}
 	};
 
 	output << std::setw(4) << js << std::endl;

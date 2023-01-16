@@ -5,6 +5,7 @@
 #include "gfx.h"
 #include "texture.h"
 #include "window_interface.h"
+#include "ui/pin.h"
 
 /*
  * TEXTURE INPUT
@@ -132,7 +133,7 @@ void NodeTexture::display_summary()
 		             ImGui::GetContentRegionAvail(), {0, 1}, {1, 0});
 }
 
-void NodeTexture::display()
+void NodeTexture::display(ESpTool tool)
 {
 	if (ImGui::Button("##import", ImGui::GetContentRegionAvail()))
 	{
@@ -166,7 +167,7 @@ ImageWriteNode::ImageWriteNode()
 	});
 }
 
-void ImageWriteNode::display()
+void ImageWriteNode::display(ESpTool tool)
 {
 	if (!path_input->target() || path_input->target()->get_type() != EType::String)
 		return;

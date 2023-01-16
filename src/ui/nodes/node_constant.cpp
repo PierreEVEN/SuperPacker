@@ -4,6 +4,7 @@
 #include <gl/gl3w.h>
 
 #include "gfx.h"
+#include "ui/pin.h"
 
 NodeFloat::NodeFloat()
 {
@@ -21,7 +22,7 @@ NodeFloat::~NodeFloat()
 	uniform_var->unregister();
 }
 
-void NodeFloat::display()
+void NodeFloat::display(ESpTool tool)
 {
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0, ImGui::GetContentRegionAvail().y / 2 - ImGui::CalcTextSize("a").y / 2 });
 	ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);	

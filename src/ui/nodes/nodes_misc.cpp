@@ -1,5 +1,7 @@
 #include "nodes_misc.h"
 
+#include "ui/pin.h"
+
 MakeFloat4::MakeFloat4()
 {
 	r = add_input("r");
@@ -14,7 +16,7 @@ MakeFloat4::MakeFloat4()
 
 	out->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		if (!*r || !*g || !*b || !*a ||
+		if (!r->is_connected() || !g->is_connected() || !b->is_connected() || !a->is_connected() ||
 			r->target()->get_type() != EType::Float ||
 			g->target()->get_type() != EType::Float ||
 			b->target()->get_type() != EType::Float ||
@@ -63,7 +65,7 @@ MakeFloat3::MakeFloat3()
 
 	out->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		if (!*r || !*g || !*b ||
+		if (!r->is_connected() || !g->is_connected() || !b->is_connected() ||
 			r->target()->get_type() != EType::Float ||
 			g->target()->get_type() != EType::Float ||
 			b->target()->get_type() != EType::Float)
@@ -103,7 +105,7 @@ MakeFloat2::MakeFloat2()
 	out->on_get_type.add_lambda([] { return EType::Float2; });
 	out->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		if (!*r || !*g ||
+		if (!r->is_connected() || !g->is_connected() ||
 			r->target()->get_type() != EType::Float ||
 			g->target()->get_type() != EType::Float)
 			return "";
@@ -134,7 +136,7 @@ BreakColor::BreakColor()
 	r->on_get_type.add_lambda([] { return EType::Float; });
 	r->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		if (!*in)
+		if (!in->is_connected())
 			return "";
 		const auto in_code = in->target()->get_code(context);
 		return std::format(
@@ -149,7 +151,7 @@ BreakColor::BreakColor()
 	g->on_get_type.add_lambda([] { return EType::Float; });
 	g->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		if (!*in)
+		if (!in->is_connected())
 			return "";
 		const auto in_code = in->target()->get_code(context);
 		return std::format(
@@ -167,7 +169,7 @@ BreakColor::BreakColor()
 	b->on_get_type.add_lambda([] { return EType::Float; });
 	b->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		if (!*in)
+		if (!in->is_connected())
 			return "";
 		const auto in_code = in->target()->get_code(context);
 		return std::format(
@@ -185,7 +187,7 @@ BreakColor::BreakColor()
 	a->on_get_type.add_lambda([] { return EType::Float; });
 	a->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		if (!*in)
+		if (!in->is_connected())
 			return "";
 		const auto in_code = in->target()->get_code(context);
 		return std::format(

@@ -8,13 +8,11 @@ class NodeFloat : public Node
 public:
 	NodeFloat();
 	virtual ~NodeFloat();
-	void display() override;
+	void display(ESpTool tool) override;
 	virtual void register_uniform(CodeContext& ctx) override;
 
 	virtual nlohmann::json serialize(Graph& graph) override;
 	void deserialize(const nlohmann::json& json) override;
-
-	ESummaryMode summary_mode() const override { return ESummaryMode::Input; }
 
 	void display_summary() override;
 

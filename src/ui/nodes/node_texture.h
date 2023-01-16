@@ -8,14 +8,13 @@ public:
 	NodeTexture();
 	virtual ~NodeTexture();
 
-	void display() override;
+	void display(ESpTool tool) override;
 	void register_uniform(CodeContext& ctx) override;
 
 	nlohmann::json serialize(Graph& graph) override;
 	void deserialize(const nlohmann::json& json) override;
 
 	void display_summary() override;
-	ESummaryMode summary_mode() const override { return ESummaryMode::Input; }
 private:
 	std::shared_ptr<Texture> texture;
 	std::shared_ptr<ShaderUniform> texture_uniform;
@@ -28,11 +27,10 @@ class ImageWriteNode : public Node
 {
 public:
 	ImageWriteNode();
-	void display() override;
-	ESummaryMode summary_mode() const override { return ESummaryMode::Output; }
+	void display(ESpTool tool) override;
 	void display_summary() override;
 private:
 	std::filesystem::path default_path;
-	std::shared_ptr<NodeInput> path_input;
-	std::shared_ptr<NodeInput> rgba_input;
+	std::shared_ptr<InputPin> path_input;
+	std::shared_ptr<InputPin> rgba_input;
 };

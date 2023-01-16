@@ -7,10 +7,10 @@
 
 class Graph;
 
-class GraphManager
+class MainWindow
 {
 public:
-	GraphManager(std::filesystem::path in_user_data_path = "resources");
+	MainWindow(std::filesystem::path in_user_data_path = "resources");
 
 	void load_layout();
 	void save_layout();
@@ -31,7 +31,7 @@ public:
 		return window_saved_pos;
 	}
 
-	std::shared_ptr<Graph> get_graph_by_name(const std::string& in_name) const;
+	[[nodiscard]] std::shared_ptr<Graph> get_graph_by_name(const std::string& in_name) const;
 
 private:
 	int window_saved_width = 800;

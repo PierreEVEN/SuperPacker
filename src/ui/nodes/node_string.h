@@ -8,13 +8,11 @@ class TextInput : public Node
 {
 public:
 	TextInput();
-	void display() override;
+	void display(ESpTool tool) override;
 
 	virtual nlohmann::json serialize(Graph& graph) override;
 	void deserialize(const nlohmann::json& json) override;
 	
-	ESummaryMode summary_mode() const override { return ESummaryMode::Input; }
-
 	void display_summary() override;
 private:
 	std::string value;
@@ -24,12 +22,11 @@ class DirectoryInput : public Node
 {
 public:
 	DirectoryInput();
-	void display() override;
+	void display(ESpTool tool) override;
 
 	virtual nlohmann::json serialize(Graph& graph) override;
 	void deserialize(const nlohmann::json& json) override;
-
-	ESummaryMode summary_mode() const override { return ESummaryMode::Input; }
+	
 	void display_summary() override;
 private:
 	std::string value;
@@ -39,12 +36,11 @@ class FileInput : public Node
 {
 public:
 	FileInput();
-	void display() override;
+	void display(ESpTool tool) override;
 
 	virtual nlohmann::json serialize(Graph& graph) override;
 	void deserialize(const nlohmann::json& json) override;
-
-	ESummaryMode summary_mode() const override { return ESummaryMode::Input; }
+	
 	void display_summary() override;
 private:
 	std::string value;
@@ -54,13 +50,13 @@ class AppendText : public Node
 {
 public:
 	AppendText();
-	void display() override;
+	void display(ESpTool tool) override;
 
 private:
 
 	std::string value;
 
-	std::shared_ptr<NodeInput> a;
-	std::shared_ptr<NodeInput> b;
-	std::shared_ptr<NodeOutput> out;
+	std::shared_ptr<InputPin> a;
+	std::shared_ptr<InputPin> b;
+	std::shared_ptr<OutputPin> out;
 };

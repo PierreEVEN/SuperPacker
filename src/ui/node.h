@@ -9,69 +9,23 @@
 #include "graph.h"
 #include "out_shader.h"
 #include "packer/code.h"
-#include "packer/types.h"
 
 
 class Texture;
 class Node;
 
-// result, pos_x, pos_y, res_x, res_y
-DECLARE_DELEGATE_SINGLECAST_RETURN(EventGetOutputType, EType);
-DECLARE_DELEGATE_SINGLECAST_RETURN(EventGetCode, std::string, CodeContext&);
 DECLARE_DELEGATE_MULTICAST(EventUpdateNode);
 
-class NodeOutput
-{
-	friend class NodeInput;
-public:
-	NodeOutput(Node* in_owner, std::string in_name) : name(std::move(in_name)),
-	                                                  owning_node(in_owner)
-	{
-	}
-
-	EventGetOutputType on_get_type;
-	EventGetCode on_get_code;
-
-	ImVec2 position;
-	const std::string name;
-
-	std::string get_code(CodeContext& code_context);
-	EType get_type() { return on_get_type.execute(); }
-	[[nodiscard]] Node& owner() const { return *owning_node; }
-	void mark_dirty() { code = nullptr; }
-	[[nodiscard]] bool linked() const { return !link_destinations.empty(); }
-
-	void break_links() const;
-private:
-	std::shared_ptr<std::string> code = nullptr;
-	std::vector<NodeInput*> link_destinations;
-	Node* owning_node;
-};
-
-class NodeInput
+class NodeTransform
 {
 public:
-	NodeInput(Node* in_owner, std::string in_name) : name(std::move(in_name)), owning_node(in_owner)
-	{
-	}
-
+	ImVec2 screen_min;
+	ImVec2 screen_max;
 	ImVec2 position;
-
-	const std::string name;
-
-	operator bool() const
-	{
-		return link_target != nullptr;
-	}
-
-	void link_to(const std::shared_ptr<NodeOutput>& output);
-
-	[[nodiscard]] const std::shared_ptr<NodeOutput>& target() const { return link_target; }
-	[[nodiscard]] Node& owner() const { return *owning_node; }
+	ImVec2 size;
 private:
-	Node* owning_node;
-	std::shared_ptr<NodeOutput> link_target;
 };
+
 
 class Node
 {
@@ -79,36 +33,45 @@ class Node
 public:
 	virtual nlohmann::json serialize(Graph& graph);
 	virtual void deserialize(const nlohmann::json& json);
-
-
-	void display_internal(Graph& graph);
+	
 	void display_summary_internal();
 
-	virtual void display() = 0;
+	virtual void display(ESpTool tool)
+	{
+	}
+
 	void draw_connections(const Graph& graph) const;
 
-	std::shared_ptr<NodeInput> add_input(std::string name);
-	std::shared_ptr<NodeOutput> add_output(std::string name);
+	std::shared_ptr<InputPin> add_input(std::string name);
+	std::shared_ptr<OutputPin> add_output(std::string name);
 
 	[[nodiscard]] std::string get_internal_name() const { return name + "_" + std::to_string(uuid); }
 
 	OutShader& get_display_shader();
-
-
-	[[nodiscard]] std::shared_ptr<NodeOutput> output_by_name(const std::string& name) const;
-	[[nodiscard]] std::shared_ptr<NodeInput> input_by_name(const std::string& name) const;
 
 	EventUpdateNode on_update;
 
 	void mark_dirty();
 
 	[[nodiscard]] Graph& get_graph() const { return *owning_graph; }
+	[[nodiscard]] uint64_t get_uuid() const { return uuid; }
+	[[nodiscard]] std::string uuid_as_string() const { return std::to_string(uuid); }
+	[[nodiscard]] std::string get_name() const { return name; }
+	[[nodiscard]] const NodeTransform& get_transform() const { return transform; }
+	[[nodiscard]] const std::vector<std::shared_ptr<OutputPin>>& get_outputs() const { return outputs; }
+	[[nodiscard]] const std::vector<std::shared_ptr<InputPin>>& get_inputs() const { return inputs; }
+	[[nodiscard]] std::shared_ptr<OutputPin> find_output_by_name(const std::string& name) const;
+	[[nodiscard]] std::shared_ptr<InputPin> find_input_by_name(const std::string& name) const;
+	
+	void set_name(const std::string& new_name) { name = new_name; }
+	bool is_editing_name = false;
 
 protected:
 	virtual void display_summary()
 	{
 	}
-	float calc_min_height() const;
+
+	[[nodiscard]] float calc_min_height() const;
 
 	virtual void register_uniform(CodeContext& ctx)
 	{
@@ -116,30 +79,17 @@ protected:
 
 	void update_nodes_positions();
 
-	ImVec2 screen_min;
-	ImVec2 screen_max;
-
-	enum class ESummaryMode
-	{
-		Unavailable,
-		Input,
-		Output
-	};
-
-	[[nodiscard]] virtual ESummaryMode summary_mode() const { return ESummaryMode::Unavailable; }
-
 	std::string type_name;
-	std::vector<std::shared_ptr<NodeInput>> inputs;
-	std::vector<std::shared_ptr<NodeOutput>> outputs;
-	ImVec2 position;
-	ImVec2 size;
+	std::vector<std::shared_ptr<InputPin>> inputs;
+	std::vector<std::shared_ptr<OutputPin>> outputs;
 	int64_t uuid;
-	std::string name;
 	OutShader display_shader;
 	Graph* owning_graph = nullptr;
 
 private:
-	bool edit_name = false;
-	bool display_in_summary = true;
+	NodeTransform transform;
+
+	std::string name;
+
 	void internal_init(size_t new_uuid);
 };

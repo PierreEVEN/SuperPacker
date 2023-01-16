@@ -1,7 +1,7 @@
 {
-    "name": "resources/Demo2",
+    "enabled_tool": 0,
     "nodes": {
-        "Image Output_1": {
+        "Image Write_1": {
             "height": 110.0,
             "inputs": {
                 "Path": {
@@ -15,8 +15,7 @@
                     "uuid": 0
                 }
             },
-            "name": "Image Output",
-            "summary": true,
+            "pin_name": "Image Write",
             "type": "class ImageWriteNode",
             "uuid": 1,
             "width": 300.0,
@@ -26,9 +25,8 @@
         "Texture_0": {
             "height": 270.0,
             "inputs": null,
-            "name": "Texture",
+            "pin_name": "Texture",
             "source_file": "C:\\Users\\pierre\\Documents\\projects\\SuperPacker\\resources\\appicon.ico",
-            "summary": true,
             "type": "class NodeTexture",
             "uuid": 0,
             "width": 300.0,
@@ -37,8 +35,8 @@
         }
     },
     "path": "resources/Demo2",
+    "pin_name": "Demo2",
     "pos_x": -757.6805419921875,
     "pos_y": -35.42448043823242,
-    "summary_mode": true,
     "zoom": 1.2547450065612793
 }

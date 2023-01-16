@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "ui/pin.h"
+
 NodeAdd::NodeAdd()
 {
 	a = add_input("a");
@@ -9,7 +11,7 @@ NodeAdd::NodeAdd()
 	auto out = add_output("result");
 	out->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		if (!*a || !*b)
+		if (!a->is_connected() || !b->is_connected())
 			return "";
 
 		const auto a_type = a->target()->on_get_type.execute();
@@ -50,7 +52,7 @@ NodeAdd::NodeAdd()
 
 	out->on_get_type.add_lambda([&]()
 	{
-		if (!*a || !*b)
+		if (!a->is_connected() || !b->is_connected())
 			return EType::Undefined;
 
 		const auto a_type = a->target()->on_get_type.execute();
@@ -67,7 +69,7 @@ NodeMult::NodeMult()
 	const auto out = add_output("result");
 	out->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		if (!*a || !*b)
+		if (!a->is_connected() || !b->is_connected())
 			return "";
 
 		const auto a_type = a->target()->on_get_type.execute();
@@ -108,7 +110,7 @@ NodeMult::NodeMult()
 
 	out->on_get_type.add_lambda([&]()
 	{
-			if (!*a || !*b)
+			if (!a->is_connected() || !b->is_connected())
 				return EType::Undefined;
 
 			const auto a_type = a->target()->on_get_type.execute();

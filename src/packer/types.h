@@ -11,3 +11,10 @@ enum class EType
 	Sampler2D,
 	String
 };
+
+enum class ESpTool
+{
+	EditGraph,
+	EditWidget,
+	RunWidget
+};
