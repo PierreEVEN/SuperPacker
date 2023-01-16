@@ -123,7 +123,7 @@ void Texture::load_from_disc(const std::filesystem::path& path)
 
 void Texture::reset_memory()
 {
-	invalidate_data();
+	clear();
 
 	if (width <= 0 || height <= 0 || channels <= 0 || channels > 4)
 		return;
@@ -177,10 +177,10 @@ void Texture::set_format(int new_width, int new_height, uint8_t new_channels, EP
 	width = new_width;
 	height = new_height;
 	channels = new_channels;
-	invalidate_data();
+	clear();
 }
 
-void Texture::invalidate_data()
+void Texture::clear()
 {
 	if (is_valid_gpu)
 	{
@@ -220,7 +220,7 @@ Texture::Texture()
 
 Texture::~Texture()
 {
-	invalidate_data();
+	clear();
 }
 
 uint32_t Texture::get_id()

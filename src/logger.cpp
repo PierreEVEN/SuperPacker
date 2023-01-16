@@ -20,6 +20,9 @@ void Logger::add_frame_log(const Log& log)
 
 void Logger::add_persistent_log(const Log& log)
 {
+	if (log.type == ELogType::Error)
+		std::cerr << log.message << std::endl;
+
 	persistent_logs[persistent_first] = log;
 	persistent_first = (persistent_first + 1) % persistent_logs.size();
 	persistent_count++;

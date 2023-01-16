@@ -43,7 +43,9 @@ GraphManager::GraphManager(std::filesystem::path in_user_data_path)
 		}
 		catch (const std::exception& e)
 		{
-			std::cerr << "failed to load json : " << e.what() << std::endl;
+			Logger::get().add_persistent_log({
+				ELogType::Error, std::string("failed to load json : ") + std::string(e.what())
+			});
 		}
 	}
 }
@@ -70,7 +72,7 @@ void GraphManager::load_layout()
 		}
 		catch (const std::exception& e)
 		{
-			std::cerr << "failed to load json : " << e.what() << std::endl;
+			Logger::get().add_persistent_log({ELogType::Error, std::string("failed to load json : ") + e.what()});
 		}
 	}
 }
@@ -82,7 +84,7 @@ void GraphManager::save_layout()
 	// Create user directory if not exists
 	if (!exists(config_path.parent_path()))
 		if (!create_directories(config_path.parent_path()))
-			std::cerr << "failed to create config directory" << std::endl;
+			Logger::get().add_persistent_log({ELogType::Error, std::string("failed to create config directory")});
 
 
 	if (std::ofstream config_file(user_data_path / CONFIG_FILE); config_file.is_open())
@@ -278,6 +280,9 @@ void GraphManager::display()
 			{
 				if (ImGui::Button("Edit\nMode", ImVec2{60, 60}))
 					selected_graph->toggle_summary_mode();
+				ImGui::SameLine();
+				if (ImGui::Button("Export\nGraph", ImVec2{60, 60}))
+					;
 
 				ImGui::Separator();
 
@@ -290,16 +295,14 @@ void GraphManager::display()
 	}
 	ImGui::End();
 
-	ImGui::SetNextWindowPos(ImVec2{0, ImGui::GetIO().DisplaySize.y - Logger::get().get_display_height() });
-	ImGui::SetNextWindowSize(ImVec2{ImGui::GetIO().DisplaySize.x, Logger::get() .get_display_height()});
+	ImGui::SetNextWindowPos(ImVec2{0, ImGui::GetIO().DisplaySize.y - Logger::get().get_display_height()});
+	ImGui::SetNextWindowSize(ImVec2{ImGui::GetIO().DisplaySize.x, Logger::get().get_display_height()});
 	if (ImGui::Begin("bottom_logs", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBringToFrontOnFocus))
 	{
 		ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetWindowPos(), ImGui::GetWindowPos() + ImGui::GetWindowSize(),
 		                                          COLOR(0, 120, 200, 255));
 
 		Logger::get().display();
-
-
 	}
 	ImGui::End();
 }

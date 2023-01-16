@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iostream>
 
+#include "logger.h"
+
 static std::vector<FileResource*> file_resources;
 
 FileResource::FileResource()
@@ -20,13 +22,14 @@ FileResource::~FileResource()
 	file_resources.erase(std::find(file_resources.begin(), file_resources.end(), this));
 }
 
-void FileResource::set_path(const std::string& path)
+void FileResource::set_path(const std::filesystem::path& path)
 {
-	if (file_path != path)
+	const bool changed = file_path != path;
+	if (changed)
 		file_path = path;
-	if (std::filesystem::exists(path) && std::filesystem::is_regular_file(path))
+	if (exists(path) && is_regular_file(path))
 	{
-		if (!is_valid_path)
+		if (!is_valid_path || changed)
 		{
 			last_write_time = std::filesystem::last_write_time(path);
 			is_valid_path = true;
@@ -70,7 +73,7 @@ const std::vector<char>& FileResource::get_raw_data()
 					return file_data;
 				}
 			}
-			std::cerr << "failed to read file content" << std::endl;
+			Logger::get().add_persistent_log({ELogType::Error, "failed to read file content"});
 		}
 	}
 	return file_data;

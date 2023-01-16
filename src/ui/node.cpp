@@ -110,16 +110,12 @@ static void custom_draw_callback(const ImDrawList* parent_list, const ImDrawCmd*
 	{
 		node->get_graph().code_ctx().update_uniforms();
 
-		const float normalized_clip_rect[4] = {
-			cmd->ClipRect.x / ImGui::GetIO().DisplaySize.x,
-			1 - cmd->ClipRect.y / ImGui::GetIO().DisplaySize.y,
-			cmd->ClipRect.z / ImGui::GetIO().DisplaySize.x,
-			1 - cmd->ClipRect.w / ImGui::GetIO().DisplaySize.y,
-		};
-
 		const int fb_height = static_cast<int>(ImGui::GetIO().DisplaySize.y * ImGui::GetIO().DisplayFramebufferScale.y);
-		const ImVec2 clip_min(cmd->ClipRect.x, cmd->ClipRect.y);
-		const ImVec2 clip_max(cmd->ClipRect.z, cmd->ClipRect.w);
+
+		const auto window_clip_rect = parent_list->_CmdHeader.ClipRect;
+		const ImVec2 clip_min(max(cmd->ClipRect.x, window_clip_rect.x), max(cmd->ClipRect.y, window_clip_rect.y));
+		const ImVec2 clip_max(min(cmd->ClipRect.z, window_clip_rect.z), min(cmd->ClipRect.w, window_clip_rect.w));
+
 		if (clip_max.x <= clip_min.x || clip_max.y <= clip_min.y)
 			return;
 
@@ -128,6 +124,14 @@ static void custom_draw_callback(const ImDrawList* parent_list, const ImDrawCmd*
 		          static_cast<int>(static_cast<float>(fb_height) - clip_max.y),
 		          static_cast<int>(clip_max.x - clip_min.x),
 		          static_cast<int>(clip_max.y - clip_min.y));
+
+		// Draw UVs
+		const float normalized_clip_rect[4] = {
+			cmd->ClipRect.x / ImGui::GetIO().DisplaySize.x,
+			1 - cmd->ClipRect.y / ImGui::GetIO().DisplaySize.y,
+			cmd->ClipRect.z / ImGui::GetIO().DisplaySize.x,
+			1 - cmd->ClipRect.w / ImGui::GetIO().DisplaySize.y,
+		};
 		glUniform4fv(1, 1, normalized_clip_rect);
 		node->get_display_shader().draw();
 	}
@@ -267,10 +271,23 @@ void Node::display_internal(Graph& graph)
 
 void Node::display_summary_internal()
 {
-	ImGui::Text(name.c_str());
-	ImGui::SameLine();
-	display_summary();
-	ImGui::Separator();
+	ImGui::SetCursorPosX(20);
+	if (ImGui::BeginChild((std::string("summary_##") + std::to_string(uuid)).c_str(),
+	                      ImVec2{ImGui::GetContentRegionAvail().x - 40, 200}))
+	{
+		ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetWindowPos(),
+		                                          ImGui::GetWindowPos() + ImGui::GetContentRegionAvail(),
+		                                          ImGui::ColorConvertFloat4ToU32({1, 1, 1, 1}), 10);
+
+		ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetWindowPos() + ImVec2{2.f, 2.f},
+		                                          ImGui::GetWindowPos() + ImGui::GetContentRegionAvail() - ImVec2{4.f, 4.f},
+		                                          ImGui::ColorConvertFloat4ToU32({0.3f, 0.3f, 0.3f, 1}), 5);
+
+		ImGui::Text(name.c_str());
+		display_summary();
+	}
+	ImGui::EndChild();
+	ImGui::Dummy({0, 20});
 }
 
 std::shared_ptr<NodeInput> Node::add_input(std::string name)

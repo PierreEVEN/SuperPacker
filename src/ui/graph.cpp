@@ -159,19 +159,32 @@ void Graph::draw()
 {
 	if (summary_mode)
 	{
+		ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertFloat4ToU32({0.2f, 0.2f, 0.2f, 1}));
 		if (ImGui::BeginChild("summary"))
 		{
-			ImGui::Columns(2);
-			for (const auto& node : nodes)
-				if (node->display_in_summary && node->summary_mode() == Node::ESummaryMode::Input)
-					node->display_summary_internal();
-			ImGui::NextColumn();
+			if (ImGui::BeginChild("input panel", ImGui::GetContentRegionAvail() * ImVec2(0.5f, 1.f)))
+			{
+				for (const auto& node : nodes)
+					if (node->display_in_summary && node->summary_mode() == Node::ESummaryMode::Input)
+					{
+						node->display_summary_internal();
+						ImGui::Separator();
+					}
+			}
+			ImGui::EndChild();
+			ImGui::SameLine();
+
+			ImGui::BeginChild("output panel", ImGui::GetContentRegionAvail());
 			for (const auto& node : nodes)
 				if (node->display_in_summary && node->summary_mode() == Node::ESummaryMode::Output)
+				{
 					node->display_summary_internal();
-			ImGui::Columns(1);
+					ImGui::Separator();
+				}
+			ImGui::EndChild();
 		}
 		ImGui::EndChild();
+		ImGui::PopStyleColor();
 	}
 	else
 	{
@@ -413,8 +426,8 @@ void Graph::draw()
 				is_in_context_menu = false;
 			}
 
-			ImGui::SetCursorPos({ 0, ImGui::GetWindowSize().y - logger.get_display_height() });
-			if (ImGui::BeginChild("logger", { ImGui::GetWindowSize().x, logger.get_display_height() }))
+			ImGui::SetCursorPos({0, ImGui::GetWindowSize().y - logger.get_display_height()});
+			if (ImGui::BeginChild("logger", {ImGui::GetWindowSize().x, logger.get_display_height()}))
 			{
 				logger.display();
 			}
@@ -437,7 +450,6 @@ void Graph::draw()
 						const auto node = spawn_by_name(node_js["type"]);
 						if (!node)
 						{
-							std::cerr << "failed to spawn node of type " << node_js["type"] << std::endl;
 							logger.add_persistent_log({
 								ELogType::Error,
 								std::string("failed to spawn node of type ") + std::string(node_js["type"])
@@ -668,7 +680,9 @@ void Graph::load_from_file()
 		const auto node = spawn_by_name(node_js["type"]);
 		if (!node)
 		{
-			std::cerr << "failed to spawn node of type " << node_js["type"] << std::endl;
+			Logger::get().add_persistent_log({
+				ELogType::Error, std::string("failed to spawn node of type ") + std::string(node_js["type"])
+			});
 			continue;
 		}
 		node->deserialize(node_js);
@@ -701,7 +715,7 @@ void Graph::save_to_file()
 {
 	if (!exists(path.parent_path()))
 		if (!create_directories(path.parent_path()))
-			std::cerr << "failed to create directory to save graph to" << std::endl;
+			Logger::get().add_persistent_log({ELogType::Error, "failed to create directory to save graph to"});
 
 	std::ofstream output(path);
 

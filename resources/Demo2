@@ -1,80 +1,34 @@
 {
     "name": "resources/Demo2",
     "nodes": {
-        "Append TOTO_3": {
+        "Image Output_1": {
             "height": 110.0,
             "inputs": {
-                "A": {
-                    "from": "result",
-                    "to": "A",
-                    "uuid": 4
+                "Path": {
+                    "from": "path",
+                    "to": "Path",
+                    "uuid": 0
                 },
-                "B": {
-                    "from": "result",
-                    "to": "B",
-                    "uuid": 2
-                }
-            },
-            "name": "Append TOTO",
-            "summary": true,
-            "type": "class AppendText",
-            "uuid": 3,
-            "width": 300.0,
-            "x": -181.3095703125,
-            "y": -64.121826171875
-        },
-        "EAFAZFAZ_2": {
-            "height": 70.0,
-            "inputs": null,
-            "name": "EAFAZFAZ",
-            "summary": true,
-            "type": "class TextInput",
-            "uuid": 2,
-            "value": "times_square.jpg",
-            "width": 300.0,
-            "x": -625.856689453125,
-            "y": 31.1705322265625
-        },
-        "Image Write_1": {
-            "height": 110.0,
-            "inputs": {
                 "RGBA": {
                     "from": "RGBA",
                     "to": "RGBA",
                     "uuid": 0
                 }
             },
-            "name": "Image Write",
-            "summary": false,
+            "name": "Image Output",
+            "summary": true,
             "type": "class ImageWriteNode",
             "uuid": 1,
             "width": 300.0,
             "x": 682.5421752929688,
             "y": -117.4464111328125
         },
-        "Text_4": {
-            "height": 70.0,
-            "inputs": null,
-            "name": "Text",
-            "summary": true,
-            "type": "class TextInput",
-            "uuid": 4,
-            "value": "resources/",
-            "width": 300.0,
-            "x": -679.3421630859375,
-            "y": -124.5213623046875
-        },
         "Texture_0": {
-            "height": 230.0,
-            "inputs": {
-                "path": {
-                    "from": "Result",
-                    "to": "path",
-                    "uuid": 3
-                }
-            },
+            "height": 270.0,
+            "inputs": null,
             "name": "Texture",
-            "summary": false,
+            "source_file": "C:\\Users\\pierre\\Documents\\projects\\SuperPacker\\resources\\appicon.ico",
+            "summary": true,
             "type": "class NodeTexture",
             "uuid": 0,
             "width": 300.0,
@@ -83,8 +37,8 @@
         }
     },
     "path": "resources/Demo2",
-    "pos_x": 373.4741516113281,
-    "pos_y": -44.57032012939453,
+    "pos_x": -757.6805419921875,
+    "pos_y": -35.42448043823242,
     "summary_mode": true,
-    "zoom": 0.6805564761161804
+    "zoom": 1.2547450065612793
 }

@@ -12,13 +12,16 @@
 
 #include <Windows.h>
 
+#include "logger.h"
 #include "resource.h"
 
 static Gfx* instance = nullptr;
 
 static void glfw_error_callback(int error, const char* description)
 {
-	std::cerr << "Glfw Error " << error << ": " << description << std::endl;
+	Logger::get().add_persistent_log({
+		ELogType::Error, std::string("Glfw Error : ") + std::to_string(error) + " : " + description
+	});
 }
 
 #define COLOR_DARKNESS 400.f
@@ -30,7 +33,7 @@ Gfx::Gfx(const std::string& window_name, uint32_t window_x, uint32_t window_y, i
 	instance = this;
 	glfwSetErrorCallback(glfw_error_callback);
 	{
-		if (!glfwInit()) { std::cerr << "Failed to initialize GFLW!" << std::endl; }
+		if (!glfwInit()) Logger::get().add_persistent_log({ELogType::Error, "Failed to initialize GFLW!"});
 	}
 	const char* glsl_version = "#version 330";
 	GLint major = 4, minor = 5;
@@ -46,14 +49,14 @@ Gfx::Gfx(const std::string& window_name, uint32_t window_x, uint32_t window_y, i
 
 	{
 		main_window = glfwCreateWindow(window_x, window_y, window_name.c_str(), nullptr, nullptr);
-		if (!main_window) { std::cerr << "Failed to create Window!" << std::endl; }
+		if (!main_window) Logger::get().add_persistent_log({ELogType::Error, "Failed to create Window!" });
 	}
 	glfwMakeContextCurrent(main_window);
 
 	if (pos_x && pos_y)
 		glfwSetWindowPos(main_window, *pos_x, *pos_y);
 
-	if (gl3wInit() != 0) { std::cerr << "Failed to initialize OpenGL loader!" << std::endl; }
+	if (gl3wInit() != 0) Logger::get().add_persistent_log({ELogType::Error, "Failed to initialize OpenGL loader!"});
 
 	glfwSwapInterval(1); // Enable vsync
 	glfwSetWindowUserPointer(main_window, this);
@@ -216,7 +219,7 @@ Gfx::Gfx(const std::string& window_name, uint32_t window_x, uint32_t window_y, i
 		PopupBorderSize
 		=
 		1;
-	
+
 	style
 		.
 		Colors[ImGuiCol_Text] = COLOR_BR(232, 232, 232, 255);
@@ -378,7 +381,7 @@ int Gfx::get_window_height() const
 }
 
 int Gfx::get_window_pos_x() const
-{	
+{
 	int x, y;
 	glfwGetWindowPos(main_window, &x, &y);
 	return x;

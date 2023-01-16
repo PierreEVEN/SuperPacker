@@ -30,13 +30,15 @@ public:
 
 	void make_gpu_available();
 
+	[[nodiscard]] bool valid_on_gpu() const { return is_valid_gpu; }
+	[[nodiscard]] bool valid_on_cpu() const { return is_valid_cpu; }
 
 	// NEW
 	void load_from_disc(const std::filesystem::path& path);
 	void reset_memory();
 	void set_format(int new_width, int new_height, uint8_t new_channels, EPixelFormat new_format = EPixelFormat::UINT8);
 
-	void invalidate_data();
+	void clear();
 
 	static bool is_valid_image_file(const std::filesystem::path& path);
 	static uint8_t bits_per_pixel(EPixelFormat format);

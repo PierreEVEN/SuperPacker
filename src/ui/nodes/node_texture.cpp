@@ -4,6 +4,7 @@
 
 #include "gfx.h"
 #include "texture.h"
+#include "window_interface.h"
 
 /*
  * TEXTURE INPUT
@@ -56,27 +57,24 @@ NodeTexture::NodeTexture()
 		                   texture_uniform->get_name(), enabled_uniform->get_name());
 	});
 
-	path = add_input("path");
-
+	texture = Texture::create();
 	texture_data.on_data_changed.add_lambda([&]
 	{
 		if (texture_data.is_valid())
 		{
-			texture = Texture::create();
 			texture->load_from_disc(texture_data.get_path());
 		}
 		else
 		{
-			texture = nullptr;
+			texture->clear();
 		}
 	});
 
-	on_update.add_lambda([&]
+	const auto texture_path = add_output("path");
+	texture_path->on_get_type.add_lambda([]() { return EType::String; });
+	texture_path->on_get_code.add_lambda([&](CodeContext& context)-> std::string
 	{
-		if (*path)
-			texture_data.set_path(path->target()->get_code(get_graph().code_ctx()));
-		else
-			texture_data.set_path("");
+		return texture_data.get_path().string();
 	});
 }
 
@@ -111,8 +109,39 @@ void NodeTexture::register_uniform(CodeContext& ctx)
 	});
 }
 
+nlohmann::json NodeTexture::serialize(Graph& graph)
+{
+	auto serialized = Node::serialize(graph);
+	serialized["source_file"] = texture_data.get_path();
+	return serialized;
+}
+
+void NodeTexture::deserialize(const nlohmann::json& json)
+{
+	Node::deserialize(json);
+	if (json.contains("source_file"))
+		texture_data.set_path(json["source_file"]);
+}
+
+void NodeTexture::display_summary()
+{
+	Node::display_summary();
+
+	if (texture && texture->valid_on_cpu())
+		ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<uint64_t>(texture->get_id())),
+		             ImGui::GetContentRegionAvail(), {0, 1}, {1, 0});
+}
+
 void NodeTexture::display()
 {
+	if (ImGui::Button("##import", ImGui::GetContentRegionAvail()))
+	{
+		const auto new_path = windows::pick_image();
+		if (!new_path.empty())
+			texture_data.set_path(new_path);
+		else
+			get_graph().logger.add_persistent_log({ELogType::Warning, "failed to select image"});
+	}
 }
 
 /*
@@ -149,7 +178,7 @@ void ImageWriteNode::display()
 }
 
 void ImageWriteNode::display_summary()
-{	
+{
 	if (ImGui::Button("Export", {ImGui::GetContentRegionAvail().x, 100}))
 	{
 		std::cout << "output to " << path_input->target()->get_code(get_graph().code_ctx()) << std::endl;

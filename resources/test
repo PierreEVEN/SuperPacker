@@ -1,28 +1,6 @@
 {
     "name": "test",
     "nodes": {
-        "Append Text_187": {
-            "height": 110.0,
-            "inputs": {
-                "A": {
-                    "from": "dir",
-                    "to": "A",
-                    "uuid": 234
-                },
-                "B": {
-                    "from": "result",
-                    "to": "B",
-                    "uuid": 186
-                }
-            },
-            "name": "Append Text",
-            "summary": true,
-            "type": "class AppendText",
-            "uuid": 187,
-            "width": 300.0,
-            "x": 292.2935485839844,
-            "y": 268.9786376953125
-        },
         "Append Text_247": {
             "height": 110.0,
             "inputs": {
@@ -45,28 +23,6 @@
             "x": 1664.643798828125,
             "y": 585.3292236328125
         },
-        "Append Text_98": {
-            "height": 110.0,
-            "inputs": {
-                "A": {
-                    "from": "dir",
-                    "to": "A",
-                    "uuid": 234
-                },
-                "B": {
-                    "from": "result",
-                    "to": "B",
-                    "uuid": 80
-                }
-            },
-            "name": "Append Text",
-            "summary": true,
-            "type": "class AppendText",
-            "uuid": 98,
-            "width": 300.0,
-            "x": 256.5031433105469,
-            "y": -84.46675872802734
-        },
         "Directory_234": {
             "height": 70.0,
             "inputs": null,
@@ -76,20 +32,8 @@
             "uuid": 234,
             "value": "resources/",
             "width": 300.0,
-            "x": -777.9286499023438,
-            "y": 205.83863830566406
-        },
-        "File_261": {
-            "height": 70.0,
-            "inputs": null,
-            "name": "File",
-            "summary": true,
-            "type": "class FileInput",
-            "uuid": 261,
-            "value": "resources\\icon.png",
-            "width": 300.0,
-            "x": 488.4585876464844,
-            "y": 634.695556640625
+            "x": 1242.1072998046875,
+            "y": 921.8839111328125
         },
         "Float_63": {
             "height": 70.0,
@@ -98,10 +42,10 @@
             "summary": true,
             "type": "class NodeFloat",
             "uuid": 63,
-            "value": 0.6800000071525574,
+            "value": 0.36000001430511475,
             "width": 300.0,
-            "x": 824.9464111328125,
-            "y": -17.07405662536621
+            "x": 833.2820434570313,
+            "y": 220.48577880859375
         },
         "Image Write_6": {
             "height": 110.0,
@@ -157,18 +101,6 @@
             "x": 1747.4674072265625,
             "y": 201.4334716796875
         },
-        "Text_186": {
-            "height": 70.0,
-            "inputs": null,
-            "name": "Text",
-            "summary": true,
-            "type": "class TextInput",
-            "uuid": 186,
-            "value": "appicon.ico",
-            "width": 300.0,
-            "x": -255.32301330566406,
-            "y": 403.2863464355469
-        },
         "Text_246": {
             "height": 70.0,
             "inputs": null,
@@ -181,68 +113,41 @@
             "x": 1315.93896484375,
             "y": 668.7083129882813
         },
-        "Text_80": {
-            "height": 70.0,
-            "inputs": null,
-            "name": "Text",
-            "summary": true,
-            "type": "class TextInput",
-            "uuid": 80,
-            "value": "times_square.jpg",
-            "width": 300.0,
-            "x": -252.44544982910156,
-            "y": 207.93545532226563
-        },
         "Texture_44": {
-            "height": 230.0,
-            "inputs": {
-                "path": {
-                    "from": "Result",
-                    "to": "path",
-                    "uuid": 187
-                }
-            },
+            "height": 270.0,
+            "inputs": null,
             "name": "Texture",
+            "source_file": "C:\\Users\\pierre\\Documents\\projects\\SuperPacker\\resources\\times_square.jpg",
             "summary": true,
             "type": "class NodeTexture",
             "uuid": 44,
             "width": 300.0,
-            "x": 830.1116333007813,
-            "y": 318.9571533203125
+            "x": 800.9198608398438,
+            "y": 345.0921325683594
         },
         "Texture_47": {
-            "height": 230.0,
-            "inputs": {
-                "path": {
-                    "from": "dir",
-                    "to": "path",
-                    "uuid": 261
-                }
-            },
+            "height": 270.0,
+            "inputs": null,
             "name": "Texture",
+            "source_file": "C:\\Users\\pierre\\Documents\\projects\\SuperPacker\\resources\\icon.png",
             "summary": true,
             "type": "class NodeTexture",
             "uuid": 47,
             "width": 300.0,
-            "x": 828.0924682617188,
-            "y": 557.5738525390625
+            "x": 803.5166015625,
+            "y": 640.1417236328125
         },
         "Texture_5": {
-            "height": 230.0,
-            "inputs": {
-                "path": {
-                    "from": "Result",
-                    "to": "path",
-                    "uuid": 98
-                }
-            },
+            "height": 270.0,
+            "inputs": null,
             "name": "Texture",
+            "source_file": "C:\\Users\\pierre\\Documents\\projects\\SuperPacker\\resources\\appicon.ico",
             "summary": true,
             "type": "class NodeTexture",
             "uuid": 5,
             "width": 300.0,
-            "x": 824.71533203125,
-            "y": 84.48563385009766
+            "x": 1206.7413330078125,
+            "y": -107.78765106201172
         },
         "add_62": {
             "height": 110.0,
@@ -263,13 +168,13 @@
             "type": "class NodeAdd",
             "uuid": 62,
             "width": 300.0,
-            "x": 1339.8677978515625,
-            "y": 232.71607971191406
+            "x": 1235.54638671875,
+            "y": 190.7193145751953
         }
     },
     "path": "resources/test",
-    "pos_x": -164.11898803710938,
-    "pos_y": -240.67689514160156,
-    "summary_mode": false,
-    "zoom": 0.5751726627349854
+    "pos_x": -1207.5084228515625,
+    "pos_y": -410.4471740722656,
+    "summary_mode": true,
+    "zoom": 0.6352980136871338
 }
