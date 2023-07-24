@@ -141,163 +141,26 @@ void MainWindow::display()
 	ImGui::GetStyle().ItemSpacing = {0, 0};
 	ImGui::GetStyle().WindowPadding = {0, 0};
 
+	// Draw Main Window
 	ImGui::SetNextWindowPos({0, 0});
 	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize - ImVec2{0, Logger::get().get_display_height()});
 	if (ImGui::Begin("loaded_graphs", nullptr,
 	                 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBringToFrontOnFocus))
 	{
-		ImGui::BeginGroup();
-		// Create new graph
-		if (ImGui::Button("+", {BUTTON_SIZE, BUTTON_SIZE}))
-		{
-			is_creating_file = true;
-			want_keyboard_focus = true;
-			display_left_tab = true;
-		}
-		if (ImGui::IsItemHovered())
-		{
-			ImGui::BeginTooltip();
-			ImGui::Text("new project");
-			ImGui::EndTooltip();
-		}
-
-		// Open existing graph
-		if (ImGui::Button("O", {BUTTON_SIZE, BUTTON_SIZE}))
-		{
-			if (const auto new_file = windows::pick_graph_file(); exists(new_file))
-			{
-				load_or_create_graph(new_file);
-				display_left_tab = true;
-			}
-		}
-		if (ImGui::IsItemHovered())
-		{
-			ImGui::BeginTooltip();
-			ImGui::Text("Open project from file (*.spg)");
-			ImGui::EndTooltip();
-		}
-
-		// Show recent graph
-		bool pushed_color = false;
-		if (display_left_tab)
-		{
-			ImGui::PushStyleColor(ImGuiCol_Button, COLOR(100, 100, 100, 80));
-			pushed_color = true;
-		}
-		if (ImGui::Button("R", {BUTTON_SIZE, BUTTON_SIZE}))
-			display_left_tab = !display_left_tab;
-		if (pushed_color)
-			ImGui::PopStyleColor();
-
-		if (ImGui::IsItemHovered())
-		{
-			ImGui::BeginTooltip();
-			ImGui::Text("Show recent projects");
-			ImGui::EndTooltip();
-		}
-
-		ImGui::Dummy({0, ImGui::GetContentRegionAvail().y - BUTTON_SIZE});
-
-		// Info
-		if (ImGui::Button("I", {BUTTON_SIZE, BUTTON_SIZE}))
-			std::cout << "help" << std::endl;
-		if (ImGui::IsItemHovered())
-		{
-			ImGui::BeginTooltip();
-			ImGui::Text("System information");
-			ImGui::EndTooltip();
-		}
-
-		ImGui::EndGroup();
-
-		if (display_left_tab)
-		{
-			ImGui::SameLine();
-
-			if (ImGui::BeginChild("graph_list", {LEFT_PANEL_WIDTH, ImGui::GetContentRegionAvail().y}))
-			{
-				ImGui::Dummy(ImVec2{0, 10});
-				ImGui::PushStyleColor(ImGuiCol_Text, COLOR(255, 255, 255, 200));
-				ImGui::Text("Recent Projects");
-				ImGui::PopStyleColor();
-				ImGui::Dummy(ImVec2{0, 10});
-				ImGui::Separator();
-
-				// Create new project input
-				if (is_creating_file)
-				{
-					ImGui::SetNextItemWidth(LEFT_PANEL_WIDTH);
-					if (want_keyboard_focus)
-					{
-						ImGui::SetKeyboardFocusHere(0);
-					}
-					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {
-						                    0, FILE_BUTTON_HEIGHT / 2 - ImGui::CalcTextSize("a").y / 2
-					                    });
-					if (char buf[256] = {"my_project"}; ImGui::InputText("##new_file_name", buf, sizeof buf,
-					                                                     ImGuiInputTextFlags_EnterReturnsTrue))
-					{
-						if (!get_graph_by_name(buf))
-						{
-							load_or_create_graph(user_data_path / GRAPH_PATH / (std::string(buf) + ".spg"));
-							is_creating_file = false;
-						}
-					}
-
-					// Cancel
-					if (!want_keyboard_focus && ImGui::GetCurrentWindow()->GetID("##new_file_name") !=
-						ImGui::GetCurrentContext()->ActiveId)
-						is_creating_file = false;
-					want_keyboard_focus = false;
-					ImGui::PopStyleVar();
-				}
-
-				// Display project list
-				for (const auto& graph : loaded_graphs)
-				{
-					if (selected_graph == graph)
-					{
-						ImGui::PushStyleColor(ImGuiCol_Button, COLOR(100, 100, 100, 20));
-						ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetCursorScreenPos(),
-						                                          ImGui::GetCursorScreenPos() + ImVec2{
-							                                          5, FILE_BUTTON_HEIGHT
-						                                          }, COLOR(255, 255, 255, 255));
-					}
-					else
-						ImGui::PushStyleColor(ImGuiCol_Text, COLOR(255, 255, 255, 150));
-					if (ImGui::Button(graph->name.c_str(), {ImGui::GetContentRegionAvail().x, FILE_BUTTON_HEIGHT}))
-						selected_graph = graph;
-					ImGui::PopStyleColor();
-				}
-			}
-			ImGui::EndChild();
-		}
+		draw_menu();
 
 		ImGui::SameLine();
-		if (ImGui::BeginChild("graph_window"))
-		{
-			if (selected_graph)
-			{
-				if (ImGui::Button("Edit\nGraph", ImVec2{60, 60}))
-					selected_graph->set_enabled_tool(ESpTool::EditGraph);
-				ImGui::SameLine();
-				if (ImGui::Button("Edit\nWidget", ImVec2{ 60, 60 }))
-					selected_graph->set_enabled_tool(ESpTool::EditWidget);
-				ImGui::SameLine();
-				if (ImGui::Button("Tool\nWidget", ImVec2{ 60, 60 }))
-					selected_graph->set_enabled_tool(ESpTool::RunWidget);
 
-				ImGui::Separator();
+		if (display_left_tab)
+			draw_outliner();
 
-				ImGui::PushStyleColor(ImGuiCol_ChildBg, COLOR(0, 0, 0, 70));
-				selected_graph->draw();
-				ImGui::PopStyleColor();
-			}
-		}
-		ImGui::EndChild();
+		ImGui::SameLine();
+
+		draw_viewport();
 	}
 	ImGui::End();
 
+	// Draw Logs
 	ImGui::SetNextWindowPos(ImVec2{0, ImGui::GetIO().DisplaySize.y - Logger::get().get_display_height()});
 	ImGui::SetNextWindowSize(ImVec2{ImGui::GetIO().DisplaySize.x, Logger::get().get_display_height()});
 	if (ImGui::Begin("bottom_logs", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBringToFrontOnFocus))
@@ -316,7 +179,7 @@ void MainWindow::save_all() const
 		graph->save_to_file();
 }
 
-std::shared_ptr<Graph> MainWindow::get_graph_by_name(const std::string& in_name) const
+std::shared_ptr<Graph> MainWindow::find_graph_by_name(const std::string& in_name) const
 {
 	for (const auto& graph : loaded_graphs)
 		if (graph->name == in_name)
@@ -340,4 +203,157 @@ void MainWindow::draw_toolbar(Graph& graph)
 	{
 		graph.save_to_file();
 	}
+}
+
+void MainWindow::draw_menu()
+{
+	ImGui::BeginGroup();
+	// Create new graph
+	if (ImGui::Button("+", { BUTTON_SIZE, BUTTON_SIZE }))
+	{
+		is_creating_file = true;
+		want_keyboard_focus = true;
+		display_left_tab = true;
+	}
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("new project");
+		ImGui::EndTooltip();
+	}
+
+	// Open existing graph
+	if (ImGui::Button("O", { BUTTON_SIZE, BUTTON_SIZE }))
+	{
+		if (const auto new_file = windows::pick_graph_file(); exists(new_file))
+		{
+			load_or_create_graph(new_file);
+			display_left_tab = true;
+		}
+	}
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("Open project from file (*.spg)");
+		ImGui::EndTooltip();
+	}
+
+	// Show recent graph
+	bool pushed_color = false;
+	if (display_left_tab)
+	{
+		ImGui::PushStyleColor(ImGuiCol_Button, COLOR(100, 100, 100, 80));
+		pushed_color = true;
+	}
+	if (ImGui::Button("R", { BUTTON_SIZE, BUTTON_SIZE }))
+		display_left_tab = !display_left_tab;
+	if (pushed_color)
+		ImGui::PopStyleColor();
+
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("Show recent projects");
+		ImGui::EndTooltip();
+	}
+
+	ImGui::Dummy({ 0, ImGui::GetContentRegionAvail().y - BUTTON_SIZE });
+
+	// Info
+	if (ImGui::Button("I", { BUTTON_SIZE, BUTTON_SIZE }))
+		std::cout << "help" << std::endl;
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("System information");
+		ImGui::EndTooltip();
+	}
+
+	ImGui::EndGroup();
+}
+
+void MainWindow::draw_outliner()
+{
+	if (ImGui::BeginChild("graph_list", { LEFT_PANEL_WIDTH, ImGui::GetContentRegionAvail().y }))
+	{
+		ImGui::Dummy(ImVec2{ 0, 10 });
+		ImGui::PushStyleColor(ImGuiCol_Text, COLOR(255, 255, 255, 200));
+		ImGui::Text("Recent Projects");
+		ImGui::PopStyleColor();
+		ImGui::Dummy(ImVec2{ 0, 10 });
+		ImGui::Separator();
+
+		// Create new project input
+		if (is_creating_file)
+		{
+			ImGui::SetNextItemWidth(LEFT_PANEL_WIDTH);
+			if (want_keyboard_focus)
+			{
+				ImGui::SetKeyboardFocusHere(0);
+			}
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {
+									0, FILE_BUTTON_HEIGHT / 2 - ImGui::CalcTextSize("a").y / 2
+				});
+			if (char buf[256] = { "my_project" }; ImGui::InputText("##new_file_name", buf, sizeof buf,
+				ImGuiInputTextFlags_EnterReturnsTrue))
+			{
+				if (!find_graph_by_name(buf))
+				{
+					load_or_create_graph(user_data_path / GRAPH_PATH / (std::string(buf) + ".spg"));
+					is_creating_file = false;
+				}
+			}
+
+			// Cancel
+			if (!want_keyboard_focus && ImGui::GetCurrentWindow()->GetID("##new_file_name") !=
+				ImGui::GetCurrentContext()->ActiveId)
+				is_creating_file = false;
+			want_keyboard_focus = false;
+			ImGui::PopStyleVar();
+		}
+
+		// Display project list
+		for (const auto& graph : loaded_graphs)
+		{
+			if (selected_graph == graph)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Button, COLOR(100, 100, 100, 20));
+				ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetCursorScreenPos(),
+					ImGui::GetCursorScreenPos() + ImVec2{
+						5, FILE_BUTTON_HEIGHT
+					}, COLOR(255, 255, 255, 255));
+			}
+			else
+				ImGui::PushStyleColor(ImGuiCol_Text, COLOR(255, 255, 255, 150));
+			if (ImGui::Button(graph->name.c_str(), { ImGui::GetContentRegionAvail().x, FILE_BUTTON_HEIGHT }))
+				selected_graph = graph;
+			ImGui::PopStyleColor();
+		}
+	}
+	ImGui::EndChild();
+}
+
+void MainWindow::draw_viewport() const
+{
+	if (ImGui::BeginChild("graph_window"))
+	{
+		if (selected_graph)
+		{
+			if (ImGui::Button("Edit\nGraph", ImVec2{ 60, 60 }))
+				selected_graph->set_enabled_tool(ESpTool::EditGraph);
+			ImGui::SameLine();
+			if (ImGui::Button("Edit\nWidget", ImVec2{ 60, 60 }))
+				selected_graph->set_enabled_tool(ESpTool::EditWidget);
+			ImGui::SameLine();
+			if (ImGui::Button("Tool\nWidget", ImVec2{ 60, 60 }))
+				selected_graph->set_enabled_tool(ESpTool::RunWidget);
+
+			ImGui::Separator();
+
+			ImGui::PushStyleColor(ImGuiCol_ChildBg, COLOR(0, 0, 0, 70));
+			selected_graph->draw();
+			ImGui::PopStyleColor();
+		}
+	}
+	ImGui::EndChild();
 }

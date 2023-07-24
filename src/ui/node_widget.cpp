@@ -50,8 +50,28 @@ static void custom_draw_callback(const ImDrawList* parent_list, const ImDrawCmd*
 
 void NodeWidget::display(Graph* graph, Node* node, ESpTool tool)
 {
-	ImVec2 screen_min = node->get_transform().screen_min;
-	ImVec2 screen_max = node->get_transform().screen_max;
+	switch (tool)
+	{
+	case ESpTool::EditGraph:
+		display_graph(graph, node);
+	case ESpTool::EditWidget:
+		if (!node->is_parameter())
+			break;
+		display_setup(graph, node);
+		break;
+	case ESpTool::RunWidget:
+		if (!node->is_parameter())
+			break;
+		display_run(graph, node);
+		break;
+	default: ;
+	}
+}
+
+void NodeWidget::display_graph(Graph* graph, Node* node)
+{
+	const ImVec2 screen_min = node->get_transform().screen_min;
+	const ImVec2 screen_max = node->get_transform().screen_max;
 
 	ImGui::SetWindowFontScale(graph->zoom);
 
@@ -93,7 +113,7 @@ void NodeWidget::display(Graph* graph, Node* node, ESpTool tool)
 			dl->AddCallback(custom_draw_callback, node);
 			dl->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 			dl->PopClipRect();
-			node->display(tool);
+			node->display(ESpTool::EditGraph);
 			ImGui::SetWindowFontScale(1);
 		}
 		ImGui::EndChild();
@@ -168,22 +188,12 @@ void NodeWidget::display(Graph* graph, Node* node, ESpTool tool)
 	ImGui::EndChild();
 
 	ImGui::SetWindowFontScale(1);
+}
 
+void NodeWidget::display_setup(Graph* graph, Node* node)
+{
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void NodeWidget::display_run(Graph* graph, Node* node)
+{
 }

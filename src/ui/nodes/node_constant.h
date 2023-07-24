@@ -16,6 +16,7 @@ public:
 
 	void display_summary() override;
 
+	bool is_parameter() const override { return true; }
 private:
 	std::shared_ptr<ShaderUniform> uniform_var;
 	float value = 0;

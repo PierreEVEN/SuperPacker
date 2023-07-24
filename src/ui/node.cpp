@@ -147,8 +147,9 @@ float Node::calc_min_height() const
 	return max(outputs.size(), inputs.size()) * 40.f + 30.f;
 }
 
-void Node::update_nodes_positions()
+void Node::update_nodes_positions(const ImVec2& movement)
 {
+	transform.position += movement;
 	transform.size.y = calc_min_height();
 
 	transform.screen_min = get_graph().pos_to_screen(transform.position);

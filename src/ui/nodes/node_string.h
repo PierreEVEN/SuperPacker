@@ -14,6 +14,7 @@ public:
 	void deserialize(const nlohmann::json& json) override;
 	
 	void display_summary() override;
+	bool is_parameter() const override { return true; }
 private:
 	std::string value;
 };
@@ -28,6 +29,7 @@ public:
 	void deserialize(const nlohmann::json& json) override;
 	
 	void display_summary() override;
+	bool is_parameter() const override { return true; }
 private:
 	std::string value;
 };
@@ -42,6 +44,7 @@ public:
 	void deserialize(const nlohmann::json& json) override;
 	
 	void display_summary() override;
+	bool is_parameter() const override { return true; }
 private:
 	std::string value;
 };

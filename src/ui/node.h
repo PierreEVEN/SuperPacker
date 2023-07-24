@@ -23,7 +23,6 @@ public:
 	ImVec2 screen_max;
 	ImVec2 position;
 	ImVec2 size;
-private:
 };
 
 
@@ -66,6 +65,10 @@ public:
 	void set_name(const std::string& new_name) { name = new_name; }
 	bool is_editing_name = false;
 
+	void update_nodes_positions(const ImVec2& movement = { 0, 0 });
+
+	virtual bool is_parameter() const { return false; }
+
 protected:
 	virtual void display_summary()
 	{
@@ -77,16 +80,13 @@ protected:
 	{
 	}
 
-	void update_nodes_positions();
-
-	std::string type_name;
-	std::vector<std::shared_ptr<InputPin>> inputs;
-	std::vector<std::shared_ptr<OutputPin>> outputs;
+private:
 	int64_t uuid;
 	OutShader display_shader;
-	Graph* owning_graph = nullptr;
-
-private:
+	std::vector<std::shared_ptr<InputPin>> inputs;
+	std::vector<std::shared_ptr<OutputPin>> outputs;
+	std::string type_name;
+	Graph* owning_graph;
 	NodeTransform transform;
 
 	std::string name;

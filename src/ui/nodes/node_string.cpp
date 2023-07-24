@@ -65,7 +65,7 @@ void TextInput::display_summary()
 	char buf[2048];
 
 	strcpy_s(buf, std::min(value.length() + 1, static_cast<size_t>(256)), value.c_str());
-	if (ImGui::InputTextMultiline(("value##" + std::to_string(uuid)).c_str(), buf, 2048, {ImGui::GetContentRegionAvail().x, 100},
+	if (ImGui::InputTextMultiline(("value##" + uuid_as_string()).c_str(), buf, 2048, {ImGui::GetContentRegionAvail().x, 100},
 	                              ImGuiInputTextFlags_CtrlEnterForNewLine))
 	{
 		value = buf;
@@ -93,7 +93,7 @@ DirectoryInput::DirectoryInput()
 
 void DirectoryInput::display(ESpTool tool)
 {
-	if (ImGui::Button((value + "##btn" + std::to_string(uuid)).c_str(), ImGui::GetContentRegionAvail()))
+	if (ImGui::Button((value + "##btn" + uuid_as_string()).c_str(), ImGui::GetContentRegionAvail()))
 	{
 		nfdnchar_t* outPath;
 		if (NFD::PickFolder(outPath, nullptr) == NFD_OKAY)
@@ -122,7 +122,7 @@ void DirectoryInput::deserialize(const nlohmann::json& json)
 void DirectoryInput::display_summary()
 {
 	Node::display_summary();
-	if (ImGui::Button((value + "##btn_" + std::to_string(uuid)).c_str(), {ImGui::GetContentRegionAvail().x, 100}))
+	if (ImGui::Button((value + "##btn_" + uuid_as_string()).c_str(), {ImGui::GetContentRegionAvail().x, 100}))
 	{
 		nfdnchar_t* outPath;
 		if (NFD::PickFolder(outPath, nullptr) == NFD_OKAY)
@@ -179,7 +179,7 @@ void FileInput::display_summary()
 {
 	Node::display_summary();
 	
-	if (ImGui::Button((value + "##btn" + std::to_string(uuid)).c_str(), {ImGui::GetContentRegionAvail().x, 100}))
+	if (ImGui::Button((value + "##btn" + uuid_as_string()).c_str(), {ImGui::GetContentRegionAvail().x, 100}))
 	{
 		nfdnchar_t* outPath;
 		if (NFD::OpenDialog(outPath) == NFD_OKAY)

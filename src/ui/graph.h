@@ -51,8 +51,9 @@ struct MouseHit
 
 class Graph
 {
+	friend class GraphWidgets;
 public:
-	Graph(const std::filesystem::path& in_path);
+	Graph(std::filesystem::path in_path);
 
 	void draw();
 
@@ -93,7 +94,7 @@ public:
 	[[nodiscard]] ImVec2 pos_to_screen(const ImVec2& from, const ImDrawList* draw_list = nullptr) const;
 	[[nodiscard]] ImVec2 pos_to_graph(const ImVec2& from, const ImDrawList* draw_list = nullptr) const;
 
-
+	void delete_selection();
 	void remove_node(Node* erased_node);
 
 	void open_context_menu();

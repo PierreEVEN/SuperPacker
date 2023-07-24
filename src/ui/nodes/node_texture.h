@@ -15,6 +15,7 @@ public:
 	void deserialize(const nlohmann::json& json) override;
 
 	void display_summary() override;
+	bool is_parameter() const override { return true; }
 private:
 	std::shared_ptr<Texture> texture;
 	std::shared_ptr<ShaderUniform> texture_uniform;
@@ -29,6 +30,7 @@ public:
 	ImageWriteNode();
 	void display(ESpTool tool) override;
 	void display_summary() override;
+	bool is_parameter() const override { return true; }
 private:
 	std::filesystem::path default_path;
 	std::shared_ptr<InputPin> path_input;

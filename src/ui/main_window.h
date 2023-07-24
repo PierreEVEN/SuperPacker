@@ -31,7 +31,7 @@ public:
 		return window_saved_pos;
 	}
 
-	[[nodiscard]] std::shared_ptr<Graph> get_graph_by_name(const std::string& in_name) const;
+	[[nodiscard]] std::shared_ptr<Graph> find_graph_by_name(const std::string& in_name) const;
 
 private:
 	int window_saved_width = 800;
@@ -41,6 +41,11 @@ private:
 	bool window_saved_pos = false;
 
 	void draw_toolbar(Graph& graph);
+
+	void draw_menu();
+	void draw_outliner();
+	void draw_viewport() const;
+
 
 	std::vector<std::shared_ptr<Graph>> loaded_graphs;
 	const std::filesystem::path user_data_path;
